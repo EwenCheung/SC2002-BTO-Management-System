@@ -1,0 +1,5 @@
+Project Name,Neighborhood,Type 1,Number of units for Type 1,Selling price for Type 1,Type 2,Number of units for Type 2,Selling price for Type 2,Application opening date,Application closing date,Manager,Officer Slot,Officer,Visibility
+Garden Heights,Tampines,2-Room,28,380000.0,3-Room,40,470000.0,3/15/2025,4/20/2025,S5678901G,2,T2109876H;S6543210I,true
+Acacia Breeze,Yishun,2-Room,23,350000.0,3-Room,34,450000.0,2/15/2025,3/20/2025,S5678901G,3,T2109876H;S6543210I,true
+Sunrise Estate,Jurong West,2-Room,20,300000.0,3-Room,30,400000.0,4/1/2025,4/2/2025,T8765432F,3,,false
+Pine Vista,Punggol,4-Room,30,580000.0,3-Room,45,480000.0,3/1/2025,3/15/2025,T8765432F,2,T1234567J,true

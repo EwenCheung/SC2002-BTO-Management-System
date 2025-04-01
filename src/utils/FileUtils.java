@@ -1,0 +1,70 @@
+package utils;
+
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class FileUtils {
+    private static final String DATASET_PATH = "Datasets/";
+    private static final String DELIMITER = ",";
+
+    public static List<String[]> readFile(String fileName) {
+        List<String[]> data = new ArrayList<>();
+        
+        try (BufferedReader reader = new BufferedReader(new FileReader(DATASET_PATH + fileName))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                data.add(line.split(DELIMITER));
+            }
+        } catch (IOException e) {
+            System.err.println("Error reading file: " + e.getMessage());
+        }
+        
+        return data;
+    }
+
+    public static boolean writeFile(String fileName, List<String[]> data) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(DATASET_PATH + fileName))) {
+            for (String[] row : data) {
+                writer.write(String.join(DELIMITER, row));
+                writer.newLine();
+            }
+            return true;
+        } catch (IOException e) {
+            System.err.println("Error writing to file: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public static boolean updateFile(String fileName, int rowIndex, int colIndex, String value) {
+        List<String[]> data = readFile(fileName);
+        if (rowIndex < 0 || rowIndex >= data.size()) {
+            return false;
+        }
+
+        String[] row = data.get(rowIndex);
+        if (colIndex < 0 || colIndex >= row.length) {
+            return false;
+        }
+
+        row[colIndex] = value;
+        return writeFile(fileName, data);
+    }
+
+    public static void convertExcelToText(String excelFile, String textFile) {
+        // Read from Excel file
+        List<String[]> data = new ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(new FileReader(DATASET_PATH + excelFile))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                data.add(line.split("\t")); // Assuming tab-separated Excel data
+            }
+        } catch (IOException e) {
+            System.err.println("Error reading Excel file: " + e.getMessage());
+            return;
+        }
+
+        // Write to text file
+        writeFile(textFile, data);
+    }
+}
