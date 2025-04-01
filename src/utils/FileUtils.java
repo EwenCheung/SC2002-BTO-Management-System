@@ -50,21 +50,4 @@ public class FileUtils {
         row[colIndex] = value;
         return writeFile(fileName, data);
     }
-
-    public static void convertExcelToText(String excelFile, String textFile) {
-        // Read from Excel file
-        List<String[]> data = new ArrayList<>();
-        try (BufferedReader reader = new BufferedReader(new FileReader(DATASET_PATH + excelFile))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                data.add(line.split("\t")); // Assuming tab-separated Excel data
-            }
-        } catch (IOException e) {
-            System.err.println("Error reading Excel file: " + e.getMessage());
-            return;
-        }
-
-        // Write to text file
-        writeFile(textFile, data);
-    }
 }
