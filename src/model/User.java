@@ -1,4 +1,4 @@
-package auth;
+package model;
 
 public class User {
     private String name;
@@ -47,5 +47,9 @@ public class User {
 
     public void setMaritalStatus(String maritalStatus) {
         this.maritalStatus = maritalStatus;
+    }
+
+    protected void setUserType(UserType u){
+        this.userType = u;
     }
 }

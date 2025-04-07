@@ -1,16 +1,15 @@
 package manager;
 
-import model.Project;
-import model.UnitType;
-import utils.FileUtils;
-import auth.User;
-
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import model.Project;
+import model.UnitType;
+import model.User;
+import utils.FileUtils;
 
 public class ProjectManager {
     private static final String PROJECT_FILE = "ProjectList.txt";

@@ -1,4 +1,4 @@
-package auth;
+package model;
 
 public enum UserType {
     APPLICANT,

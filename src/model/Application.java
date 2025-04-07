@@ -8,8 +8,10 @@ public class Application {
         UNDER_REVIEW("Under Review"),
         PENDING_DOCUMENTS("Pending Documents"),
         BACKGROUND_CHECK("Background Check"),
+        WITHDRAW_REQUESTED("Withdraw Requested"),
         APPROVED("Approved"),
-        REJECTED("Rejected");
+        REJECTED("Rejected"),
+        BOOKED("Booked");
 
         private final String displayName;
 
