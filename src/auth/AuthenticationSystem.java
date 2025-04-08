@@ -3,6 +3,12 @@ package auth;
 import utils.FileUtils;
 import java.util.List;
 
+import applicant.Applicant;
+import applicant.HDBOfficer;
+import manager.ProjectManager;
+import model.User;
+import model.UserType;
+
 public class AuthenticationSystem {
     private static final String APPLICANT_FILE = "ApplicantList.txt";
     private static final String OFFICER_FILE = "OfficerList.txt";
@@ -31,16 +37,42 @@ public class AuthenticationSystem {
         List<String[]> users = FileUtils.readFile(fileName);
         
         // Skip header row
-        for (int i = 1; i < users.size(); i++) {
-            String[] userData = users.get(i);
-            if (userData[1].equals(nric) && userData[4].equals(password)) {
-                return new User(
-                    userData[0], // name
-                    userData[1], // nric
-                    Integer.parseInt(userData[2]), // age
-                    userData[3], // marital status
-                    type
-                );
+        switch(type){
+            case APPLICANT:
+                for (int i = 1; i < users.size(); i++) {
+                    String[] userData = users.get(i);
+                    if (userData[1].equals(nric) && userData[4].equals(password)) {
+                        return new Applicant(
+                            userData[0], // name
+                            userData[1], // nric
+                            Integer.parseInt(userData[2]), // age
+                            userData[3] // marital status
+                        );
+                    }
+                }
+            case OFFICER:
+                for (int i = 1; i < users.size(); i++) {
+                    String[] userData = users.get(i);
+                    if (userData[1].equals(nric) && userData[4].equals(password)) {
+                        return new HDBOfficer(
+                            userData[0], // name
+                            userData[1], // nric
+                            Integer.parseInt(userData[2]), // age
+                            userData[3] // marital status
+                        );
+                    }
+                }
+            case MANAGER:
+            for (int i = 1; i < users.size(); i++) {
+                String[] userData = users.get(i);
+                if (userData[1].equals(nric) && userData[4].equals(password)) {
+                    return new ProjectManager(
+                        userData[0], // name
+                        userData[1], // nric
+                        Integer.parseInt(userData[2]), // age
+                        userData[3] // marital status
+                    );
+                }
             }
         }
         return null;

@@ -25,10 +25,12 @@ public class UnitType {
 
     public boolean assignUnit(String applicantNric) {
         if (availableUnits.isEmpty()) {
+            System.out.println("There are no more available units.");
             return false;
         }
         String unit = availableUnits.remove(0);
         assignedUnits.add(unit);
+        System.out.println("Unit successfully assigned.");
         return true;
     }
 

@@ -1,8 +1,11 @@
 package auth;
 
-import java.util.List;
-import model.UserType;
 import utils.FileUtils;
+import java.util.List;
+
+import model.UserType;
+
+import java.util.ArrayList;
 
 public class RegistrationSystem {
     private static final String APPLICANT_FILE = "ApplicantList.txt";

@@ -1,6 +1,6 @@
 package model;
 
-public class User {
+public abstract class User {
     private String name;
     private String nric;
     private int age;
@@ -49,7 +49,7 @@ public class User {
         this.maritalStatus = maritalStatus;
     }
 
-    protected void setUserType(UserType u){
-        this.userType = u;
+    public void setUserType(UserType userType){
+        this.userType=userType;
     }
 }

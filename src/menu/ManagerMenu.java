@@ -1,12 +1,14 @@
 package menu;
 
+import model.Project;
+import model.UnitType;
+import model.User;
+import utils.FileUtils;
+import manager.ProjectManager;
+
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import manager.ProjectManager;
-import model.Project;
-import model.User;
-import utils.FileUtils;
 
 public class ManagerMenu {
     private Scanner scanner;

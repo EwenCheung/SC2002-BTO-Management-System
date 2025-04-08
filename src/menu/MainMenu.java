@@ -3,8 +3,8 @@ package menu;
 import java.util.Scanner;
 import auth.AuthenticationSystem;
 import auth.RegistrationSystem;
-import auth.User;
-import auth.UserType;
+import model.User;
+import model.UserType;
 
 public class MainMenu {
     private Scanner scanner;

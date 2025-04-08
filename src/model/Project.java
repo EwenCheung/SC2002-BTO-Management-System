@@ -56,6 +56,7 @@ public class Project {
         return !now.isBefore(openingDate) && !now.isAfter(closingDate);
     }
 
+
     // Getters
     public String getProjectName() {
         return projectName;
@@ -112,6 +113,10 @@ public class Project {
 
     public void setVisible(boolean visible) {
         this.isVisible = visible;
+    }
+
+    public boolean assignUnit(String type, String applicantNric){
+        return unitTypes.get(type).assignUnit(applicantNric);
     }
 
     @Override

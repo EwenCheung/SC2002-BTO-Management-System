@@ -11,7 +11,7 @@ public class Applicant extends User{
     private Application application;
     private final List<Enquiry> enquiries;
 
-    public Applicant(String nric, String name, int age, String maritalStatus){
+    public Applicant(String name, String nric, int age, String maritalStatus){
         super(nric, name, age, maritalStatus, UserType.APPLICANT);
         this.enquiries= new ArrayList<>();
     }

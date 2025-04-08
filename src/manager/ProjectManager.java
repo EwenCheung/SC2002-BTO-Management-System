@@ -1,22 +1,25 @@
 package manager;
 
+import model.Project;
+import model.UnitType;
+import utils.FileUtils;
+import model.User;
+import model.UserType;
+
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import model.Project;
-import model.UnitType;
-import model.User;
-import utils.FileUtils;
 
-public class ProjectManager {
+public class ProjectManager extends User{
     private static final String PROJECT_FILE = "ProjectList.txt";
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("M/d/yyyy");
     private Map<String, Project> projects;
 
-    public ProjectManager() {
+    public ProjectManager(String name, String nric, int age, String maritalStatus) {
+        super(name, nric, age, maritalStatus, UserType.MANAGER);
         this.projects = new HashMap<>();
         loadProjects();
     }

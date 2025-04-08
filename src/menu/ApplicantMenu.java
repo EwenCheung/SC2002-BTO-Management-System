@@ -1,7 +1,8 @@
 package menu;
 
-import auth.User;
 import auth.AuthenticationSystem;
+import model.User;
+
 import java.util.Scanner;
 
 public class ApplicantMenu {

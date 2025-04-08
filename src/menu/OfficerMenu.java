@@ -1,8 +1,8 @@
 package menu;
 
-import auth.User;
 import auth.AuthenticationSystem;
 import manager.ProjectManager;
+import applicant.HDBOfficer;
 import model.Project;
 import utils.FileUtils;
 import java.util.*;
@@ -10,14 +10,14 @@ import java.time.LocalDateTime;
 
 public class OfficerMenu {
     private Scanner scanner;
-    private User user;
+    private HDBOfficer officer;
 
     private AuthenticationSystem authSystem;
     private ProjectManager projectManager;
 
-    public OfficerMenu(User user) {
+    public OfficerMenu(HDBOfficer officer) {
         this.scanner = new Scanner(System.in);
-        this.user = user;
+        this.officer = officer;
         this.authSystem = new AuthenticationSystem();
         this.projectManager = new ProjectManager();
     }
@@ -25,7 +25,7 @@ public class OfficerMenu {
     public void display() {
         while (true) {
             System.out.println("\n=== HDB Officer Menu ===");
-            System.out.println("Welcome, " + user.getName());
+            System.out.println("Welcome, " + officer.getName());
             System.out.println("=== Project Management ===");
             System.out.println("1. Register for Project");
             System.out.println("2. View Registration Status");
@@ -55,10 +55,10 @@ public class OfficerMenu {
                 switch (choice) {
                     case 1:
                         // Check if already registered for another active project
-                        List<Project> assignedProjects = projectManager.getVisibleProjects(user);
+                        List<Project> assignedProjects = projectManager.getVisibleProjects(officer);
                         boolean isAssigned = false;
                         for (Project project : assignedProjects) {
-                            if (project.getAssignedOfficers().contains(user.getNric()) &&
+                            if (project.getAssignedOfficers().contains(officer.getNric()) &&
                                 project.isApplicationOpen()) {
                                 isAssigned = true;
                                 break;
@@ -107,7 +107,7 @@ public class OfficerMenu {
                         List<Project> applicableProjects = new ArrayList<>();
                         
                         for (Project project : availableProjects) {
-                            if (!project.getAssignedOfficers().contains(user.getNric())) {
+                            if (!project.getAssignedOfficers().contains(officer.getNric())) {
                                 applicableProjects.add(project);
                             }
                         }
@@ -156,7 +156,7 @@ public class OfficerMenu {
     private void processFlatSelection() {
         while (true) {
             System.out.println("\n=== Process Flat Selection ===");
-            System.out.println("1. Update Available Units");
+            System.out.println("1. Process Successful application");
             System.out.println("2. Retrieve Applicant Details");
             System.out.println("3. Update Application Status");
             System.out.println("4. Back to Main Menu");
@@ -166,16 +166,19 @@ public class OfficerMenu {
                 int choice = Integer.parseInt(scanner.nextLine().trim());
                 switch (choice) {
                     case 1:
-                        System.out.println("\nFeature to be implemented: Update Available Units");
-                        // Will handle updating remaining units
+                        System.out.print("Enter Applicants NRIC: ");
+                        String applicantNric = scanner.nextLine();
+                        System.out.print("Enter the type of flat they are applying for: ");
+                        String type = scanner.nextLine();
+                        officer.updateApplicationStatus(type, applicantNric);
                         break;
                     case 2:
                         System.out.println("\nFeature to be implemented: Retrieve Applicant Details");
-                        // Will show applicant details by NRIC
+                        officer.retrieveApplicantDetails(scanner);
                         break;
                     case 3:
                         System.out.println("\nFeature to be implemented: Update Application Status");
-                        // Will update status from successful to booked
+                        officer.updateApplicationStatus(scanner);
                         break;
                     case 4:
                         return;
@@ -232,7 +235,7 @@ public class OfficerMenu {
             List<String[]> applications = FileUtils.readFile("ApplicationList.txt");
             for (int i = 1; i < applications.size(); i++) {
                 String[] app = applications.get(i);
-                if (app[1].equals(user.getNric()) && app[2].equals(selectedProject.getProjectName())) {
+                if (app[1].equals(officer.getNric()) && app[2].equals(selectedProject.getProjectName())) {
                     System.out.println("You cannot register as an officer for a project you have applied for.");
                     return;
                 }
@@ -245,7 +248,7 @@ public class OfficerMenu {
 
             registrations.add(new String[]{
                 registrationId,
-                user.getNric(),
+                officer.getNric(),
                 selectedProject.getProjectName(),
                 "PENDING",
                 LocalDateTime.now().toString()
@@ -281,7 +284,7 @@ public class OfficerMenu {
             System.out.println("\nYour Registration Requests:");
             for (int i = 1; i < registrations.size(); i++) {
                 String[] reg = registrations.get(i);
-                if (reg[1].equals(user.getNric())) {
+                if (reg[1].equals(officer.getNric())) {
                     found = true;
                     System.out.println("\nRegistration ID: " + reg[0]);
                     System.out.println("Project: " + reg[2]);
@@ -301,12 +304,12 @@ public class OfficerMenu {
 
     private void viewProjectDetails() {
         System.out.println("\n=== View Project Details ===");
-        List<Project> assignedProjects = projectManager.getVisibleProjects(user);
+        List<Project> assignedProjects = projectManager.getVisibleProjects(officer);
         List<Project> activeProjects = new ArrayList<>();
 
         // Filter projects where officer is assigned
         for (Project project : assignedProjects) {
-            if (project.getAssignedOfficers().contains(user.getNric())) {
+            if (project.getAssignedOfficers().contains(officer.getNric())) {
                 activeProjects.add(project);
             }
         }
@@ -364,12 +367,12 @@ public class OfficerMenu {
 
     private void viewProjectEnquiries() {
         System.out.println("\n=== View Project Enquiries ===");
-        List<Project> assignedProjects = projectManager.getVisibleProjects(user);
+        List<Project> assignedProjects = projectManager.getVisibleProjects(officer);
         List<Project> activeProjects = new ArrayList<>();
 
         // Filter projects where officer is assigned
         for (Project project : assignedProjects) {
-            if (project.getAssignedOfficers().contains(user.getNric())) {
+            if (project.getAssignedOfficers().contains(officer.getNric())) {
                 activeProjects.add(project);
             }
         }
@@ -429,12 +432,12 @@ public class OfficerMenu {
 
     private void replyToEnquiries() {
         System.out.println("\n=== Reply to Project Enquiries ===");
-        List<Project> assignedProjects = projectManager.getVisibleProjects(user);
+        List<Project> assignedProjects = projectManager.getVisibleProjects(officer);
         List<Project> activeProjects = new ArrayList<>();
 
         // Filter projects where officer is assigned
         for (Project project : assignedProjects) {
-            if (project.getAssignedOfficers().contains(user.getNric())) {
+            if (project.getAssignedOfficers().contains(officer.getNric())) {
                 activeProjects.add(project);
             }
         }
@@ -506,7 +509,7 @@ public class OfficerMenu {
             // Update the enquiry
             int selectedIndex = pendingEnquiries.get(enquiryChoice - 1);
             enquiries.get(selectedIndex)[4] = response;
-            enquiries.get(selectedIndex)[6] = user.getNric();
+            enquiries.get(selectedIndex)[6] = officer.getNric();
             enquiries.get(selectedIndex)[7] = LocalDateTime.now().toString();
 
             if (FileUtils.writeFile("EnquiryList.txt", enquiries)) {
