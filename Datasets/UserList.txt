@@ -1,0 +1,1 @@
+Name##NRIC##Age##Marital Status##Password##UserType

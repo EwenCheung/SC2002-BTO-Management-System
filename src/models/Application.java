@@ -1,45 +1,38 @@
-package model;
+package models;
 
 import java.time.LocalDateTime;
+import models.enums.ApplicationStatus;
 
 public class Application {
-    public enum Status {
-        PENDING("Pending"),
-        UNDER_REVIEW("Under Review"),
-        PENDING_DOCUMENTS("Pending Documents"),
-        BACKGROUND_CHECK("Background Check"),
-        APPROVED("Approved"),
-        REJECTED("Rejected");
-
-        private final String displayName;
-
-        Status(String displayName) {
-            this.displayName = displayName;
-        }
-
-        @Override
-        public String toString() {
-            return displayName;
-        }
-    }
 
     private String applicationId;
     private String applicantNric;
     private String projectName;
     private String unitType;
-    private Status status;
+    private ApplicationStatus status;
     private String assignedUnit;
     private String assignedOfficer;
     private LocalDateTime applicationDate;
     private LocalDateTime lastUpdated;
     private String remarks;
 
-    public Application(String applicationId, String applicantNric, String projectName, String unitType) {
-        this.applicationId = applicationId;
+    public Application(String applicationId, String applicantNric, String projectName, String unitType, ApplicationStatus status, String assignedUnit, String assignedOfficer, LocalDateTime applicationDate, LocalDateTime lastUpdated, String remarks){
         this.applicantNric = applicantNric;
         this.projectName = projectName;
         this.unitType = unitType;
-        this.status = Status.PENDING;
+        this.status = status;
+        this.assignedUnit = assignedUnit;
+        this.assignedOfficer = assignedOfficer;
+        this.applicationDate = applicationDate;
+        this.lastUpdated = lastUpdated;
+        this.remarks = remarks;
+    }
+
+    public Application(String applicantNric, String projectName, String unitType) {
+        this.applicantNric = applicantNric;
+        this.projectName = projectName;
+        this.unitType = unitType;
+        this.status = ApplicationStatus.PENDING;
         this.applicationDate = LocalDateTime.now();
         this.lastUpdated = LocalDateTime.now();
     }
@@ -61,7 +54,7 @@ public class Application {
         return unitType;
     }
 
-    public Status getStatus() {
+    public ApplicationStatus getStatus() {
         return status;
     }
 
@@ -86,7 +79,7 @@ public class Application {
     }
 
     // Setters
-    public void setStatus(Status status) {
+    public void setStatus(ApplicationStatus status) {
         this.status = status;
         this.lastUpdated = LocalDateTime.now();
     }
@@ -104,6 +97,10 @@ public class Application {
     public void setRemarks(String remarks) {
         this.remarks = remarks;
         this.lastUpdated = LocalDateTime.now();
+    }
+
+    public void setApplicationId(String applicationId){
+        this.applicationId = applicationId;
     }
 
     public String generateReceipt() {

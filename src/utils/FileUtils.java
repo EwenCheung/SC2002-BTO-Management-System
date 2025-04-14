@@ -3,10 +3,10 @@ package utils;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import static utils.Constants.DELIMITER;
 
 public class FileUtils {
     private static final String DATASET_PATH = "Datasets/";
-    private static final String DELIMITER = ",";
 
     public static List<String[]> readFile(String fileName) {
         List<String[]> data = new ArrayList<>();
