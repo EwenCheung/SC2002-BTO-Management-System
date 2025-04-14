@@ -7,8 +7,82 @@ import users.ProjectManager;
 import users.enums.MaritalStatus;
 import users.enums.UserType;
 import java.util.List;
+import java.util.Scanner;
 
 public class RegistrationSystem {
+    /**
+     * Handles the entire user registration process by scanning inputs from the provided Scanner.
+     * Prompts for all necessary registration details and then calls registerUser to process the registration.
+     *
+     * @param scanner  the Scanner instance for reading user input.
+     * @param userList the global in-memory list of users.
+     * @return the new User object if registration is successful; null otherwise.
+     */
+    public User registerUserFromInput(Scanner scanner, List<User> userList) {
+        System.out.println("\n=== User Registration ===");
+
+        System.out.print("Enter Name: ");
+        String name = scanner.nextLine().trim();
+
+        System.out.print("Enter NRIC: ");
+        String nric = scanner.nextLine().trim();
+
+        System.out.print("Enter Age: ");
+        int age;
+        try {
+            age = Integer.parseInt(scanner.nextLine().trim());
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid age format. Registration failed.");
+            return null;
+        }
+
+        System.out.print("Enter Marital Status (Single/Married): ");
+        String maritalStatus = scanner.nextLine().trim();
+
+        System.out.print("Enter Password: ");
+        String password = scanner.nextLine().trim();
+
+        System.out.print("Enter User Type (APPLICANT, OFFICER, MANAGER): ");
+        String userType = scanner.nextLine().trim();
+
+        // Delegate to the existing registration logic.
+        User newUser = registerUser(name, nric, age, maritalStatus, password, userType, userList);
+        return newUser;
+    }
+
+    // Helper validation methods can be retained if needed.
+    public boolean isValidNRIC(String nric) {
+        if (nric == null || nric.length() != 9) {
+            return false;
+        }
+        char firstChar = nric.charAt(0);
+        if (firstChar != 'S' && firstChar != 'T') {
+            return false;
+        }
+        String digits = nric.substring(1, 8);
+        try {
+            Integer.parseInt(digits);
+        } catch (NumberFormatException e) {
+            return false;
+        }
+        return Character.isLetter(nric.charAt(8));
+    }
+
+    public boolean isValidAge(int age) {
+        return age >= 18 && age <= 130;
+    }
+
+    public boolean isValidMaritalStatus(String status) {
+        if (status == null) {
+            return false;
+        }
+        String lowerStatus = status.toLowerCase();
+        return lowerStatus.equals("single") || lowerStatus.equals("married");
+    }
+
+    public boolean isValidPassword(String password) {
+        return password != null && password.length() >= 6;
+    }
 
     /**
      * Attempts to register a new user (applicant, officer, or manager) based on the input parameters.
@@ -21,10 +95,11 @@ public class RegistrationSystem {
      * @param maritalStatusStr the user's marital status as a string ("Single" or "Married").
      * @param password         the user's password.
      * @param userTypeStr      the type of user as a string ("APPLICANT", "OFFICER", or "MANAGER").
-     * @param userList         the global in-memory list of users (loaded via FileIO in MainMenu).
+     * @param userList         the global in-memory list of users.
      * @return the new User object if registration is successful; null otherwise.
      */
-    public User registerUser(String name, String nric, int age, String maritalStatusStr, String password, String userTypeStr, List<User> userList) {
+    public User registerUser(String name, String nric, int age, String maritalStatusStr,
+                            String password, String userTypeStr, List<User> userList) {
         // Validate input fields.
         if (name == null || name.trim().isEmpty() ||
             nric == null || nric.trim().isEmpty() ||
@@ -80,39 +155,5 @@ public class RegistrationSystem {
 
         System.out.println("Registration successful! Please proceed to login in the main menu.");
         return newUser;
-    }
-
-    // Helper validation methods can be retained if needed.
-    public boolean isValidNRIC(String nric) {
-        if (nric == null || nric.length() != 9) {
-            return false;
-        }
-        char firstChar = nric.charAt(0);
-        if (firstChar != 'S' && firstChar != 'T') {
-            return false;
-        }
-        String digits = nric.substring(1, 8);
-        try {
-            Integer.parseInt(digits);
-        } catch (NumberFormatException e) {
-            return false;
-        }
-        return Character.isLetter(nric.charAt(8));
-    }
-
-    public boolean isValidAge(int age) {
-        return age >= 18 && age <= 130;
-    }
-
-    public boolean isValidMaritalStatus(String status) {
-        if (status == null) {
-            return false;
-        }
-        String lowerStatus = status.toLowerCase();
-        return lowerStatus.equals("single") || lowerStatus.equals("married");
-    }
-
-    public boolean isValidPassword(String password) {
-        return password != null && password.length() >= 6;
     }
 }

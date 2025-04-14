@@ -14,7 +14,7 @@ import utils.FileUtils;
 public class HDBOfficer extends User{
 
     public HDBOfficer(String name, String nric, int age, MaritalStatus maritalStatus, String password){
-        super(nric, name, age, maritalStatus, UserType.OFFICER, password);
+        super(name, nric, age, maritalStatus, UserType.OFFICER, password);
     }
 
 

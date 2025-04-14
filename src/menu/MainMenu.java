@@ -130,32 +130,9 @@ public class MainMenu {
     }
 
     private void registerFlow() {
-        System.out.println("\n=== User Registration ===");
-        System.out.print("Enter Name: ");
-        String name = scanner.nextLine().trim();
-        System.out.print("Enter NRIC: ");
-        String nric = scanner.nextLine().trim();
-        System.out.print("Enter Age: ");
-        int age;
-        try {
-            age = Integer.parseInt(scanner.nextLine().trim());
-        } catch (NumberFormatException e) {
-            System.out.println("Invalid age format. Registration failed.");
-            return;
-        }
-        System.out.print("Enter Marital Status (Single/Married): ");
-        String maritalStatus = scanner.nextLine().trim();
-        System.out.print("Enter Password: ");
-        String password = scanner.nextLine().trim();
-        System.out.print("Enter User Type (APPLICANT, OFFICER, MANAGER): ");
-        String userType = scanner.nextLine().trim();
-
-        User newUser = regSystem.registerUser(name, nric, age, maritalStatus, password, userType, userList);
+        User newUser = regSystem.registerUserFromInput(scanner, userList);
         if (newUser != null) {
             userList.add(newUser);
-            System.out.println("Registration successful! Please login from the main menu.");
-        } else {
-            System.out.println("Registration failed. Please check your details and try again.");
         }
     }
 

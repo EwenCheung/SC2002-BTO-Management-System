@@ -9,23 +9,19 @@ import users.User;
 
 public class AuthenticationSystem {
 public User login(List<User> users, Scanner scanner) {
-    int count = 0;
     System.out.print("Enter NRIC: ");
     String nric = scanner.nextLine().trim();
 
     // Find the user by NRIC
     User foundUser = null;
     for (User user : users) {
-        System.out.println(user.getNric());
         if (user.getNric().equalsIgnoreCase(nric)) {
             foundUser = user;
             break;
         }
-        count++;
     }
 
     if (foundUser == null) {
-        System.out.println("i exited here 2. this is the nric i received " +nric+" at count "+count);
         System.out.println("User not found. Please register if you're a first-time user.");
         return null;
     }
