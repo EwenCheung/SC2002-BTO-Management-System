@@ -1,7 +1,10 @@
 package utils;
 
 public class Constants {
-    public static final String DELIMITER = "##";
+    // Store the raw delimiter
+    public static final String DELIMITER = ",";
+    // Provide a properly escaped version for regex operations
+    public static final String DELIMITER_REGEX = ",";
     public static final String PROJECT_FILE = "ProjectList.txt";
     public static final String APPLICATION_FILE = "ApplicationList.txt";
     public static final String ENQUIRY_FILE = "EnquiryList.txt";

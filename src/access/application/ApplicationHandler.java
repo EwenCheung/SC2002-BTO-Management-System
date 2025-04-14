@@ -123,6 +123,30 @@ public class ApplicationHandler implements ManagerApplicationFeatures, OfficerAp
         FileIO.saveApplications(applications);
     }
     
+    /**
+     * Retrieves an application by its ID.
+     * @param applicationId The unique ID of the application to retrieve.
+     * @return The Application object, or null if not found.
+     */
+    public Application getApplicationById(String applicationId) {
+        return findApplicationById(applicationId);
+    }
+    
+    /**
+     * Updates an existing application with new data.
+     * @param application The application with updated information.
+     */
+    public void updateApplication(Application application) {
+        Application existingApp = findApplicationById(application.getApplicationId());
+        if (existingApp == null) {
+            throw new IllegalArgumentException("Application not found: " + application.getApplicationId());
+        }
+        
+        // Update the application in the list
+        int index = applications.indexOf(existingApp);
+        applications.set(index, application);
+    }
+    
     private Application findApplicationById(String applicationId) {
         for (Application app : applications) {
             if (app.getApplicationId().equalsIgnoreCase(applicationId)) {

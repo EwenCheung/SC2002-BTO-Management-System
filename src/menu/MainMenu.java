@@ -21,9 +21,6 @@ import models.Enquiry;
 import models.Project;
 import models.OfficerRegistration;
 import models.WithdrawalRequest;
-import menu.ApplicantMenu;
-import menu.OfficerMenu;
-import menu.ManagerMenu;
 
 public class MainMenu {
     private Scanner scanner;
@@ -51,30 +48,23 @@ public class MainMenu {
         this.projectList = FileIO.loadProjects();
         this.officerRegistrationList = FileIO.loadOfficerRegistrations();
         this.withdrawalRequestsList = FileIO.loadWithdrawals();
-        ProjectHandler projectHandler = new ProjectHandler(projectList);
-        ApplicationHandler applicationHandler = new ApplicationHandler(applicationList);
-        EnquiryHandler enquiryHandler = new EnquiryHandler(enquiryList);
-        OfficerRegistrationHandler registrationHandler = new OfficerRegistrationHandler(officerRegistrationList);
-        WithdrawalHandler withdrawalHandler = new WithdrawalHandler(withdrawalRequestsList);
-
+        this.projectHandler = new ProjectHandler(projectList);
+        this.applicationHandler = new ApplicationHandler(applicationList);
+        this.enquiryHandler = new EnquiryHandler(enquiryList);
+        this.registrationHandler = new OfficerRegistrationHandler(officerRegistrationList);
+        this.withdrawalHandler = new WithdrawalHandler(withdrawalRequestsList);
     }
 
     public void displayMainMenu() {
         while (true) {
-            System.out.println("\n=== BTO Management System ===");
+            printHeader("BTO MANAGEMENT SYSTEM");
             System.out.println("1. Login");
-            System.out.println("2. Register");
+            System.out.println("2. Register as Applicant");
             System.out.println("3. Exit");
-            System.out.print("Enter your choice: ");
-
-            int choice = 0;
-            try {
-                choice = Integer.parseInt(scanner.nextLine().trim());
-            } catch (NumberFormatException e) {
-                System.out.println("Please enter a valid number.");
-                continue;
-            }
-
+            printDivider();
+            
+            int choice = readChoice("Enter your choice: ", 1, 3);
+            
             switch (choice) {
                 case 1:
                     loginFlow();
@@ -84,21 +74,32 @@ public class MainMenu {
                     break;
                 case 3:
                     saveAllData();
-                    System.out.println("Thank you for using BTO Management System. Exiting...");
+                    printSuccess("Thank you for using BTO Management System. Exiting...");
                     System.exit(0);
                     break;
                 default:
-                    System.out.println("Invalid choice. Please try again.");
+                    printError("Invalid choice. Please try again.");
             }
         }
     }
 
     private void loginFlow() {
-        User user = authSystem.login(userList, scanner);
+        printHeader("LOGIN MENU");
+        System.out.println("1. Applicant Login");
+        System.out.println("2. Officer Login");
+        System.out.println("3. Manager Login");
+        System.out.println("4. Back to Main Menu");
+        printDivider();
+        
+        int choice = readChoice("Enter your choice: ", 1, 4);
+        if (choice == 4) return;
+        
+        User user = authSystem.login(userList, scanner, choice);
         if (user == null) {
-            System.out.println("Login failed. Returning to main menu.");
+            printError("Login failed. Returning to main menu.");
             return;
         }
+        
         // Now call the relevant sub-menu based on user type.
         if (user.getUserType() == UserType.APPLICANT) {
             new ApplicantMenu((Applicant) user, projectHandler, applicationHandler, enquiryHandler, withdrawalHandler).display();
@@ -106,33 +107,44 @@ public class MainMenu {
             new ManagerMenu((ProjectManager) user, projectHandler, applicationHandler, enquiryHandler, registrationHandler, withdrawalHandler).display();
         } else if (user.getUserType() == UserType.OFFICER) {
             // If a HDBOfficer logs in, prompt to choose between officer and applicant functions.
-            System.out.println("You are logged in as HDB Officer.");
+            printHeader("OFFICER LOGIN SUCCESSFUL");
+            System.out.println("Welcome, " + user.getName());
+            printDivider();
             System.out.println("Select your mode: ");
             System.out.println("1. Officer Functions");
             System.out.println("2. Applicant Functions");
-            System.out.print("Enter your choice: ");
-            int mode = 0;
-            try {
-                mode = Integer.parseInt(scanner.nextLine().trim());
-            } catch (NumberFormatException e) {
-                System.out.println("Invalid input. Defaulting to Officer Functions.");
-                mode = 1;
-            }
+            printDivider();
+            
+            int mode = readChoice("Enter your choice: ", 1, 2);
+            
             if (mode == 1) {
                 new OfficerMenu((HDBOfficer) user, projectHandler, applicationHandler, enquiryHandler, registrationHandler).display();
             } else if (mode == 2) {
-                new ApplicantMenu((Applicant) user, projectHandler, applicationHandler, enquiryHandler, withdrawalHandler).display();
-            } else {
-                System.out.println("Invalid selection. Defaulting to Officer Functions.");
-                new OfficerMenu((HDBOfficer) user, projectHandler, applicationHandler, enquiryHandler, registrationHandler).display();
+                // Create a new Applicant with the same personal details as the Officer
+                HDBOfficer officer = (HDBOfficer) user;
+                Applicant applicantView = new Applicant(
+                    officer.getName(), 
+                    officer.getNric(), 
+                    officer.getAge(), 
+                    officer.getMaritalStatus(), 
+                    officer.getPassword()
+                );
+                new ApplicantMenu(applicantView, projectHandler, applicationHandler, enquiryHandler, withdrawalHandler).display();
             }
         }
+        
+        saveAllData(); // Save data when returning from a sub-menu
     }
 
     private void registerFlow() {
+        printHeader("REGISTER AS APPLICANT");
+        
         User newUser = regSystem.registerUserFromInput(scanner, userList);
         if (newUser != null) {
             userList.add(newUser);
+            printSuccess("Registration successful! You can now login.");
+        } else {
+            printError("Registration failed. Please try again.");
         }
     }
 
@@ -143,5 +155,40 @@ public class MainMenu {
         FileIO.saveOfficerRegistrations(officerRegistrationList);
         FileIO.saveUsers(userList);
         FileIO.saveWithdrawals(withdrawalRequestsList);
+    }
+    
+    // UI Helper Methods for consistent look and feel
+    private void printHeader(String title) {
+        System.out.println("\n" + "=".repeat(60));
+        System.out.println(" ".repeat((60 - title.length()) / 2) + title);
+        System.out.println("=".repeat(60));
+    }
+    
+    private void printDivider() {
+        System.out.println("-".repeat(60));
+    }
+    
+    private void printSuccess(String message) {
+        System.out.println("\n✓ " + message);
+    }
+    
+    private void printError(String message) {
+        System.out.println("\n✗ " + message);
+    }
+    
+    private int readChoice(String prompt, int min, int max) {
+        while (true) {
+            System.out.print(prompt);
+            try {
+                int choice = Integer.parseInt(scanner.nextLine().trim());
+                if (choice >= min && choice <= max) {
+                    return choice;
+                } else {
+                    printError("Please enter a number between " + min + " and " + max);
+                }
+            } catch (NumberFormatException e) {
+                printError("Please enter a valid number");
+            }
+        }
     }
 }

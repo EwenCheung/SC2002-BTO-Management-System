@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import static utils.Constants.DELIMITER;
+import static utils.Constants.DELIMITER_REGEX;
 
 public class FileUtils {
     private static final String DATASET_PATH = "Datasets/";
@@ -14,7 +15,8 @@ public class FileUtils {
         try (BufferedReader reader = new BufferedReader(new FileReader(DATASET_PATH + fileName))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                data.add(line.split(DELIMITER));
+                // Use the escaped delimiter pattern for regex operations
+                data.add(line.split(DELIMITER_REGEX));
             }
         } catch (IOException e) {
             System.err.println("Error reading file: " + e.getMessage());

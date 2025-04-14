@@ -1,1 +1,1 @@
-Request ID##Application ID##Applicant NRIC##Project Name##Status##Request Date##Process Date##Remarks
+Request ID,Application ID,Applicant NRIC,Project Name,Status,Request Date,Process Date,Remarks

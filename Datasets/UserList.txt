@@ -1,8 +1,8 @@
-Name##NRIC##Age##Marital Status##Password##UserType
-Micheal##T8765432F##36##SINGLE##password##MANAGER
-Jessica##S5678901G##26##MARRIED##password##MANAGER
-John##S1234567A##35##SINGLE##password##APPLICANT
-Sarah##T7654321B##40##MARRIED##password##APPLICANT
-David##T1234567J##29##MARRIED##password##OFFICER
-Emily##S6543210I##28##SINGLE##password##OFFICER
-Jack##G1234567H##45##MARRIED##password##APPLICANT
+Name,NRIC,Age,Marital Status,Password,UserType
+Micheal,T8765432F,36,SINGLE,password,MANAGER
+Jessica,S5678901G,26,MARRIED,password,MANAGER
+John,S1234567A,35,SINGLE,password,APPLICANT
+Sarah,T7654321B,40,MARRIED,password,APPLICANT
+David,T1234567J,29,MARRIED,password,OFFICER
+Emily,S6543210I,28,SINGLE,password,OFFICER
+Jack,G1234567H,45,MARRIED,password,APPLICANT

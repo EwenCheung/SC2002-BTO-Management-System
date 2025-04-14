@@ -84,8 +84,8 @@ public class FileIO {
         
         for (User user : users) {
             String serialized = UserSerializer.serialize(user);
-            // Split using the delimiter pattern; Constants.DELIMITER is defined as "\\|\\|"
-            String[] tokens = serialized.split(Constants.DELIMITER);
+            // Use the escaped delimiter for splitting
+            String[] tokens = serialized.split(Constants.DELIMITER_REGEX);
             data.add(tokens);
         }
         saveRaw(Constants.USER_FILE, data);
@@ -98,7 +98,7 @@ public class FileIO {
         
         for (Project project : projects) {
             String serialized = ProjectSerializer.serialize(project);
-            String[] tokens = serialized.split(Constants.DELIMITER);
+            String[] tokens = serialized.split(Constants.DELIMITER_REGEX);
             data.add(tokens);
         }
         saveRaw(Constants.PROJECT_FILE, data);
@@ -111,7 +111,7 @@ public class FileIO {
         
         for (Application app : applications) {
             String serialized = ApplicationSerializer.serialize(app);
-            String[] tokens = serialized.split(Constants.DELIMITER);
+            String[] tokens = serialized.split(Constants.DELIMITER_REGEX);
             data.add(tokens);
         }
         saveRaw(Constants.APPLICATION_FILE, data);
@@ -124,7 +124,7 @@ public class FileIO {
         
         for (Enquiry enquiry : enquiries) {
             String serialized = EnquirySerializer.serialize(enquiry);
-            String[] tokens = serialized.split(Constants.DELIMITER);
+            String[] tokens = serialized.split(Constants.DELIMITER_REGEX);
             data.add(tokens);
         }
         saveRaw(Constants.ENQUIRY_FILE, data);
@@ -137,7 +137,7 @@ public class FileIO {
         
         for (WithdrawalRequest request : withdrawals) {
             String serialized = WithdrawalRequestSerializer.serialize(request);
-            String[] tokens = serialized.split(Constants.DELIMITER);
+            String[] tokens = serialized.split(Constants.DELIMITER_REGEX);
             data.add(tokens);
         }
         saveRaw(Constants.WITHDRAWAL_FILE, data);
@@ -150,7 +150,7 @@ public class FileIO {
         
         for (OfficerRegistration reg : registrations) {
             String serialized = OfficerRegistrationSerializer.serialize(reg);
-            String[] tokens = serialized.split(Constants.DELIMITER);
+            String[] tokens = serialized.split(Constants.DELIMITER_REGEX);
             data.add(tokens);
         }
         saveRaw(Constants.OFFICER_REGISTRATION_FILE, data);

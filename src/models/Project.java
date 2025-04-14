@@ -124,5 +124,87 @@ public class Project {
      public void setOfficerSlots(int officerSlot){
         this.officerSlot = officerSlot;
      }
+
+    /**
+     * Gets the number of available units for a specified unit type.
+     * @param type The unit type (e.g., "2-Room", "3-Room").
+     * @return The number of available units, or 0 if the unit type doesn't exist.
+     */
+    public int getAvailableUnits(String type) {
+        if (this.units.containsKey(type)) {
+            return this.units.get(type).getAvailableUnits();
+        }
+        return 0;
+    }
+    
+    /**
+     * Decrements the available units count for a specified unit type.
+     * @param type The unit type.
+     * @return true if units were successfully decremented, false if no units are available.
+     */
+    public boolean decrementAvailableUnits(String type) {
+        if (this.units.containsKey(type)) {
+            UnitInfo info = this.units.get(type);
+            if (info.getAvailableUnits() > 0) {
+                info.setAvailableUnits(info.getAvailableUnits() - 1);
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    /**
+     * Increments the available units count for a specified unit type.
+     * Used when applications are withdrawn or cancelled.
+     * @param type The unit type.
+     * @return true if units were successfully incremented, false if max capacity reached.
+     */
+    public boolean incrementAvailableUnits(String type) {
+        if (this.units.containsKey(type)) {
+            UnitInfo info = this.units.get(type);
+            if (info.getAvailableUnits() < info.getTotalUnits()) {
+                info.setAvailableUnits(info.getAvailableUnits() + 1);
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    /**
+     * Checks if there are available slots for new HDB Officers.
+     * @return true if there are available slots, false otherwise.
+     */
+    public boolean hasAvailableOfficerSlots() {
+        return officers.size() < officerSlot;
+    }
+    
+    /**
+     * Gets the number of remaining officer slots.
+     * @return The number of remaining slots.
+     */
+    public int getRemainingOfficerSlots() {
+        return officerSlot - officers.size();
+    }
+    
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Project: ").append(projectName).append("\n");
+        sb.append("Neighborhood: ").append(neighborhood).append("\n");
+        sb.append("Application Period: ").append(applicationOpeningDate).append(" to ").append(applicationClosingDate).append("\n");
+        sb.append("Manager: ").append(manager).append("\n");
+        sb.append("Officer Slots: ").append(officers.size()).append("/").append(officerSlot).append("\n");
+        sb.append("Visibility: ").append(visible ? "Visible" : "Hidden").append("\n");
+        sb.append("Unit Types:\n");
+        
+        for (Map.Entry<String, UnitInfo> entry : units.entrySet()) {
+            UnitInfo info = entry.getValue();
+            sb.append("  - ").append(entry.getKey())
+              .append(": ").append(info.getAvailableUnits()).append("/").append(info.getTotalUnits())
+              .append(" units available, Price: $").append(String.format("%.2f", info.getSellingPrice())).append("\n");
+        }
+        
+        return sb.toString();
+    }
 }
 

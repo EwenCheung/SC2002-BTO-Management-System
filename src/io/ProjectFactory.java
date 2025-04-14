@@ -1,8 +1,10 @@
 package io;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import models.Project;
+import utils.Constants;
 
 public class ProjectFactory {
     public static Project createProject(String[] tokens) {
@@ -27,8 +29,9 @@ public class ProjectFactory {
         int avail2 = Integer.parseInt(tokens[8]);
         double price2 = Double.parseDouble(tokens[9]);
 
-        LocalDate openDate = LocalDate.parse(tokens[10]);
-        LocalDate closeDate = LocalDate.parse(tokens[11]);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(Constants.DATE_TIME_FORMAT);
+        LocalDate openDate = LocalDate.parse(tokens[10], formatter);
+        LocalDate closeDate = LocalDate.parse(tokens[11], formatter);
         String managerNric = tokens[12];
         int officerSlot = Integer.parseInt(tokens[13]);
         List<String> officers = tokens[14].isEmpty() ? new ArrayList<>() : Arrays.asList(tokens[14].split(";"));

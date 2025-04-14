@@ -8,7 +8,8 @@ public enum ApplicationStatus {
     WITHDRAW_REQUESTED("Withdraw Requested"),
     APPROVED("Approved"),
     REJECTED("Rejected"),
-    BOOKED("Booked");
+    BOOKED("Booked"),
+    WITHDRAWN("Withdrawn");
 
     private final String displayName;
 
