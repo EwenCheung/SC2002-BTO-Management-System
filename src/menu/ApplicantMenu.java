@@ -4,18 +4,13 @@ import access.application.ApplicantApplicationFeatures;
 import access.enquiry.ApplicantEnquiryFeatures;
 import access.project.ApplicantProjectFeatures;
 import access.withdrawal.ApplicantWithdrawalFeatures;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Scanner;
 import models.Application;
 import models.Enquiry;
 import models.Project;
 import models.WithdrawalRequest;
-import models.enums.WithdrawalStatus;
 import users.Applicant;
-import users.User;
-import utils.Constants;
 import utils.FileUtils;
 
 public class ApplicantMenu {

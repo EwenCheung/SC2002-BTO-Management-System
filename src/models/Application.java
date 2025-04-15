@@ -17,6 +17,7 @@ public class Application {
     private String remarks;
 
     public Application(String applicationId, String applicantNric, String projectName, String unitType, ApplicationStatus status, String assignedUnit, String assignedOfficer, LocalDateTime applicationDate, LocalDateTime lastUpdated, String remarks){
+        this.applicationId = applicationId;
         this.applicantNric = applicantNric;
         this.projectName = projectName;
         this.unitType = unitType;

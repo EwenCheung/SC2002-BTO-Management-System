@@ -1,9 +1,9 @@
 package io;
 
-import models.Application;
 import java.time.format.DateTimeFormatter;
-import static utils.Constants.DELIMITER;
+import models.Application;
 import static utils.Constants.DATE_TIME_FORMAT;
+import static utils.Constants.DELIMITER;
 
 public class ApplicationSerializer {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern(DATE_TIME_FORMAT);
