@@ -6,7 +6,7 @@ The BTO (Build-To-Order) Management System is a comprehensive application design
 This system was developed following object-oriented design principles (ModelOOApp approach) to ensure modularity, maintainability, and extensibility.
 
 ## System Requirements
-- Java Development Kit (JDK) 11 or higher
+- Java Development Kit (JDK) 8 or higher
 - Minimum 4GB RAM
 - 50MB of free disk space
 - Any operating system that supports Java (Windows, macOS, Linux)

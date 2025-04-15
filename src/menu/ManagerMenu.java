@@ -889,7 +889,7 @@ public class ManagerMenu {
         // Build a header row
         System.out.printf("%-15s %-15s %-25s %-10s %-15s %-10s %s%n",
                 "Applicant", "NRIC", "Project", "Flat Type", "Status", "Age", "Marital Status");
-        System.out.println("-".repeat(100));
+        System.out.println(FileUtils.repeatChar('=', 100));
         
         // For each application, get the applicant details
         for (Application app : applications) {
@@ -908,7 +908,7 @@ public class ManagerMenu {
                 );
             }
         }
-        System.out.println("-".repeat(100));
+        System.out.println(FileUtils.repeatChar('=', 100));
         System.out.println("Total Applications: " + applications.size());
         
         // Ask if user wants to save the report to a file
@@ -938,7 +938,7 @@ public class ManagerMenu {
         // Build the report
         System.out.printf("%-15s %-15s %-25s %-10s %-15s %-10s%n",
                 "Applicant", "NRIC", "Project", "Flat Type", "Status", "Age");
-        System.out.println("-".repeat(90));
+        System.out.println(FileUtils.repeatChar('=', 90));
         
         for (Application app : marriedApplicantsApps) {
             User applicant = findUserByNric(app.getApplicantNric());
@@ -953,7 +953,7 @@ public class ManagerMenu {
                 );
             }
         }
-        System.out.println("-".repeat(90));
+        System.out.println(FileUtils.repeatChar('=', 90));
         System.out.println("Total Applications from Married Applicants: " + marriedApplicantsApps.size());
         
         // Ask if user wants to save the report to a file
@@ -983,7 +983,7 @@ public class ManagerMenu {
         // Build the report
         System.out.printf("%-15s %-15s %-25s %-10s %-15s %-10s%n",
                 "Applicant", "NRIC", "Project", "Flat Type", "Status", "Age");
-        System.out.println("-".repeat(90));
+        System.out.println(FileUtils.repeatChar('=', 90));
         
         for (Application app : singleApplicantsApps) {
             User applicant = findUserByNric(app.getApplicantNric());
@@ -998,7 +998,7 @@ public class ManagerMenu {
                 );
             }
         }
-        System.out.println("-".repeat(90));
+        System.out.println(FileUtils.repeatChar('=', 90));
         System.out.println("Total Applications from Single Applicants: " + singleApplicantsApps.size());
         
         // Ask if user wants to save the report to a file
@@ -1074,7 +1074,7 @@ public class ManagerMenu {
             System.out.println("\nDetailed Application List:");
             System.out.printf("%-15s %-15s %-10s %-15s %-15s%n",
                     "Applicant", "NRIC", "Unit Type", "Status", "Assigned Unit");
-            System.out.println("-".repeat(80));
+            System.out.println(FileUtils.repeatChar('=', 80));
             
             for (Application app : projectApplications) {
                 User applicant = findUserByNric(app.getApplicantNric());
@@ -1126,7 +1126,7 @@ public class ManagerMenu {
         // Add column headers
         content.append(String.format("%-15s %-15s %-25s %-10s %-15s %-10s %s%n",
                 "Applicant", "NRIC", "Project", "Flat Type", "Status", "Age", "Marital Status"));
-        content.append("-".repeat(100)).append("\n");
+        content.append(FileUtils.repeatChar('=', 100)).append("\n");
         
         // Add data rows
         for (Application app : applications) {
@@ -1146,7 +1146,7 @@ public class ManagerMenu {
             }
         }
         
-        content.append("-".repeat(100)).append("\n");
+        content.append(FileUtils.repeatChar('=', 100)).append("\n");
         content.append("Total Applications: ").append(applications.size());
         
         return content.toString();
@@ -1199,7 +1199,7 @@ public class ManagerMenu {
         content.append("Detailed Application List:\n");
         content.append(String.format("%-15s %-15s %-10s %-15s %-15s%n",
                 "Applicant", "NRIC", "Unit Type", "Status", "Assigned Unit"));
-        content.append("-".repeat(80)).append("\n");
+        content.append(FileUtils.repeatChar('=', 80)).append("\n");
         
         for (Application app : applications) {
             User applicant = findUserByNric(app.getApplicantNric());
