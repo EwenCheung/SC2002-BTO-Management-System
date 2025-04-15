@@ -357,10 +357,10 @@ The implementation correctly handles the overlapping responsibilities between us
 
 ## Development Team
 - Ewen Cheung Yi Wen
-- Jerick Ho
-- Yun Han
-- Eshaa
-- Jusvin Tan
+- Jerick Ho Cheng Hien
+- Chan Yun Han
+- Makhija Eshaa Jiten
+- Jusvin Adrian Tan 
 
 ## License
 This project is licensed under the MIT License - see the LICENSE file for details.
