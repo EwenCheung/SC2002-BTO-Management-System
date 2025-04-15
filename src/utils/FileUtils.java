@@ -52,4 +52,20 @@ public class FileUtils {
         row[colIndex] = value;
         return writeFile(fileName, data);
     }
+
+    /**
+     * Returns a string consisting of the specified character repeated count times.
+     * This is a compatibility method for Java 8 (replacing String.repeat() from Java 11+).
+     * 
+     * @param c     The character to repeat
+     * @param count The number of times to repeat
+     * @return      A string with the character repeated the specified number of times
+     */
+    public static String repeatChar(char c, int count) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < count; i++) {
+            sb.append(c);
+        }
+        return sb.toString();
+    }
 }

@@ -3,6 +3,7 @@ package menu;
 import auth.AuthenticationSystem;
 import auth.RegistrationSystem;
 import io.FileIO;
+import utils.FileUtils;
 import java.util.List;
 import java.util.Scanner;
 
@@ -159,13 +160,13 @@ public class MainMenu {
     
     // UI Helper Methods for consistent look and feel
     private void printHeader(String title) {
-        System.out.println("\n" + "=".repeat(60));
-        System.out.println(" ".repeat((60 - title.length()) / 2) + title);
-        System.out.println("=".repeat(60));
+        System.out.println("\n" + FileUtils.repeatChar('=', 60));
+        System.out.println(FileUtils.repeatChar(' ', (60 - title.length()) / 2) + title);
+        System.out.println(FileUtils.repeatChar('=', 60));
     }
     
     private void printDivider() {
-        System.out.println("-".repeat(60));
+        System.out.println(FileUtils.repeatChar('-', 60));
     }
     
     private void printSuccess(String message) {

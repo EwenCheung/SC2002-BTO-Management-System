@@ -20,6 +20,7 @@ import models.enums.EnquiryStatus;
 import models.enums.OfficerRegistrationStatus;
 import users.HDBOfficer;
 import utils.Constants;
+import utils.FileUtils;
 
 public class OfficerMenu {
     private Scanner scanner;
@@ -557,7 +558,7 @@ public class OfficerMenu {
         System.out.println("\nMessage:");
         System.out.println(enquiry.getMessage());
         
-        if (enquiry.getReply() != null && !enquiry.getReply().isEmpty()) {
+        if (enquiry.getReply() != null && enquiry.getReply().isEmpty()) {
             System.out.println("\nResponse:");
             System.out.println(enquiry.getReply());
             System.out.println("\nResponded by: " + enquiry.getRespondentNric());
@@ -720,13 +721,13 @@ public class OfficerMenu {
     // ----- UI Helper Methods -----
     
     private void printHeader(String title) {
-        System.out.println("\n" + "=".repeat(70));
-        System.out.println(" ".repeat((70 - title.length()) / 2) + title);
-        System.out.println("=".repeat(70));
+        System.out.println("\n" + FileUtils.repeatChar('=', 70));
+        System.out.println(FileUtils.repeatChar(' ', (70 - title.length()) / 2) + title);
+        System.out.println(FileUtils.repeatChar('=', 70));
     }
     
     private void printDivider() {
-        System.out.println("-".repeat(70));
+        System.out.println(FileUtils.repeatChar('-', 70));
     }
     
     private void printMessage(String message) {

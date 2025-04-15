@@ -16,6 +16,7 @@ import models.enums.WithdrawalStatus;
 import users.Applicant;
 import users.User;
 import utils.Constants;
+import utils.FileUtils;
 
 public class ApplicantMenu {
     private Scanner scanner;
@@ -666,13 +667,13 @@ public class ApplicantMenu {
     }
 
     private void printHeader(String title) {
-        System.out.println("\n" + "=".repeat(60));
-        System.out.println(" ".repeat((60 - title.length()) / 2) + title);
-        System.out.println("=".repeat(60));
+        System.out.println("\n" + FileUtils.repeatChar('=', 60));
+        System.out.println(FileUtils.repeatChar(' ', (60 - title.length()) / 2) + title);
+        System.out.println(FileUtils.repeatChar('=', 60));
     }
     
     private void printDivider() {
-        System.out.println("-".repeat(60));
+        System.out.println(FileUtils.repeatChar('-', 60));
     }
     
     private void printMessage(String message) {

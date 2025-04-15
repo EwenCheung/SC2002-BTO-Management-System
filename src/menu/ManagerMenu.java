@@ -29,6 +29,7 @@ import users.ProjectManager;
 import users.User;
 import users.enums.MaritalStatus;
 import utils.Constants;
+import utils.FileUtils;
 
 public class ManagerMenu {
     private Scanner scanner;
@@ -122,13 +123,13 @@ public class ManagerMenu {
     // --- UI Helper Methods ---
     
     private void printHeader(String title) {
-        System.out.println("\n" + "=".repeat(70));
-        System.out.println(" ".repeat((70 - title.length()) / 2) + title);
-        System.out.println("=".repeat(70));
+        System.out.println("\n" + FileUtils.repeatChar('=', 70));
+        System.out.println(FileUtils.repeatChar(' ', (70 - title.length()) / 2) + title);
+        System.out.println(FileUtils.repeatChar('=', 70));
     }
     
     private void printDivider() {
-        System.out.println("-".repeat(70));
+        System.out.println(FileUtils.repeatChar('-', 70));
     }
     
     private void printMessage(String message) {
