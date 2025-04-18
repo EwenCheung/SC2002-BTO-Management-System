@@ -27,6 +27,7 @@ public class WithdrawalHandler implements ManagerWithdrawalFeatures, ApplicantWi
             throw new IllegalArgumentException("Withdrawal request not found: " + requestId);
         }
         req.setStatus(WithdrawalStatus.APPROVED);
+        saveChanges(); // Add this line to save changes to CSV
     }
     
     @Override
@@ -36,6 +37,7 @@ public class WithdrawalHandler implements ManagerWithdrawalFeatures, ApplicantWi
             throw new IllegalArgumentException("Withdrawal request not found: " + requestId);
         }
         req.setStatus(WithdrawalStatus.REJECTED);
+        saveChanges(); // Add this line to save changes to CSV
     }
 
     @Override

@@ -37,7 +37,13 @@ public class ApplicantMenu {
         this.withdrawalFacade = withdrawalFacade;
     }
 
-    public void display() {
+    /**
+     * Displays the Applicant Menu and handles user interactions.
+     * 
+     * @return true if the user chooses to switch to Officer Mode (for HDB Officers only),
+     *         false if the user chooses to logout.
+     */
+    public boolean display() {
         while (true) {
             printHeader("APPLICANT MENU");
             System.out.println("Welcome, " + applicant.getName());
@@ -50,10 +56,20 @@ public class ApplicantMenu {
             System.out.println("4. Manage Enquiries");
             System.out.println("5. Manage Withdrawal");  // Changed from "Request Withdrawal" to "Manage Withdrawal"
             System.out.println("6. Change Password");
-            System.out.println("7. Logout");
+            
+            // Check if user is an HDB Officer (to show Change Mode option)
+            boolean isOfficer = applicant.getUserType() == users.enums.UserType.OFFICER;
+            if (isOfficer) {
+                System.out.println("7. Switch to Officer Mode");
+                System.out.println("8. Logout");
+            } else {
+                System.out.println("7. Logout");
+            }
+            
             printDivider();
             
-            int choice = readChoice(1, 7);
+            int maxChoice = isOfficer ? 8 : 7;
+            int choice = readChoice(1, maxChoice);
             if (choice == -1) continue;
 
             switch (choice) {
@@ -64,8 +80,18 @@ public class ApplicantMenu {
                 case 5: manageWithdrawal(); break;  // Changed method name
                 case 6: changePassword(); break;
                 case 7:
-                    printMessage("Logging out...");
-                    return;
+                    if (isOfficer) {
+                        printMessage("Switching to Officer Mode...");
+                        return true; // Return true to switch to Officer mode
+                    } else {
+                        printMessage("Logging out...");
+                        return false; // Return false to logout
+                    }
+                case 8:
+                    if (isOfficer) {
+                        printMessage("Logging out...");
+                        return false; // Return false to logout
+                    }
             }
         }
     }
@@ -85,18 +111,28 @@ public class ApplicantMenu {
             
             if (choice == 5) return;
             
+            // Get the list of projects the applicant has already applied to
+            List<Application> myApps = appFacade.getApplicationsForApplicant(applicant.getNric());
+            List<String> appliedProjectNames = new ArrayList<>();
+            for (Application app : myApps) {
+                appliedProjectNames.add(app.getProjectName());
+            }
+            
+            // Get visible projects based on application period and applied projects
+            List<Project> visibleProjects = projectFacade.getVisibleProjects(applicant.getNric(), appliedProjectNames);
+            
             List<Project> projects;
             boolean keepShowingProjects = true;
             
             while (keepShowingProjects) {
                 switch (choice) {
                     case 1:
-                        keepShowingProjects = displayProjects(projectFacade.getVisibleProjects());
+                        keepShowingProjects = displayProjects(visibleProjects);
                         break;
                     case 2:
                         System.out.print("Enter neighborhood name: ");
                         String neighborhood = scanner.nextLine().trim();
-                        projects = filterProjectsByNeighborhood(projectFacade.getVisibleProjects(), neighborhood);
+                        projects = filterProjectsByNeighborhood(visibleProjects, neighborhood);
                         keepShowingProjects = displayProjects(projects);
                         break;
                     case 3:
@@ -110,7 +146,7 @@ public class ApplicantMenu {
                         }
                         
                         String flatType = (flatChoice == 1) ? "2-Room" : "3-Room";
-                        projects = filterProjectsByFlatType(projectFacade.getVisibleProjects(), flatType);
+                        projects = filterProjectsByFlatType(visibleProjects, flatType);
                         keepShowingProjects = displayProjects(projects);
                         break;
                     case 4:
@@ -128,7 +164,7 @@ public class ApplicantMenu {
                             break;
                         }
                         
-                        projects = filterProjectsByPriceRange(projectFacade.getVisibleProjects(), minPrice, maxPrice);
+                        projects = filterProjectsByPriceRange(visibleProjects, minPrice, maxPrice);
                         keepShowingProjects = displayProjects(projects);
                         break;
                 }

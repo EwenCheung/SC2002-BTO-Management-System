@@ -105,6 +105,7 @@ public class ProjectHandler implements ManagerProjectFeatures, OfficerProjectFea
                 int available = info.getAvailableUnits();
                 if (available >= count) {
                     info.setAvailableUnits(available - count);
+                    saveChanges(); // Save changes to ProjectList.csv
                 } else {
                     throw new IllegalArgumentException("Not enough available units for " + unitType);
                 }
@@ -116,12 +117,46 @@ public class ProjectHandler implements ManagerProjectFeatures, OfficerProjectFea
         }
     }
     
-    // ---- ApplicantProjectFeatures method ----
+    /**
+     * Gets all projects that have open officer slots and are available for registration
+     * @return a list of projects with available officer slots
+     */
+    public List<Project> getProjectsWithOpenSlots() {
+        List<Project> availableProjects = new ArrayList<>();
+        for (Project p : projects) {
+            if (p.getRemainingOfficerSlots() > 0) {
+                availableProjects.add(p);
+            }
+        }
+        return availableProjects;
+    }
+    
+    // ---- ApplicantProjectFeatures methods ----
     @Override
     public List<Project> getVisibleProjects() {
         List<Project> visibleProjects = new ArrayList<>();
         for (Project p : projects) {
             if (p.isVisible()) {
+                visibleProjects.add(p);
+            }
+        }
+        return visibleProjects;
+    }
+    
+    @Override
+    public List<Project> getVisibleProjects(String applicantNric, List<String> appliedProjectNames) {
+        List<Project> visibleProjects = new ArrayList<>();
+        java.time.LocalDate currentDate = java.time.LocalDate.now();
+        
+        for (Project p : projects) {
+            // Project is visible if:
+            // 1. It's marked as visible AND current date is within application period
+            // OR
+            // 2. The applicant has already applied to this project (regardless of visibility)
+            if ((p.isVisible() && 
+                 !currentDate.isBefore(p.getApplicationOpeningDate()) && 
+                 !currentDate.isAfter(p.getApplicationClosingDate())) || 
+                (appliedProjectNames != null && appliedProjectNames.contains(p.getProjectName()))) {
                 visibleProjects.add(p);
             }
         }

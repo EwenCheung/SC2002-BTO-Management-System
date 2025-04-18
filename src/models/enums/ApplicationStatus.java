@@ -6,10 +6,11 @@ public enum ApplicationStatus {
     PENDING_DOCUMENTS("Pending Documents"),
     BACKGROUND_CHECK("Background Check"),
     WITHDRAW_REQUESTED("Withdraw Requested"),
-    APPROVED("Approved"),
-    REJECTED("Rejected"),
+    APPROVED("Successful"),
+    REJECTED("Unsuccessful"),
     BOOKED("Booked"),
-    WITHDRAWN("Withdrawn");
+    WITHDRAWN("Unsuccessful"),
+    UNSUCCESSFUL("Unsuccessful");  // Added for compatibility with existing data
 
     private final String displayName;
 

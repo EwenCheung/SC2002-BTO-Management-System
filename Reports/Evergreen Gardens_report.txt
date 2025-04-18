@@ -1,0 +1,17 @@
+Project Report: Evergreen Gardens
+Neighborhood: Punggol
+Application Period: 2025-05-01 to 2025-07-01
+Generated on: 2025-04-19
+
+Summary:
+Total Applications: 1
+2-Room Applications: 1
+3-Room Applications: 0
+Approved/Booked: 0
+Pending: 1
+Rejected: 0
+
+Detailed Application List:
+Applicant       NRIC            Project         Flat Type  Status          Age        Marital Status 
+====================================================================================================
+James           T2345678D       Evergreen Ga... 2-Room     Pending         30         MARRIED        

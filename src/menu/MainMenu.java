@@ -101,40 +101,106 @@ public class MainMenu {
             return;
         }
         
-        // Now call the relevant sub-menu based on user type.
-        if (user.getUserType() == UserType.APPLICANT) {
-            new ApplicantMenu((Applicant) user, projectHandler, applicationHandler, enquiryHandler, withdrawalHandler).display();
-        } else if (user.getUserType() == UserType.MANAGER) {
-            new ManagerMenu((ProjectManager) user, projectHandler, applicationHandler, enquiryHandler, registrationHandler, withdrawalHandler).display();
-        } else if (user.getUserType() == UserType.OFFICER) {
-            // If a HDBOfficer logs in, prompt to choose between officer and applicant functions.
-            printHeader("OFFICER LOGIN SUCCESSFUL");
-            System.out.println("Welcome, " + user.getName());
-            printDivider();
-            System.out.println("Select your mode: ");
-            System.out.println("1. Officer Functions");
-            System.out.println("2. Applicant Functions");
-            printDivider();
-            
-            int mode = readChoice("Enter your choice: ", 1, 2);
-            
-            if (mode == 1) {
-                new OfficerMenu((HDBOfficer) user, projectHandler, applicationHandler, enquiryHandler, registrationHandler).display();
-            } else if (mode == 2) {
-                // Create a new Applicant with the same personal details as the Officer
-                HDBOfficer officer = (HDBOfficer) user;
-                Applicant applicantView = new Applicant(
-                    officer.getName(), 
-                    officer.getNric(), 
-                    officer.getAge(), 
-                    officer.getMaritalStatus(), 
-                    officer.getPassword()
-                );
-                new ApplicantMenu(applicantView, projectHandler, applicationHandler, enquiryHandler, withdrawalHandler).display();
-            }
-        }
+        // Handle user session with potential mode switching
+        handleUserSession(user);
         
         saveAllData(); // Save data when returning from a sub-menu
+    }
+    
+    /**
+     * Handles a user session with support for mode switching between Officer and Applicant modes.
+     * 
+     * @param user The logged-in user
+     */
+    private void handleUserSession(User user) {
+        boolean keepSessionActive = true;
+        boolean officerMode = false; // Track if we're currently in officer mode
+        boolean skipModeSelection = false; // Flag to skip mode selection when switching
+        
+        while (keepSessionActive) {
+            if (user.getUserType() == UserType.APPLICANT) {
+                // Regular applicant - just display the menu and then logout
+                new ApplicantMenu((Applicant) user, projectHandler, applicationHandler, enquiryHandler, withdrawalHandler).display();
+                keepSessionActive = false; // Regular applicants don't have mode switching
+            } else if (user.getUserType() == UserType.MANAGER) {
+                // Manager - just display the menu and then logout
+                new ManagerMenu((ProjectManager) user, projectHandler, applicationHandler, enquiryHandler, registrationHandler, withdrawalHandler).display();
+                keepSessionActive = false; // Managers don't have mode switching
+            } else if (user.getUserType() == UserType.OFFICER) {
+                HDBOfficer officer = (HDBOfficer) user;
+                
+                // Only prompt for mode selection at initial login, not when switching modes
+                if (!officerMode && !skipModeSelection) {
+                    int mode = promptForMode(officer.getName());
+                    
+                    if (mode == 1) {
+                        // Officer chose Officer mode
+                        officerMode = true;
+                    } else if (mode == 2) {
+                        // Officer chose Applicant mode
+                        skipModeSelection = true; // Skip mode selection next time in the loop
+                    }
+                }
+                
+                if (officerMode) {
+                    // We're in Officer mode
+                    boolean switchToApplicant = new OfficerMenu(officer, projectHandler, applicationHandler, 
+                                            enquiryHandler, registrationHandler).display();
+                    
+                    if (switchToApplicant) {
+                        // User wants to switch to Applicant mode
+                        officerMode = false;
+                        skipModeSelection = true; // Skip the mode selection prompt
+                        continue;
+                    } else {
+                        // Officer chose to logout
+                        keepSessionActive = false;
+                    }
+                } else {
+                    // We're in Applicant mode
+                    // Create a new Applicant with the officer's information but maintain OFFICER user type
+                    Applicant officerAsApplicant = new Applicant(
+                        officer.getName(),
+                        officer.getNric(),
+                        officer.getAge(),
+                        officer.getMaritalStatus(),
+                        officer.getPassword()
+                    );
+                    // Set the UserType to OFFICER so the ApplicantMenu knows to show the switch option
+                    officerAsApplicant.setUserType(UserType.OFFICER);
+                    
+                    boolean switchToOfficer = new ApplicantMenu(officerAsApplicant, projectHandler, applicationHandler, 
+                                   enquiryHandler, withdrawalHandler).display();
+                    
+                    if (switchToOfficer) {
+                        // User wants to switch to Officer mode
+                        officerMode = true;
+                        continue;
+                    } else {
+                        // User chose to logout
+                        keepSessionActive = false;
+                    }
+                }
+            }
+        }
+    }
+    
+    /**
+     * Prompts the officer to select a mode (Officer or Applicant).
+     * 
+     * @param name The name of the officer
+     * @return The selected mode (1 for Officer, 2 for Applicant)
+     */
+    private int promptForMode(String name) {
+        printHeader("OFFICER LOGIN SUCCESSFUL");
+        System.out.println("Welcome, " + name);
+        printDivider();
+        System.out.println("Select your mode: ");
+        System.out.println("1. Officer Functions");
+        System.out.println("2. Applicant Functions");
+        printDivider();
+        
+        return readChoice("Enter your choice: ", 1, 2);
     }
 
     private void registerFlow() {

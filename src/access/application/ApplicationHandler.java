@@ -27,6 +27,7 @@ public class ApplicationHandler implements ManagerApplicationFeatures, OfficerAp
             throw new IllegalArgumentException("Application not found: " + applicationId);
         }
         app.setStatus(ApplicationStatus.APPROVED);
+        saveChanges(); // Add this line to save changes to CSV
     }
     
     @Override
@@ -36,6 +37,7 @@ public class ApplicationHandler implements ManagerApplicationFeatures, OfficerAp
             throw new IllegalArgumentException("Application not found: " + applicationId);
         }
         app.setStatus(ApplicationStatus.REJECTED);
+        saveChanges(); // Add this line to save changes to CSV
     }
 
     @Override
@@ -75,15 +77,21 @@ public class ApplicationHandler implements ManagerApplicationFeatures, OfficerAp
     }
     
     @Override
+    public Application getApplication(String applicationId) {
+        return findApplicationById(applicationId);
+    }
+    
+    @Override
     public void processApplication(String applicationId) {
         Application app = findApplicationById(applicationId);
         if (app == null) {
             throw new IllegalArgumentException("Application not found: " + applicationId);
         }
         if (app.getStatus() != ApplicationStatus.APPROVED) {
-            throw new IllegalArgumentException("Only approved applications can be processed.");
+            throw new IllegalArgumentException("Only applications with 'Successful' status can be processed to 'Booked'.");
         }
         app.setStatus(ApplicationStatus.BOOKED);
+        saveChanges(); // Ensure changes are saved to CSV
     }
     
     @Override
@@ -93,7 +101,7 @@ public class ApplicationHandler implements ManagerApplicationFeatures, OfficerAp
             throw new IllegalArgumentException("Application not found: " + applicationId);
         }
         if (app.getStatus() != ApplicationStatus.BOOKED) {
-            throw new IllegalArgumentException("Receipt can only be generated for booked applications.");
+            throw new IllegalArgumentException("Receipt can only be generated for applications with 'Booked' status.");
         }
         return app.generateReceipt();
     }
@@ -106,6 +114,7 @@ public class ApplicationHandler implements ManagerApplicationFeatures, OfficerAp
             application.setApplicationId(generateUniqueId("APP"));
         }
         applications.add(application);
+        saveChanges(); // Save to CSV after adding
     }
     
     @Override
@@ -124,18 +133,10 @@ public class ApplicationHandler implements ManagerApplicationFeatures, OfficerAp
     }
     
     /**
-     * Retrieves an application by its ID.
-     * @param applicationId The unique ID of the application to retrieve.
-     * @return The Application object, or null if not found.
-     */
-    public Application getApplicationById(String applicationId) {
-        return findApplicationById(applicationId);
-    }
-    
-    /**
      * Updates an existing application with new data.
      * @param application The application with updated information.
      */
+    @Override
     public void updateApplication(Application application) {
         Application existingApp = findApplicationById(application.getApplicationId());
         if (existingApp == null) {
@@ -145,6 +146,9 @@ public class ApplicationHandler implements ManagerApplicationFeatures, OfficerAp
         // Update the application in the list
         int index = applications.indexOf(existingApp);
         applications.set(index, application);
+        
+        // Save changes to CSV
+        saveChanges();
     }
     
     private Application findApplicationById(String applicationId) {

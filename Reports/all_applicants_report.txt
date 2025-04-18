@@ -1,0 +1,8 @@
+All Applicants Report
+Generated on: 2025-04-19
+
+Applicant       NRIC            Project                   Flat Type  Status          Age        Marital Status
+====================================================================================================
+James           T2345678D       Evergreen Gardens         2-Room     Pending         30         MARRIED
+====================================================================================================
+Total Applications: 1

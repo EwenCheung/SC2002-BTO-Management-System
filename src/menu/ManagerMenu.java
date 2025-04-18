@@ -86,8 +86,8 @@ public class ManagerMenu {
             
             System.out.println("\n=== Reports & Enquiries ===");
             System.out.println("11. Generate Reports");
-            System.out.println("12. View All Enquiries");
-            System.out.println("13. Reply to Project Enquiries");
+            System.out.println("12. View All Project Enquiries");
+            System.out.println("13. View and Reply My Project Enquiries");
             
             System.out.println("\n=== System ===");
             System.out.println("14. Change Password");
@@ -178,29 +178,355 @@ public class ManagerMenu {
         return str.substring(0, length - 3) + "...";
     }
     
+    /**
+     * Reads an integer with validation and retry logic
+     * @param prompt The prompt to display to the user
+     * @param errorMessage The error message to display if input is invalid
+     * @return The integer input or -1 if user wants to quit
+     */
+    private int readIntWithRetry(String prompt, String errorMessage) {
+        while (true) {
+            String input = readString(prompt);
+            if (input.equalsIgnoreCase("quit")) {
+                return -1;
+            }
+            
+            try {
+                int value = Integer.parseInt(input);
+                if (value < 0) {
+                    printError("Please enter a non-negative number.");
+                    continue;
+                }
+                return value;
+            } catch (NumberFormatException e) {
+                printError(errorMessage);
+            }
+        }
+    }
+    
+    /**
+     * Reads a double with validation and retry logic
+     * @param prompt The prompt to display to the user
+     * @param errorMessage The error message to display if input is invalid
+     * @return The double input or -1 if user wants to quit
+     */
+    private double readDoubleWithRetry(String prompt, String errorMessage) {
+        while (true) {
+            String input = readString(prompt);
+            if (input.equalsIgnoreCase("quit")) {
+                return -1;
+            }
+            
+            try {
+                double value = Double.parseDouble(input);
+                if (value < 0) {
+                    printError("Please enter a non-negative number.");
+                    continue;
+                }
+                return value;
+            } catch (NumberFormatException e) {
+                printError(errorMessage);
+            }
+        }
+    }
+    
+    /**
+     * Reads an integer with validation for min and max values and retry logic
+     * @param prompt The prompt to display to the user
+     * @param errorMessage The error message to display if input is invalid format
+     * @param min The minimum allowed value
+     * @param max The maximum allowed value
+     * @param rangeErrorMessage The error message for out of range values
+     * @return The integer input or -1 if user wants to quit
+     */
+    private int readIntWithValidationAndRetry(String prompt, String errorMessage, 
+                                            int min, int max, String rangeErrorMessage) {
+        while (true) {
+            String input = readString(prompt);
+            if (input.equalsIgnoreCase("quit")) {
+                return -1;
+            }
+            
+            try {
+                int value = Integer.parseInt(input);
+                if (value < min || value > max) {
+                    printError(rangeErrorMessage);
+                    continue;
+                }
+                return value;
+            } catch (NumberFormatException e) {
+                printError(errorMessage);
+            }
+        }
+    }
+    
+    /**
+     * Helper method to convert a string to camel case
+     * @param input The input string
+     * @return The camel case version of the input
+     */
+    private String toCamelCase(String input) {
+        if (input == null || input.isEmpty()) {
+            return input;
+        }
+        
+        StringBuilder result = new StringBuilder();
+        boolean capitalizeNext = true;
+        
+        for (char c : input.toCharArray()) {
+            if (Character.isWhitespace(c)) {
+                capitalizeNext = true;
+            } else if (capitalizeNext) {
+                result.append(Character.toUpperCase(c));
+                capitalizeNext = false;
+            } else {
+                result.append(c);
+            }
+        }
+        
+        return result.toString();
+    }
+    
     // --- Project Management Methods ---
     private void createProject() {
         printHeader("Create New Project");
-        if (isHandlingActiveProject()) {
-            printError("You are already handling a project within an active application period.");
-            return;
-        }
+        
         try {
-            String projectName = readString("Enter Project Name: ");
-            String neighborhood = readString("Enter Neighborhood: ");
-            int twoRoomUnits = Integer.parseInt(readString("Enter number of 2-Room units: "));
-            double twoRoomPrice = Double.parseDouble(readString("Enter price for 2-Room units: "));
-            int threeRoomUnits = Integer.parseInt(readString("Enter number of 3-Room units: "));
-            double threeRoomPrice = Double.parseDouble(readString("Enter price for 3-Room units: "));
-            LocalDate openingDate = LocalDate.parse(readString("Enter application opening date (" + Constants.DATE_FORMAT + "): "), DATE_FORMATTER);
-            LocalDate closingDate = LocalDate.parse(readString("Enter application closing date (" + Constants.DATE_FORMAT + "): "), DATE_FORMATTER);
-            int officerSlots = Math.min(10, Integer.parseInt(readString("Enter number of HDB Officer slots (max 10): ")));
+            // Show quit instruction only once at the top
+            System.out.println("You can type 'quit' at any prompt to cancel the project creation.\n");
             
+            // Project Name - validate and re-prompt if empty
+            String projectName = "";
+            while (projectName.trim().isEmpty()) {
+                projectName = readString("Enter Project Name: ");
+                if (projectName.equalsIgnoreCase("quit")) {
+                    printMessage("Project creation cancelled.");
+                    return;
+                }
+                
+                if (projectName.trim().isEmpty()) {
+                    printError("Project Name cannot be empty.");
+                    // Continue the loop to prompt again
+                } else {
+                    // Check if this project name already exists
+                    List<Project> allProjects = projectFacade.getAllProjects();
+                    boolean nameExists = false;
+                    for (Project existingProject : allProjects) {
+                        if (existingProject.getProjectName().equalsIgnoreCase(projectName)) {
+                            printError("A project with this name already exists. Project names must be unique.");
+                            nameExists = true;
+                            projectName = ""; // Reset to continue the loop
+                            break;
+                        }
+                    }
+                    
+                    if (!nameExists) {
+                        // Valid project name, exit the loop
+                        break;
+                    }
+                }
+            }
+            
+            // Neighborhood - validate and re-prompt if empty
+            String neighborhood = "";
+            while (neighborhood.trim().isEmpty()) {
+                neighborhood = readString("Enter Neighborhood: ");
+                if (neighborhood.equalsIgnoreCase("quit")) {
+                    printMessage("Project creation cancelled.");
+                    return;
+                }
+                
+                if (neighborhood.trim().isEmpty()) {
+                    printError("Neighborhood cannot be empty.");
+                    // Continue the loop to prompt again
+                }
+            }
+            
+            // Convert Project Name and Neighborhood to camel case
+            projectName = toCamelCase(projectName);
+            neighborhood = toCamelCase(neighborhood);
+            
+            // Number of 2-Room units - validate and re-prompt if invalid
+            int twoRoomUnits = -1;
+            while (twoRoomUnits < 0) {
+                String input = readString("Enter number of 2-Room units: ");
+                if (input.equalsIgnoreCase("quit")) {
+                    printMessage("Project creation cancelled.");
+                    return;
+                }
+                
+                try {
+                    twoRoomUnits = Integer.parseInt(input);
+                    if (twoRoomUnits < 0) {
+                        printError("Number of units cannot be negative.");
+                        twoRoomUnits = -1; // Reset to continue the loop
+                    }
+                } catch (NumberFormatException e) {
+                    printError("Please enter a valid number for 2-Room units.");
+                }
+            }
+            
+            // Price for 2-Room units - validate and re-prompt if invalid
+            double twoRoomPrice = -1;
+            while (twoRoomPrice < 0) {
+                String input = readString("Enter price for 2-Room units: ");
+                if (input.equalsIgnoreCase("quit")) {
+                    printMessage("Project creation cancelled.");
+                    return;
+                }
+                
+                try {
+                    twoRoomPrice = Double.parseDouble(input);
+                    if (twoRoomPrice < 0) {
+                        printError("Price cannot be negative.");
+                        twoRoomPrice = -1; // Reset to continue the loop
+                    }
+                } catch (NumberFormatException e) {
+                    printError("Please enter a valid price for 2-Room units.");
+                }
+            }
+            
+            // Number of 3-Room units - validate and re-prompt if invalid
+            int threeRoomUnits = -1;
+            while (threeRoomUnits < 0) {
+                String input = readString("Enter number of 3-Room units: ");
+                if (input.equalsIgnoreCase("quit")) {
+                    printMessage("Project creation cancelled.");
+                    return;
+                }
+                
+                try {
+                    threeRoomUnits = Integer.parseInt(input);
+                    if (threeRoomUnits < 0) {
+                        printError("Number of units cannot be negative.");
+                        threeRoomUnits = -1; // Reset to continue the loop
+                    }
+                } catch (NumberFormatException e) {
+                    printError("Please enter a valid number for 3-Room units.");
+                }
+            }
+            
+            // Price for 3-Room units - validate and re-prompt if invalid
+            double threeRoomPrice = -1;
+            while (threeRoomPrice < 0) {
+                String input = readString("Enter price for 3-Room units: ");
+                if (input.equalsIgnoreCase("quit")) {
+                    printMessage("Project creation cancelled.");
+                    return;
+                }
+                
+                try {
+                    threeRoomPrice = Double.parseDouble(input);
+                    if (threeRoomPrice < 0) {
+                        printError("Price cannot be negative.");
+                        threeRoomPrice = -1; // Reset to continue the loop
+                    }
+                } catch (NumberFormatException e) {
+                    printError("Please enter a valid price for 3-Room units.");
+                }
+            }
+            
+            // Parse and validate opening date
+            LocalDate openingDate = null;
+            while (openingDate == null) {
+                String openingDateInput = readString("Enter application opening date (" + Constants.DATE_FORMAT + "): ");
+                if (openingDateInput.equalsIgnoreCase("quit")) {
+                    printMessage("Project creation cancelled.");
+                    return;
+                }
+                
+                try {
+                    LocalDate currentDate = LocalDate.now();
+                    openingDate = LocalDate.parse(openingDateInput, DATE_FORMATTER);
+                    if (openingDate.isBefore(currentDate)) {
+                        printError("Opening date cannot be in the past.");
+                        openingDate = null; // Reset to continue the loop
+                    }
+                } catch (Exception e) {
+                    printError("Invalid opening date format. Please use format: " + Constants.DATE_FORMAT);
+                }
+            }
+            
+            // Parse and validate closing date
+            LocalDate closingDate = null;
+            while (closingDate == null) {
+                String closingDateInput = readString("Enter application closing date (" + Constants.DATE_FORMAT + "): ");
+                if (closingDateInput.equalsIgnoreCase("quit")) {
+                    printMessage("Project creation cancelled.");
+                    return;
+                }
+                
+                try {
+                    closingDate = LocalDate.parse(closingDateInput, DATE_FORMATTER);
+                    if (closingDate.isBefore(openingDate)) {
+                        printError("Closing date cannot be before opening date.");
+                        closingDate = null; // Reset to continue the loop
+                    }
+                } catch (Exception e) {
+                    printError("Invalid closing date format. Please use format: " + Constants.DATE_FORMAT);
+                }
+            }
+            
+            // Check if the manager already has a project that overlaps with this application period
+            boolean hasOverlap = false;
+            List<Project> myProjects = projectFacade.getProjectsByManager(projectManager.getNric());
+            for (Project existingProject : myProjects) {
+                // Check if application periods overlap
+                LocalDate existingOpeningDate = existingProject.getApplicationOpeningDate();
+                LocalDate existingClosingDate = existingProject.getApplicationClosingDate();
+                
+                // If the new project's period overlaps with an existing project's period
+                if (!(closingDate.isBefore(existingOpeningDate) || openingDate.isAfter(existingClosingDate))) {
+                    printError("You cannot create a new project that overlaps with an existing project's application period.");
+                    System.out.println("Project '" + existingProject.getProjectName() + "' has application period: " + 
+                                      existingOpeningDate + " to " + existingClosingDate);
+                    System.out.println("You can only have one project active within each application period.");
+                    hasOverlap = true;
+                    break;
+                }
+            }
+            
+            if (hasOverlap) {
+                // Ask if the user wants to restart the creation process
+                if (readYesNo("Do you want to restart the project creation process? (Y/N): ")) {
+                    createProject(); // Restart project creation
+                } else {
+                    printMessage("Project creation cancelled.");
+                }
+                return;
+            }
+            
+            // Officer slots - validate and re-prompt if invalid
+            int officerSlots = -1;
+            while (officerSlots < 1 || officerSlots > 10) {
+                String input = readString("Enter number of HDB Officer slots (max 10): ");
+                if (input.equalsIgnoreCase("quit")) {
+                    printMessage("Project creation cancelled.");
+                    return;
+                }
+                
+                try {
+                    officerSlots = Integer.parseInt(input);
+                    if (officerSlots < 1 || officerSlots > 10) {
+                        printError("Officer slots must be between 1 and 10.");
+                        // Continue the loop
+                    }
+                } catch (NumberFormatException e) {
+                    printError("Please enter a valid number for officer slots.");
+                }
+            }
+            
+            // Create the project
             Project project = new Project(projectName, neighborhood, openingDate, closingDate, projectManager.getNric(), officerSlots);
             project.addUnitType("2-Room", twoRoomUnits, twoRoomPrice);
             project.addUnitType("3-Room", threeRoomUnits, threeRoomPrice);
             
+            // Add to project list and save changes
             projectFacade.addProject(project);
+            
+            // Save changes to file using our helper method
+            saveProjectChanges();
+            
             printSuccess("Project created successfully!");
         } catch (Exception e) {
             printError("Error creating project: " + e.getMessage());
@@ -208,11 +534,10 @@ public class ManagerMenu {
     }
     
     private boolean isHandlingActiveProject() {
-        List<Project> projects = projectFacade.getAllProjects();
+        List<Project> projects = projectFacade.getProjectsByManager(projectManager.getNric());
         LocalDate now = LocalDate.now();
         for (Project project : projects) {
-            if (project.getManager().equalsIgnoreCase(projectManager.getNric()) &&
-                !now.isBefore(project.getApplicationOpeningDate()) &&
+            if (!now.isBefore(project.getApplicationOpeningDate()) &&
                 !now.isAfter(project.getApplicationClosingDate())) {
                 return true;
             }
@@ -246,27 +571,47 @@ public class ManagerMenu {
             printHeader("Editing " + project.getProjectName());
             System.out.println("1. Edit Application Period");
             System.out.println("2. Edit Officer Slots");
-            System.out.println("3. Save Changes");
-            System.out.println("4. Cancel");
+            System.out.println("3. Back");
             try {
-                int choice = readChoice("Enter your choice: ", 1, 4);
+                int choice = readChoice("Enter your choice: ", 1, 3);
                 switch (choice) {
                     case 1:
                         LocalDate newOpening = LocalDate.parse(readString("Enter new opening date (" + Constants.DATE_FORMAT + "): "), DATE_FORMATTER);
                         LocalDate newClosing = LocalDate.parse(readString("Enter new closing date (" + Constants.DATE_FORMAT + "): "), DATE_FORMATTER);
+                        
+                        if (newClosing.isBefore(newOpening)) {
+                            printError("Closing date cannot be before opening date.");
+                            break;
+                        }
+                        
                         project.setOpeningDate(newOpening);
                         project.setClosingDate(newClosing);
-                        break;
-                    case 2:
-                        int slots = Math.min(10, Integer.parseInt(readString("Enter new number of officer slots (max 10): ")));
-                        project.setOfficerSlots(slots);
-                        break;
-                    case 3:
+                        
+                        // Save changes immediately
                         projectFacade.updateProject(project);
-                        printSuccess("Project updated successfully!");
+                        saveProjectChanges();
+                        printSuccess("Application period updated successfully!");
+                        break;
+                        
+                    case 2:
+                        int slots = Integer.parseInt(readString("Enter new number of officer slots (max 10): "));
+                        
+                        if (slots <= 0 || slots > 10) {
+                            printError("Officer slots must be between 1 and 10.");
+                            break;
+                        }
+                        
+                        project.setOfficerSlots(slots);
+                        
+                        // Save changes immediately
+                        projectFacade.updateProject(project);
+                        saveProjectChanges();
+                        printSuccess("Officer slots updated successfully!");
+                        break;
+                        
+                    case 3:
                         return;
-                    case 4:
-                        return;
+                        
                     default:
                         printError("Invalid choice.");
                 }
@@ -293,6 +638,7 @@ public class ManagerMenu {
             Project project = myProjects.get(choice - 1);
             if (readYesNo("Are you sure you want to delete this project? (Y/N): ")) {
                 projectFacade.deleteProject(project.getProjectName());
+                saveProjectChanges();
                 printSuccess("Project deleted successfully!");
             }
         } catch (NumberFormatException e) {
@@ -301,9 +647,86 @@ public class ManagerMenu {
     }
     
     private void viewAllProjects() {
-        printHeader("All Projects");
-        List<Project> allProjects = projectFacade.getAllProjects();
-        displayProjects(allProjects);
+        while (true) {
+            printHeader("All Projects");
+            List<Project> allProjects = projectFacade.getAllProjects();
+            
+            // Add filtering options
+            System.out.println("Filter Options:");
+            System.out.println("1. View all projects");
+            System.out.println("2. Filter by neighborhood");
+            System.out.println("3. Filter by application period");
+            System.out.println("4. Filter by visibility");
+            
+            int filterChoice = readChoice("Select filter option: ", 1, 4);
+            List<Project> filteredProjects = new ArrayList<>(allProjects);
+            
+            switch (filterChoice) {
+                case 1:
+                    // No filtering needed
+                    break;
+                case 2:
+                    String neighborhood = readString("Enter neighborhood to filter by: ");
+                    filteredProjects = allProjects.stream()
+                        .filter(p -> p.getNeighborhood().toLowerCase().contains(neighborhood.toLowerCase()))
+                        .collect(java.util.stream.Collectors.toList());
+                    break;
+                case 3:
+                    try {
+                        LocalDate startDate = LocalDate.parse(readString("Enter start date (" + Constants.DATE_FORMAT + "): "), DATE_FORMATTER);
+                        LocalDate endDate = LocalDate.parse(readString("Enter end date (" + Constants.DATE_FORMAT + "): "), DATE_FORMATTER);
+                        
+                        filteredProjects = allProjects.stream()
+                            .filter(p -> {
+                                // Check if project's application period overlaps with specified date range
+                                return !(p.getApplicationClosingDate().isBefore(startDate) || 
+                                        p.getApplicationOpeningDate().isAfter(endDate));
+                            })
+                            .collect(java.util.stream.Collectors.toList());
+                    } catch (Exception e) {
+                        printError("Invalid date format. Using all projects instead.");
+                    }
+                    break;
+                case 4:
+                    boolean visibilityChoice = readYesNo("Filter for visible projects? (Y/N): ");
+                    filteredProjects = allProjects.stream()
+                        .filter(p -> p.isVisible() == visibilityChoice)
+                        .collect(java.util.stream.Collectors.toList());
+                    break;
+            }
+            
+            if (filteredProjects.isEmpty()) {
+                printMessage("No projects found with the specified filter criteria.");
+            } else {
+                // Display projects in a tabular format without allowing selection
+                System.out.printf("%-4s %-25s %-15s %-15s %-15s %-10s %-10s%n", 
+                                 "No.", "Project Name", "Neighborhood", "Opening Date", "Closing Date", "Manager", "Visibility");
+                printDivider();
+                
+                int i = 1;
+                for (Project project : filteredProjects) {
+                    System.out.printf("%-4d %-25s %-15s %-15s %-15s %-10s %-10s%n", 
+                                    i++, 
+                                    truncate(project.getProjectName(), 25),
+                                    truncate(project.getNeighborhood(), 15),
+                                    project.getApplicationOpeningDate(),
+                                    project.getApplicationClosingDate(),
+                                    truncate(project.getManager(), 10),
+                                    project.isVisible() ? "Visible" : "Hidden");
+                }
+            }
+            
+            // Always show the options to continue regardless of whether projects were found
+            System.out.println("\n1. Apply different filter");
+            System.out.println("2. Return to main menu");
+            
+            int navChoice = readChoice("Select option: ", 1, 2);
+            if (navChoice == 2) {
+                // User wants to return to main menu
+                return;
+            }
+            // Otherwise continue the loop to apply a different filter
+        }
     }
     
     private void viewMyProjects() {
@@ -315,13 +738,62 @@ public class ManagerMenu {
             return;
         }
         
+        // Add filtering options
+        System.out.println("Filter Options:");
+        System.out.println("1. View all my projects");
+        System.out.println("2. Filter by neighborhood");
+        System.out.println("3. Filter by application period");
+        System.out.println("4. Filter by visibility");
+        
+        int filterChoice = readChoice("Select filter option: ", 1, 4);
+        List<Project> filteredProjects = new ArrayList<>(myProjects);
+        
+        switch (filterChoice) {
+            case 1:
+                // No filtering needed
+                break;
+            case 2:
+                String neighborhood = readString("Enter neighborhood to filter by: ");
+                filteredProjects = myProjects.stream()
+                    .filter(p -> p.getNeighborhood().toLowerCase().contains(neighborhood.toLowerCase()))
+                    .collect(java.util.stream.Collectors.toList());
+                break;
+            case 3:
+                try {
+                    LocalDate startDate = LocalDate.parse(readString("Enter start date (" + Constants.DATE_FORMAT + "): "), DATE_FORMATTER);
+                    LocalDate endDate = LocalDate.parse(readString("Enter end date (" + Constants.DATE_FORMAT + "): "), DATE_FORMATTER);
+                    
+                    filteredProjects = myProjects.stream()
+                        .filter(p -> {
+                            // Check if project's application period overlaps with specified date range
+                            return !(p.getApplicationClosingDate().isBefore(startDate) || 
+                                    p.getApplicationOpeningDate().isAfter(endDate));
+                        })
+                        .collect(java.util.stream.Collectors.toList());
+                } catch (Exception e) {
+                    printError("Invalid date format. Using all projects instead.");
+                }
+                break;
+            case 4:
+                boolean visibilityChoice = readYesNo("Filter for visible projects? (Y/N): ");
+                filteredProjects = myProjects.stream()
+                    .filter(p -> p.isVisible() == visibilityChoice)
+                    .collect(java.util.stream.Collectors.toList());
+                break;
+        }
+        
+        if (filteredProjects.isEmpty()) {
+            printMessage("No projects found with the specified filter criteria.");
+            return;
+        }
+        
         // Display projects in a tabular format
         System.out.printf("%-4s %-25s %-15s %-15s %-10s %-15s\n", 
                           "No.", "Project Name", "Neighborhood", "Application Period", "Officers", "Visibility");
         printDivider();
         
         int i = 1;
-        for (Project project : myProjects) {
+        for (Project project : filteredProjects) {
             String period = project.getApplicationOpeningDate() + " to " + project.getApplicationClosingDate();
             String officers = project.getOfficers().size() + "/" + project.getOfficerSlot();
             
@@ -337,10 +809,10 @@ public class ManagerMenu {
         
         // Allow selecting a project for more details
         System.out.print("\nSelect project number for details (0 to go back): ");
-        int choice = readChoice("", 0, myProjects.size());
+        int choice = readChoice("", 0, filteredProjects.size());
         if (choice == 0) return;
         
-        Project selectedProject = myProjects.get(choice - 1);
+        Project selectedProject = filteredProjects.get(choice - 1);
         displayProjectDetails(selectedProject);
     }
 
@@ -423,6 +895,7 @@ public class ManagerMenu {
             Project project = myProjects.get(choice - 1);
             boolean newVisibility = !project.isVisible();
             projectFacade.toggleVisibility(project.getProjectName(), newVisibility);
+            saveProjectChanges();
             printSuccess("Project visibility toggled to: " + (newVisibility ? "Visible" : "Hidden"));
         } catch (NumberFormatException e) {
             printError("Please enter a valid number.");
@@ -435,19 +908,18 @@ public class ManagerMenu {
             return;
         }
         
-        System.out.printf("%-4s %-25s %-15s %-15s %-10s %-10s%n", 
-                         "No.", "Project Name", "Neighborhood", "Application Period", "Manager", "Visibility");
+        System.out.printf("%-4s %-25s %-15s %-15s %-15s %-10s %-10s%n", 
+                         "No.", "Project Name", "Neighborhood", "Opening Date", "Closing Date", "Manager", "Visibility");
         printDivider();
         
         int i = 1;
         for (Project project : projects) {
-            String period = project.getApplicationOpeningDate() + " to " + project.getApplicationClosingDate();
-            
-            System.out.printf("%-4d %-25s %-15s %-15s %-10s %-10s%n", 
+            System.out.printf("%-4d %-25s %-15s %-15s %-15s %-10s %-10s%n", 
                             i++, 
                             truncate(project.getProjectName(), 25),
                             truncate(project.getNeighborhood(), 15),
-                            truncate(period, 15),
+                            project.getApplicationOpeningDate(),
+                            project.getApplicationClosingDate(),
                             truncate(project.getManager(), 10),
                             project.isVisible() ? "Visible" : "Hidden");
         }
@@ -647,22 +1119,13 @@ public class ManagerMenu {
                                  app.getApplicationDate().toLocalDate());
             }
             
-            // Options menu
+            // Directly ask for applicant selection without showing menu options
             printDivider();
-            System.out.println("1. Process individual application");
-            System.out.println("2. Back to project selection");
+            int appChoice = readChoice("Select a applicant number to process or press 0 to quit: ", 0, pendingApplications.size());
+            if (appChoice == 0) return;
             
-            int choice = readChoice("Enter choice: ", 1, 2);
-            if (choice == 2) return;
-            
-            if (choice == 1) {
-                // Process individual application
-                int appChoice = readChoice("Select application to process (0 to cancel): ", 0, pendingApplications.size());
-                if (appChoice == 0) continue;
-                
-                Application selectedApp = pendingApplications.get(appChoice - 1);
-                processIndividualApplication(selectedApp, project);
-            }
+            Application selectedApp = pendingApplications.get(appChoice - 1);
+            processIndividualApplication(selectedApp, project);
         }
     }
 
@@ -707,26 +1170,42 @@ public class ManagerMenu {
                 }
             }
             
+            // Create a special ApplicationStatus for SUCCESSFUL (using APPROVED internally)
             application.setStatus(ApplicationStatus.APPROVED);
+            application.setRemarks("SUCCESSFUL");
             
             // Generate a unit number
             String unitNumber = generateUnitNumber(unitType, project.getProjectName());
             application.setAssignedUnit(unitNumber);
             
-            // Update available units
+            // Update available units in the project
             project.decrementAvailableUnits(unitType);
-            projectFacade.updateProject(project);
             
-            // Save the application - use approveApplication instead of updateApplication
-            appFacade.approveApplication(application.getApplicationId());
-            printSuccess("Application approved and unit assigned: " + unitNumber);
+            // Save project changes to update unit count in CSV
+            projectFacade.updateProject(project);
+            saveProjectChanges();
+            
+            // Save the application changes
+            if (appFacade instanceof access.application.ApplicationHandler) {
+                ((access.application.ApplicationHandler) appFacade).updateApplication(application);
+                ((access.application.ApplicationHandler) appFacade).saveChanges();
+            }
+            
+            printSuccess("Application approved successfully. Unit assigned: " + unitNumber);
         } else if (choice == 2) {
             // Reject application
             String reason = readString("Enter rejection reason: ");
             
+            // Set to REJECTED internally but display as UNSUCCESSFUL
             application.setStatus(ApplicationStatus.REJECTED);
-            application.setRemarks(reason);
-            appFacade.approveApplication(application.getApplicationId());
+            application.setRemarks("UNSUCCESSFUL: " + reason);
+            
+            // Save the application changes
+            if (appFacade instanceof access.application.ApplicationHandler) {
+                ((access.application.ApplicationHandler) appFacade).updateApplication(application);
+                ((access.application.ApplicationHandler) appFacade).saveChanges();
+            }
+            
             printSuccess("Application rejected successfully.");
         }
     }
@@ -772,17 +1251,24 @@ public class ManagerMenu {
             return;
         }
         
-        // Display all pending withdrawal requests
-        System.out.println("\nPending Withdrawal Requests:");
-        for (int i = 0; i < pendingWithdrawals.size(); i++) {
-            WithdrawalRequest withdrawal = pendingWithdrawals.get(i);
-            System.out.printf("%d. Request ID: %s, Applicant: %s, Application ID: %s%n", 
-                i + 1, withdrawal.getRequestId(), withdrawal.getApplicantNric(), withdrawal.getApplicationId());
+        // Display all pending withdrawal requests in a tabular format
+        System.out.printf("%-4s %-15s %-15s %-15s %-20s%n", 
+                         "No.", "Request ID", "Applicant", "Application ID", "Request Date");
+        printDivider();
+        
+        int i = 1;
+        for (WithdrawalRequest withdrawal : pendingWithdrawals) {
+            System.out.printf("%-4d %-15s %-15s %-15s %-20s%n", 
+                             i++, 
+                             truncate(withdrawal.getRequestId(), 15),
+                             withdrawal.getApplicantNric(),
+                             truncate(withdrawal.getApplicationId(), 15),
+                             withdrawal.getRequestDate().toLocalDate());
         }
         
         // Process a selected withdrawal request
         try {
-            int choice = readChoice("Select withdrawal request to process (0 to cancel): ", 0, pendingWithdrawals.size());
+            int choice = readChoice("Select a number to process or press 0 to quit: ", 0, pendingWithdrawals.size());
             if (choice == 0) return;
             
             WithdrawalRequest selectedWithdrawal = pendingWithdrawals.get(choice - 1);
@@ -815,21 +1301,30 @@ public class ManagerMenu {
                 selectedWithdrawal.setStatus(WithdrawalStatus.APPROVED);
                 selectedWithdrawal.setProcessDate(LocalDateTime.now());
                 
-                // Update the application status to WITHDRAWN
+                // Update the application status based on its current state
+                boolean wasSuccessful = application.getStatus() == ApplicationStatus.APPROVED || 
+                                        application.getStatus() == ApplicationStatus.BOOKED;
+                
+                // Mark as WITHDRAWN in system and "Unsuccessful" in the remarks
                 application.setStatus(ApplicationStatus.WITHDRAWN);
-                application.setRemarks("Withdrawal approved by manager: " + projectManager.getName());
+                application.setRemarks("Application unsuccessful - Withdrawal approved by manager: " + projectManager.getName());
                 
                 // If the application was previously approved/booked, return the unit to available pool
-                if (application.getStatus() == ApplicationStatus.APPROVED || 
-                    application.getStatus() == ApplicationStatus.BOOKED) {
+                if (wasSuccessful) {
                     String unitType = application.getUnitType();
                     project.incrementAvailableUnits(unitType);
                     projectFacade.updateProject(project);
+                    saveProjectChanges(); // Save project changes
                 }
                 
-                // Save changes
+                // Save withdrawal changes
                 withdrawalFacade.approveWithdrawal(selectedWithdrawal.getRequestId());
-                appFacade.approveApplication(application.getApplicationId());
+                
+                // Save the application status change properly
+                if (appFacade instanceof access.application.ApplicationHandler) {
+                    ((access.application.ApplicationHandler) appFacade).updateApplication(application);
+                    ((access.application.ApplicationHandler) appFacade).saveChanges();
+                }
                 
                 printSuccess("Withdrawal request approved successfully.");
             } else {
@@ -1072,21 +1567,33 @@ public class ManagerMenu {
             
             // Detailed list
             System.out.println("\nDetailed Application List:");
-            System.out.printf("%-15s %-15s %-10s %-15s %-15s%n",
-                    "Applicant", "NRIC", "Unit Type", "Status", "Assigned Unit");
-            System.out.println(FileUtils.repeatChar('=', 80));
+            System.out.printf("%-15s %-15s %-15s %-10s %-15s %-10s %-15s%n",
+                    "Applicant", "NRIC", "Project", "Flat Type", "Status", "Age", "Marital Status");
+            System.out.println(FileUtils.repeatChar('=', 100));
             
             for (Application app : projectApplications) {
                 User applicant = findUserByNric(app.getApplicantNric());
-                String applicantName = (applicant != null) ? applicant.getName() : "Unknown";
-                
-                System.out.printf("%-15s %-15s %-10s %-15s %-15s%n",
-                        applicantName,
-                        app.getApplicantNric(),
-                        app.getUnitType(),
-                        app.getStatus(),
-                        (app.getAssignedUnit() != null) ? app.getAssignedUnit() : "Not Assigned"
-                );
+                if (applicant != null) {
+                    System.out.printf("%-15s %-15s %-15s %-10s %-15s %-10d %-15s%n",
+                            applicant.getName(),
+                            app.getApplicantNric(),
+                            truncate(selectedProject.getProjectName(), 15),
+                            app.getUnitType(),
+                            app.getStatus(),
+                            applicant.getAge(),
+                            applicant.getMaritalStatus()
+                    );
+                } else {
+                    System.out.printf("%-15s %-15s %-15s %-10s %-15s %-10s %-15s%n",
+                            "Unknown",
+                            app.getApplicantNric(),
+                            truncate(selectedProject.getProjectName(), 15),
+                            app.getUnitType(),
+                            app.getStatus(),
+                            "N/A",
+                            "N/A"
+                    );
+                }
             }
             
             // Ask if user wants to save the report to a file
@@ -1195,23 +1702,35 @@ public class ManagerMenu {
         content.append("Pending: ").append(pendingApplications).append("\n");
         content.append("Rejected: ").append(rejectedApplications).append("\n\n");
         
-        // Detailed list
+        // Detailed list with all required information
         content.append("Detailed Application List:\n");
-        content.append(String.format("%-15s %-15s %-10s %-15s %-15s%n",
-                "Applicant", "NRIC", "Unit Type", "Status", "Assigned Unit"));
-        content.append(FileUtils.repeatChar('=', 80)).append("\n");
+        content.append(String.format("%-15s %-15s %-15s %-10s %-15s %-10s %-15s%n",
+                "Applicant", "NRIC", "Project", "Flat Type", "Status", "Age", "Marital Status"));
+        content.append(FileUtils.repeatChar('=', 100)).append("\n");
         
         for (Application app : applications) {
             User applicant = findUserByNric(app.getApplicantNric());
-            String applicantName = (applicant != null) ? applicant.getName() : "Unknown";
-            
-            content.append(String.format("%-15s %-15s %-10s %-15s %-15s%n",
-                    applicantName,
-                    app.getApplicantNric(),
-                    app.getUnitType(),
-                    app.getStatus(),
-                    (app.getAssignedUnit() != null) ? app.getAssignedUnit() : "Not Assigned"
-            ));
+            if (applicant != null) {
+                content.append(String.format("%-15s %-15s %-15s %-10s %-15s %-10d %-15s%n",
+                        applicant.getName(),
+                        app.getApplicantNric(),
+                        truncate(project.getProjectName(), 15),
+                        app.getUnitType(),
+                        app.getStatus(),
+                        applicant.getAge(),
+                        applicant.getMaritalStatus()
+                ));
+            } else {
+                content.append(String.format("%-15s %-15s %-15s %-10s %-15s %-10s %-15s%n",
+                        "Unknown",
+                        app.getApplicantNric(),
+                        truncate(project.getProjectName(), 15),
+                        app.getUnitType(),
+                        app.getStatus(),
+                        "N/A",
+                        "N/A"
+                ));
+            }
         }
         
         return content.toString();
@@ -1236,104 +1755,229 @@ public class ManagerMenu {
     }
     
     private void viewAllEnquiries() {
-        printHeader("View All Enquiries");
-        List<Enquiry> enquiries = enquiryFacade.getAllEnquiries();
-        if (enquiries.isEmpty()) {
-            printError("No enquiries found.");
-        } else {
-            for (Enquiry enq : enquiries) {
-                System.out.println(enq);
+        while (true) {
+            printHeader("VIEW ALL PROJECT ENQUIRIES");
+            List<Enquiry> enquiries = enquiryFacade.getAllEnquiries();
+            
+            if (enquiries.isEmpty()) {
+                printMessage("No enquiries found in the system.");
+                System.out.println("\nEnter 0 to return to main menu: ");
+                readChoice("", 0, 0);
+                return;
             }
+            
+            // Display enquiries in a tabular format with adjusted column order
+            System.out.printf("%-4s %-20s %-15s %-20s %-15s %-20s %-15s%n", 
+                            "No.", "Enquiry ID", "Applicant", "Project", "Status", "Message", "Date");
+            printDivider();
+            
+            int i = 1;
+            for (Enquiry enquiry : enquiries) {
+                // Determine status based on whether there's a reply
+                String status = (enquiry.getReply() == null || enquiry.getReply().isEmpty() || 
+                                 enquiry.getReply().equals("No reply yet")) ? "Pending Reply" : "Replied";
+                
+                System.out.printf("%-4d %-20s %-15s %-20s %-15s %-20s %-15s%n", 
+                                i++, 
+                                enquiry.getEnquiryId(),
+                                truncate(enquiry.getApplicantNric(), 15),
+                                truncate(enquiry.getProjectName(), 20),
+                                status,
+                                truncate(enquiry.getMessage(), 20),
+                                enquiry.getSubmittedAt().toLocalDate());
+            }
+            
+            System.out.println("\nEnter enquiry number to view details (0 to return to main menu): ");
+            int choice = readChoice("", 0, enquiries.size());
+            
+            if (choice == 0) {
+                return;
+            }
+            
+            // View the selected enquiry - only viewing, not editing
+            Enquiry selectedEnquiry = enquiries.get(choice - 1);
+            viewEnquiryDetailsReadOnly(selectedEnquiry);
+        }
+    }
+
+    private void viewEnquiryDetailsReadOnly(Enquiry enquiry) {
+        printHeader("ENQUIRY DETAILS");
+        
+        System.out.println("Enquiry ID: " + enquiry.getEnquiryId());
+        System.out.println("From: " + enquiry.getApplicantNric());
+        System.out.println("Project: " + enquiry.getProjectName());
+        System.out.println("Date: " + enquiry.getSubmittedAt().toLocalDate());
+        
+        System.out.println("\nMessage:");
+        System.out.println(enquiry.getMessage());
+        
+        // Display all replies if there are any
+        List<Enquiry.Reply> replies = enquiry.getReplies();
+        
+        if (replies.isEmpty()) {
+            System.out.println("\nNo replies yet.");
+        } else {
+            System.out.println("\nReplies:");
+            printDivider();
+            
+            int i = 1;
+            for (Enquiry.Reply reply : replies) {
+                System.out.println(i + ". " + reply.getText());
+                System.out.println("   Replied by: " + reply.getRespondentNric() + " at " + reply.getTimestamp().toLocalDate());
+                i++;
+            }
+        }
+        
+        printDivider();
+        System.out.println("Press Enter to continue...");
+        scanner.nextLine();
+    }
+
+    private void replyToEnquiries() {
+        while (true) {
+            printHeader("VIEW MY PROJECT ENQUIRIES");
+            
+            // Get projects managed by this manager
+            List<Project> myProjects = getMyProjects();
+            if (myProjects.isEmpty()) {
+                printMessage("You are not managing any projects.");
+                System.out.println("\nEnter 0 to return to main menu: ");
+                readChoice("", 0, 0);
+                return;
+            }
+            
+            // Get all enquiries for projects managed by this manager
+            List<Enquiry> allEnquiries = enquiryFacade.getAllEnquiries();
+            List<Enquiry> myProjectEnquiries = new ArrayList<>();
+            
+            // Filter to only include enquiries for this manager's projects
+            for (Enquiry enquiry : allEnquiries) {
+                for (Project project : myProjects) {
+                    if (enquiry.getProjectName().equals(project.getProjectName())) {
+                        myProjectEnquiries.add(enquiry);
+                        break;
+                    }
+                }
+            }
+            
+            if (myProjectEnquiries.isEmpty()) {
+                printMessage("No enquiries found for your projects.");
+                System.out.println("\nEnter 0 to return to main menu: ");
+                readChoice("", 0, 0);
+                return;
+            }
+            
+            // Display enquiries in a tabular format with adjusted column order
+            System.out.printf("%-4s %-20s %-15s %-20s %-15s %-20s %-15s%n", 
+                            "No.", "Enquiry ID", "Applicant", "Project", "Status", "Message", "Date");
+            printDivider();
+            
+            int i = 1;
+            for (Enquiry enquiry : myProjectEnquiries) {
+                // Determine status based on whether there's a reply
+                String status = (enquiry.getReply() == null || enquiry.getReply().isEmpty() || 
+                                 enquiry.getReply().equals("No reply yet")) ? "Pending Reply" : "Replied";
+                
+                System.out.printf("%-4d %-20s %-15s %-20s %-15s %-20s %-15s%n", 
+                                i++, 
+                                enquiry.getEnquiryId(),
+                                truncate(enquiry.getApplicantNric(), 15),
+                                truncate(enquiry.getProjectName(), 20),
+                                status,
+                                truncate(enquiry.getMessage(), 20),
+                                enquiry.getSubmittedAt().toLocalDate());
+            }
+            
+            System.out.println("\nEnter enquiry number to view details (0 to return to main menu): ");
+            int choice = readChoice("", 0, myProjectEnquiries.size());
+            
+            if (choice == 0) {
+                return;
+            }
+            
+            // View and potentially reply to the selected enquiry
+            Enquiry selectedEnquiry = myProjectEnquiries.get(choice - 1);
+            viewEnquiryDetails(selectedEnquiry);
         }
     }
     
-    private void replyToEnquiries() {
-        printHeader("REPLY TO PROJECT ENQUIRIES");
+    private void viewEnquiryDetails(Enquiry enquiry) {
+        printHeader("ENQUIRY DETAILS");
         
-        // Get projects managed by this manager
+        System.out.println("Enquiry ID: " + enquiry.getEnquiryId());
+        System.out.println("From: " + enquiry.getApplicantNric());
+        System.out.println("Project: " + enquiry.getProjectName());
+        System.out.println("Date: " + enquiry.getSubmittedAt().toLocalDate());
+        
+        System.out.println("\nMessage:");
+        System.out.println(enquiry.getMessage());
+        
+        // Display current reply if there is one
+        String currentReply = enquiry.getReply();
+        if (currentReply != null && !currentReply.isEmpty() && !currentReply.equals("No reply yet")) {
+            System.out.println("\nCurrent Reply:");
+            System.out.println(currentReply);
+            if (enquiry.getRepliedAt() != null) {
+                System.out.println("Replied at: " + enquiry.getRepliedAt().toLocalDate());
+            }
+        } else {
+            System.out.println("\nNo reply yet.");
+        }
+        
+        printDivider();
+        
+        // Check if the manager manages this project
+        boolean isManagerOfProject = false;
         List<Project> myProjects = getMyProjects();
-        if (myProjects.isEmpty()) {
-            printError("You are not managing any projects.");
-            return;
-        }
-        
-        // Let manager select which project's enquiries to view
-        System.out.println("Select a project to view enquiries:");
-        for (int i = 0; i < myProjects.size(); i++) {
-            System.out.printf("%d. %s\n", i + 1, myProjects.get(i).getProjectName());
-        }
-        
-        int projectChoice = readChoice("Select project (0 to cancel): ", 0, myProjects.size());
-        if (projectChoice == 0) return;
-        
-        Project selectedProject = myProjects.get(projectChoice - 1);
-        List<Enquiry> projectEnquiries = enquiryFacade.getEnquiriesByProject(selectedProject.getProjectName());
-        
-        // Filter for unanswered enquiries
-        List<Enquiry> pendingEnquiries = new ArrayList<>();
-        for (Enquiry enq : projectEnquiries) {
-            if (enq.getReply() == null || enq.getReply().isEmpty()) {
-                pendingEnquiries.add(enq);
+        for (Project project : myProjects) {
+            if (project.getProjectName().equals(enquiry.getProjectName())) {
+                isManagerOfProject = true;
+                break;
             }
         }
         
-        if (pendingEnquiries.isEmpty()) {
-            printMessage("No pending enquiries for " + selectedProject.getProjectName());
-            return;
+        if (isManagerOfProject) {
+            System.out.println("Enter your reply (or type /cancel to return to enquiry list):");
+            String reply = scanner.nextLine().trim();
+            
+            if (reply.equals("/cancel")) {
+                return;
+            }
+            
+            if (!reply.isEmpty()) {
+                try {
+                    // Use the legacy replyEnquiry method
+                    enquiryFacade.replyEnquiry(enquiry.getEnquiryId(), reply);
+                    printSuccess("Response submitted successfully.");
+                    
+                    // Refresh the enquiry to show the updated reply
+                    refreshEnquiry(enquiry);
+                } catch (Exception e) {
+                    printError("Error replying to enquiry: " + e.getMessage());
+                }
+            } else {
+                printError("Reply cannot be empty.");
+            }
+        } else {
+            System.out.println("Press Enter to continue...");
+            scanner.nextLine();
         }
-        
-        // Display pending enquiries
-        printHeader("PENDING ENQUIRIES FOR " + selectedProject.getProjectName());
-        System.out.printf("%-5s %-15s %-15s %-40s %-15s\n", 
-                        "No.", "Enquiry ID", "Applicant", "Message", "Date");
-        printDivider();
-        
-        for (int i = 0; i < pendingEnquiries.size(); i++) {
-            Enquiry enq = pendingEnquiries.get(i);
-            System.out.printf("%-5d %-15s %-15s %-40s %-15s\n", 
-                            i + 1, 
-                            truncate(enq.getEnquiryId(), 15),
-                            truncate(enq.getApplicantNric(), 15),
-                            truncate(enq.getMessage(), 40),
-                            (enq.getSubmittedAt() != null) ? enq.getSubmittedAt().toLocalDate() : "Unknown");
-        }
-        
-        // Let manager select which enquiry to reply to
-        int enquiryChoice = readChoice("Select enquiry to reply to (0 to cancel): ", 0, pendingEnquiries.size());
-        if (enquiryChoice == 0) return;
-        
-        Enquiry selectedEnquiry = pendingEnquiries.get(enquiryChoice - 1);
-        
-        // Display the full enquiry and get response
-        printHeader("REPLY TO ENQUIRY");
-        System.out.println("Enquiry ID: " + selectedEnquiry.getEnquiryId());
-        System.out.println("From: " + selectedEnquiry.getApplicantNric());
-        System.out.println("Project: " + selectedEnquiry.getProjectName());
-        System.out.println("Date: " + (selectedEnquiry.getSubmittedAt() != null ? 
-                                    selectedEnquiry.getSubmittedAt().toLocalDate() : "Unknown"));
-        System.out.println("\nEnquiry:");
-        System.out.println(selectedEnquiry.getMessage());
-        printDivider();
-        
-        System.out.println("Enter your response (or type /cancel to cancel):");
-        String response = scanner.nextLine().trim();
-        
-        if (response.equals("/cancel")) {
-            printMessage("Reply cancelled.");
-            return;
-        }
-        
-        if (response.isEmpty()) {
-            printError("Response cannot be empty.");
-            return;
-        }
-        
-        try {
-            // Submit the response
-            enquiryFacade.replyEnquiry(selectedEnquiry.getEnquiryId(), response);
-            printSuccess("Response submitted successfully.");
-        } catch (Exception e) {
-            printError("Error replying to enquiry: " + e.getMessage());
+    }
+    
+    private void refreshEnquiry(Enquiry enquiry) {
+        // Get a fresh list of enquiries to find the updated enquiry
+        List<Enquiry> allEnquiries = enquiryFacade.getAllEnquiries();
+        for (Enquiry updatedEnquiry : allEnquiries) {
+            if (updatedEnquiry.getEnquiryId().equals(enquiry.getEnquiryId())) {
+                // Copy all the replies from the updated enquiry to the current one
+                if (updatedEnquiry.getReplies() != null && !updatedEnquiry.getReplies().isEmpty()) {
+                    enquiry.setReplies(updatedEnquiry.getReplies());
+                }
+                
+                // For legacy support also copy the single reply field
+                enquiry.setReply(updatedEnquiry.getReply());
+                break;
+            }
         }
     }
     
@@ -1379,5 +2023,22 @@ public class ManagerMenu {
         
         // Combine to form a unit number
         return projectCode + "-" + typePrefix + "-" + random;
+    }
+
+    /**
+     * Helper method to ensure changes to projects are saved to the CSV file.
+     * This method is called after each operation that modifies project data.
+     */
+    private void saveProjectChanges() {
+        try {
+            if (projectFacade instanceof access.project.ProjectHandler) {
+                ((access.project.ProjectHandler) projectFacade).saveChanges();
+            } else {
+                // Fallback method to save changes through FileIO
+                FileIO.saveProjects(projectFacade.getAllProjects());
+            }
+        } catch (Exception e) {
+            printError("Error saving project changes: " + e.getMessage());
+        }
     }
 }

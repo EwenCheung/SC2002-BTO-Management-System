@@ -26,6 +26,29 @@ public class EnquiryHandler implements ManagerEnquiryFeatures, OfficerEnquiryFea
             throw new IllegalArgumentException("Enquiry not found: " + enquiryId);
         }
         enquiry.setReply(reply);
+        
+        // Save the changes to file
+        saveChanges();
+    }
+    
+    // New method to add a reply with the responder's NRIC
+    public void addReply(String enquiryId, String reply, String responderNric) {
+        Enquiry enquiry = findEnquiryById(enquiryId);
+        if (enquiry == null) {
+            throw new IllegalArgumentException("Enquiry not found: " + enquiryId);
+        }
+        enquiry.addReply(reply, responderNric);
+        saveChanges(); // Save changes to CSV
+    }
+    
+    // New method to edit a specific reply
+    public void editReply(String enquiryId, int replyIndex, String newReplyText) {
+        Enquiry enquiry = findEnquiryById(enquiryId);
+        if (enquiry == null) {
+            throw new IllegalArgumentException("Enquiry not found: " + enquiryId);
+        }
+        enquiry.editReply(replyIndex, newReplyText);
+        saveChanges(); // Save changes to CSV
     }
 
     @Override
@@ -59,6 +82,7 @@ public class EnquiryHandler implements ManagerEnquiryFeatures, OfficerEnquiryFea
             enquiry.setEnquiryId(generateUniqueId("ENQ"));
         }
         enquiries.add(enquiry);
+        saveChanges(); // Save changes to CSV
     }
 
     @Override
@@ -68,6 +92,7 @@ public class EnquiryHandler implements ManagerEnquiryFeatures, OfficerEnquiryFea
             throw new IllegalArgumentException("Enquiry not found: " + enquiryId);
         }
         enquiry.setMessage(newMessage);
+        saveChanges(); // Save changes to CSV
     }
 
     @Override
@@ -88,6 +113,7 @@ public class EnquiryHandler implements ManagerEnquiryFeatures, OfficerEnquiryFea
             throw new IllegalArgumentException("Enquiry not found: " + enquiryId);
         }
         enquiries.remove(enquiry);
+        saveChanges(); // Save changes to CSV
     }
 
     public void saveChanges() {
