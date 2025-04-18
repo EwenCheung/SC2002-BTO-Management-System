@@ -28,7 +28,9 @@ public class ApplicationSerializer {
           .append(app.getAssignedOfficer() != null ? app.getAssignedOfficer() : "").append(DELIMITER)
           .append(DATE_FORMATTER.format(app.getApplicationDate())).append(DELIMITER)
           .append(DATE_FORMATTER.format(app.getLastUpdated())).append(DELIMITER)
+          // Always append the remarks field, even if it's empty - this ensures consistent CSV columns
           .append(app.getRemarks() != null ? app.getRemarks() : "");
+          
         return sb.toString();
     }
 }

@@ -2,14 +2,11 @@ package auth;
 
 import users.User;
 import users.Applicant;
-import users.HDBOfficer;
-import users.ProjectManager;
 import users.enums.MaritalStatus;
-import users.enums.UserType;
 import io.FileIO;
 import java.util.List;
-import java.util.ArrayList;
 import java.util.Scanner;
+import utils.FileUtils;
 
 public class RegistrationSystem {
     /**
@@ -21,34 +18,83 @@ public class RegistrationSystem {
      * @return the new User object if registration is successful; null otherwise.
      */
     public User registerUserFromInput(Scanner scanner, List<User> userList) {
-        System.out.println("\n=== User Registration ===");
+        // Header is handled by MainMenu, so we don't print it here
 
-        System.out.print("Enter Name: ");
-        String name = scanner.nextLine().trim();
-
-        System.out.print("Enter NRIC: ");
-        String nric = scanner.nextLine().trim();
-
-        System.out.print("Enter Age: ");
-        int age;
-        try {
-            age = Integer.parseInt(scanner.nextLine().trim());
-        } catch (NumberFormatException e) {
-            System.out.println("Invalid age format. Registration failed.");
-            return null;
+        // Name validation
+        String name = "";
+        boolean validName = false;
+        while (!validName) {
+            System.out.print("Enter Name: ");
+            name = scanner.nextLine().trim();
+            if (name.isEmpty()) {
+                System.out.println("✗ Name cannot be empty. Please enter a valid name.");
+            } else {
+                validName = true;
+            }
         }
 
-        System.out.print("Enter Marital Status (Single/Married): ");
-        String maritalStatus = scanner.nextLine().trim();
+        // NRIC validation
+        String nric = "";
+        boolean validNRIC = false;
+        while (!validNRIC) {
+            System.out.print("Enter NRIC (e.g., S1234567A): ");
+            nric = scanner.nextLine().trim();
+            if (!isValidNRIC(nric)) {
+                System.out.println("✗ Invalid NRIC format. Must be S/T followed by 7 digits and ending with a letter.");
+            } else {
+                validNRIC = true;
+            }
+        }
 
-        System.out.print("Enter Password: ");
-        String password = scanner.nextLine().trim();
+        // Age validation
+        int age = 0;
+        boolean validAge = false;
+        while (!validAge) {
+            System.out.print("Enter Age: ");
+            String ageInput = scanner.nextLine().trim();
+            try {
+                age = Integer.parseInt(ageInput);
+                if (!isValidAge(age)) {
+                    System.out.println("✗ Age must be between 18 and 130.");
+                } else {
+                    validAge = true;
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("✗ You should only key in numbers for age.");
+            }
+        }
 
-        System.out.print("Enter User Type (APPLICANT, OFFICER, MANAGER): ");
-        String userType = scanner.nextLine().trim();
+        // Marital Status validation
+        String maritalStatusStr = "";
+        boolean validMaritalStatus = false;
+        while (!validMaritalStatus) {
+            System.out.print("Enter Marital Status (Single/Married): ");
+            maritalStatusStr = scanner.nextLine().trim();
+            if (!isValidMaritalStatus(maritalStatusStr)) {
+                System.out.println("✗ Please enter 'Single' or 'Married'.");
+            } else {
+                validMaritalStatus = true;
+            }
+        }
+
+        // Password validation
+        String password = "";
+        boolean validPassword = false;
+        while (!validPassword) {
+            System.out.print("Enter Password (minimum 6 characters): ");
+            password = scanner.nextLine().trim();
+            if (!isValidPassword(password)) {
+                System.out.println("✗ Password must be at least 6 characters long.");
+            } else {
+                validPassword = true;
+            }
+        }
+
+        // User type is fixed to APPLICANT
+        String userType = "APPLICANT";
 
         // Delegate to the existing registration logic.
-        User newUser = registerUser(name, nric, age, maritalStatus, password, userType, userList);
+        User newUser = registerUser(name, nric, age, maritalStatusStr, password, userType, userList);
         return newUser;
     }
 
@@ -87,7 +133,7 @@ public class RegistrationSystem {
     }
 
     /**
-     * Attempts to register a new user (applicant, officer, or manager) based on the input parameters.
+     * Attempts to register a new user as an applicant based on the input parameters.
      * Validates input, checks if the NRIC already exists, and creates the correct user object.
      * Saves the new user to the appropriate type-specific file.
      *
@@ -96,67 +142,29 @@ public class RegistrationSystem {
      * @param age              the user's age.
      * @param maritalStatusStr the user's marital status as a string ("Single" or "Married").
      * @param password         the user's password.
-     * @param userTypeStr      the type of user as a string ("APPLICANT", "OFFICER", or "MANAGER").
+     * @param userTypeStr      the type of user as a string (always "APPLICANT").
      * @param userList         the global in-memory list of users.
      * @return the new User object if registration is successful; null otherwise.
      */
     public User registerUser(String name, String nric, int age, String maritalStatusStr,
                             String password, String userTypeStr, List<User> userList) {
-        // Validate input fields.
+        // Validate input fields - this is a final validation check
         if (name == null || name.trim().isEmpty() ||
             nric == null || nric.trim().isEmpty() ||
             age < 18 ||
             maritalStatusStr == null || maritalStatusStr.trim().isEmpty() ||
-            password == null || password.trim().isEmpty() ||
-            userTypeStr == null || userTypeStr.trim().isEmpty()) {
-            System.out.println("Registration failed. Please provide all required fields.");
+            password == null || password.trim().isEmpty()) {
+            System.out.println("✗ Registration failed. Please provide all required fields.");
             return null;
         }
 
-        // Check for existing NRIC in the appropriate user list
-        boolean nricExists = false;
-        UserType userTypeEnum;
-        try {
-            userTypeEnum = UserType.valueOf(userTypeStr.trim().toUpperCase());
-        } catch (IllegalArgumentException e) {
-            System.out.println("Invalid user type. Must be APPLICANT, OFFICER, or MANAGER.");
-            return null;
-        }
-        
-        // Check for duplicate NRIC in the appropriate file
-        switch (userTypeEnum) {
-            case APPLICANT:
-                List<Applicant> applicants = FileIO.loadApplicants();
-                for (Applicant applicant : applicants) {
-                    if (applicant.getNric().equalsIgnoreCase(nric.trim())) {
-                        nricExists = true;
-                        break;
-                    }
-                }
-                break;
-            case OFFICER:
-                List<HDBOfficer> officers = FileIO.loadOfficers();
-                for (HDBOfficer officer : officers) {
-                    if (officer.getNric().equalsIgnoreCase(nric.trim())) {
-                        nricExists = true;
-                        break;
-                    }
-                }
-                break;
-            case MANAGER:
-                List<ProjectManager> managers = FileIO.loadManagers();
-                for (ProjectManager manager : managers) {
-                    if (manager.getNric().equalsIgnoreCase(nric.trim())) {
-                        nricExists = true;
-                        break;
-                    }
-                }
-                break;
-        }
-        
-        if (nricExists) {
-            System.out.println("NRIC already exists. Please login instead.");
-            return null;
+        // Check for existing NRIC in the applicant list
+        List<Applicant> applicants = FileIO.loadApplicants();
+        for (Applicant applicant : applicants) {
+            if (applicant.getNric().equalsIgnoreCase(nric.trim())) {
+                System.out.println("✗ NRIC already exists. Please login instead.");
+                return null;
+            }
         }
 
         // Convert marital status string to enum.
@@ -164,37 +172,22 @@ public class RegistrationSystem {
         try {
             maritalStatus = MaritalStatus.valueOf(maritalStatusStr.trim().toUpperCase());
         } catch (IllegalArgumentException e) {
-            System.out.println("Invalid marital status. Must be 'Single' or 'Married'.");
+            System.out.println("✗ Invalid marital status. Must be 'Single' or 'Married'.");
             return null;
         }
 
-        // Create the correct user object based on the user type.
-        User newUser = null;
-        switch (userTypeEnum) {
-            case APPLICANT:
-                newUser = new Applicant(name.trim(), nric.trim(), age, maritalStatus, password.trim());
-                List<Applicant> applicants = FileIO.loadApplicants();
-                applicants.add((Applicant) newUser);
-                FileIO.saveApplicants(applicants);
-                break;
-            case OFFICER:
-                newUser = new HDBOfficer(name.trim(), nric.trim(), age, maritalStatus, password.trim());
-                List<HDBOfficer> officers = FileIO.loadOfficers();
-                officers.add((HDBOfficer) newUser);
-                FileIO.saveOfficers(officers);
-                break;
-            case MANAGER:
-                newUser = new ProjectManager(name.trim(), nric.trim(), age, maritalStatus, password.trim());
-                List<ProjectManager> managers = FileIO.loadManagers();
-                managers.add((ProjectManager) newUser);
-                FileIO.saveManagers(managers);
-                break;
-            default:
-                System.out.println("Unknown user type encountered.");
-                return null;
-        }
+        // Create the new applicant user
+        User newUser = new Applicant(name.trim(), nric.trim(), age, maritalStatus, password.trim());
+        applicants.add((Applicant) newUser);
+        FileIO.saveApplicants(applicants);
 
-        System.out.println("Registration successful! Please proceed to login in the main menu.");
+        System.out.println("✓ Registration successful! Please proceed to login in the main menu.");
         return newUser;
+    }
+    
+    private void printHeader(String title) {
+        System.out.println("\n" + FileUtils.repeatChar('=', 60));
+        System.out.println(FileUtils.repeatChar(' ', (60 - title.length()) / 2) + title);
+        System.out.println(FileUtils.repeatChar('=', 60));
     }
 }

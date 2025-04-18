@@ -48,7 +48,7 @@ public class ApplicantMenu {
             System.out.println("2. Submit Application");
             System.out.println("3. View Application Status");
             System.out.println("4. Manage Enquiries");
-            System.out.println("5. Request Withdrawal");
+            System.out.println("5. Manage Withdrawal");  // Changed from "Request Withdrawal" to "Manage Withdrawal"
             System.out.println("6. Change Password");
             System.out.println("7. Logout");
             printDivider();
@@ -61,7 +61,7 @@ public class ApplicantMenu {
                 case 2: submitApplication(); break;
                 case 3: viewApplicationStatus(); break;
                 case 4: manageEnquiries(); break;
-                case 5: requestWithdrawal(); break;
+                case 5: manageWithdrawal(); break;  // Changed method name
                 case 6: changePassword(); break;
                 case 7:
                     printMessage("Logging out...");
@@ -86,43 +86,57 @@ public class ApplicantMenu {
             if (choice == 5) return;
             
             List<Project> projects;
-            switch (choice) {
-                case 1:
-                    displayProjects(projectFacade.getVisibleProjects());
-                    break;
-                case 2:
-                    System.out.print("Enter neighborhood name: ");
-                    String neighborhood = scanner.nextLine().trim();
-                    projects = filterProjectsByNeighborhood(projectFacade.getVisibleProjects(), neighborhood);
-                    displayProjects(projects);
-                    break;
-                case 3:
-                    System.out.println("Select flat type:");
-                    System.out.println("1. 2-Room");
-                    System.out.println("2. 3-Room");
-                    int flatChoice = readChoice(1, 2);
-                    if (flatChoice == -1) continue;
-                    
-                    String flatType = (flatChoice == 1) ? "2-Room" : "3-Room";
-                    projects = filterProjectsByFlatType(projectFacade.getVisibleProjects(), flatType);
-                    displayProjects(projects);
-                    break;
-                case 4:
-                    System.out.print("Enter minimum price: ");
-                    double minPrice = readDouble();
-                    if (minPrice < 0) continue;
-                    
-                    System.out.print("Enter maximum price: ");
-                    double maxPrice = readDouble();
-                    if (maxPrice < 0) continue;
-                    
-                    projects = filterProjectsByPriceRange(projectFacade.getVisibleProjects(), minPrice, maxPrice);
-                    displayProjects(projects);
-                    break;
-            }
+            boolean keepShowingProjects = true;
             
-            System.out.println("\nPress Enter to continue...");
-            scanner.nextLine();
+            while (keepShowingProjects) {
+                switch (choice) {
+                    case 1:
+                        keepShowingProjects = displayProjects(projectFacade.getVisibleProjects());
+                        break;
+                    case 2:
+                        System.out.print("Enter neighborhood name: ");
+                        String neighborhood = scanner.nextLine().trim();
+                        projects = filterProjectsByNeighborhood(projectFacade.getVisibleProjects(), neighborhood);
+                        keepShowingProjects = displayProjects(projects);
+                        break;
+                    case 3:
+                        System.out.println("Select flat type:");
+                        System.out.println("1. 2-Room");
+                        System.out.println("2. 3-Room");
+                        int flatChoice = readChoice(1, 2);
+                        if (flatChoice == -1) {
+                            keepShowingProjects = false;
+                            break;
+                        }
+                        
+                        String flatType = (flatChoice == 1) ? "2-Room" : "3-Room";
+                        projects = filterProjectsByFlatType(projectFacade.getVisibleProjects(), flatType);
+                        keepShowingProjects = displayProjects(projects);
+                        break;
+                    case 4:
+                        System.out.print("Enter minimum price: ");
+                        double minPrice = readDouble();
+                        if (minPrice < 0) {
+                            keepShowingProjects = false;
+                            break;
+                        }
+                        
+                        System.out.print("Enter maximum price: ");
+                        double maxPrice = readDouble();
+                        if (maxPrice < 0) {
+                            keepShowingProjects = false;
+                            break;
+                        }
+                        
+                        projects = filterProjectsByPriceRange(projectFacade.getVisibleProjects(), minPrice, maxPrice);
+                        keepShowingProjects = displayProjects(projects);
+                        break;
+                }
+                
+                if (!keepShowingProjects) {
+                    break; // Break out of the inner while loop
+                }
+            }
         }
     }
     
@@ -159,7 +173,7 @@ public class ApplicantMenu {
         return filtered;
     }
     
-    private void displayProjects(List<Project> projects) {
+    private boolean displayProjects(List<Project> projects) {
         // First, filter projects based on applicant's eligibility
         List<Project> eligibleProjects = new ArrayList<>();
         
@@ -208,32 +222,43 @@ public class ApplicantMenu {
                 }
             }
             
-            // Get ALL visible projects to show total availability
-            List<Project> allVisibleProjects = projectFacade.getVisibleProjects();
-            int total2Room = 0;
-            int total3Room = 0;
-            
-            for (Project p : allVisibleProjects) {
-                Map<String, UnitInfo> units = p.getUnits();
-                if (units.containsKey("2-Room") && units.get("2-Room").getAvailableUnits() > 0) {
-                    total2Room++;
+            // Only show system-wide availability if the user is eligible to apply
+            if (isSingleEligible || isMarriedEligible) {
+                // Get ALL visible projects to show total availability
+                List<Project> allVisibleProjects = projectFacade.getVisibleProjects();
+                int total2Room = 0;
+                int total3Room = 0;
+                
+                for (Project p : allVisibleProjects) {
+                    Map<String, UnitInfo> units = p.getUnits();
+                    if (units.containsKey("2-Room") && units.get("2-Room").getAvailableUnits() > 0) {
+                        total2Room++;
+                    }
+                    if (units.containsKey("3-Room") && units.get("3-Room").getAvailableUnits() > 0) {
+                        total3Room++;
+                    }
                 }
-                if (units.containsKey("3-Room") && units.get("3-Room").getAvailableUnits() > 0) {
-                    total3Room++;
-                }
+                
+                System.out.println("\nSystem-wide availability:");
+                System.out.println("Projects with 2-Room flats available: " + total2Room);
+                System.out.println("Projects with 3-Room flats available: " + total3Room);
+                System.out.println("Please check back later for updates or adjust your filter criteria.");
             }
             
-            System.out.println("\nSystem-wide availability:");
-            System.out.println("Projects with 2-Room flats available: " + total2Room);
-            System.out.println("Projects with 3-Room flats available: " + total3Room);
-            System.out.println("Please check back later for updates or adjust your filter criteria.");
-            
-            return;
+            return false;
         }
         
-        // Display total projects and eligible projects count
-        System.out.println("Total Projects: " + projects.size());
+        // Display eligibility information first
+        System.out.println();
+        if (maritalStatus.equals("SINGLE") && applicantAge >= 35) {
+            System.out.println("As a single above 35, you are only allowed to apply flat type with 2 room.");
+        } else if (maritalStatus.equals("MARRIED") && applicantAge >= 21) {
+            System.out.println("As a married above 21, you are allowed to apply flat type with 2 room or 3 room.");
+        }
         System.out.println("Projects that match with you: " + eligibleProjects.size());
+        
+        // Display total projects as well
+        System.out.println("Total Projects: " + projects.size());
         
         printHeader("PROJECT LIST");
         // Improved header alignment
@@ -310,7 +335,7 @@ public class ApplicantMenu {
         
         System.out.println("\nEnter project number for details (0 to go back): ");
         int choice = readChoice(0, eligibleProjects.size());
-        if (choice == 0 || choice == -1) return;
+        if (choice == 0 || choice == -1) return false;
         
         // Get the selected project directly from the eligibleProjects list
         Project selected = eligibleProjects.get(choice - 1);
@@ -344,7 +369,13 @@ public class ApplicantMenu {
                                       " units available, Price: $" + String.format("%.2f", info.getSellingPrice()));
                 }
             }
+            
+            System.out.println("\nPress Enter to continue...");
+            scanner.nextLine();
         }
+        
+        // Return true to indicate that we should stay in the project list view
+        return true;
     }
 
     private void submitApplication() {
@@ -442,6 +473,12 @@ public class ApplicantMenu {
         
         Application application = new Application(applicant.getNric(), selectedProject.getProjectName(), allowedUnitType);
         appFacade.submitApplication(application);
+        
+        // Save changes immediately to ensure the application is stored in the CSV file
+        if (appFacade instanceof access.application.ApplicationHandler) {
+            ((access.application.ApplicationHandler) appFacade).saveChanges();
+        }
+        
         printSuccess("Application submitted successfully!");
     }
 
@@ -454,13 +491,14 @@ public class ApplicantMenu {
             return;
         }
         
-        System.out.printf("%-15s %-25s %-10s %-15s %-15s\n", 
+        // Modified to ensure application ID is displayed in full without truncation
+        System.out.printf("%-20s %-25s %-10s %-15s %-15s\n", 
                           "Application ID", "Project", "Unit Type", "Status", "Last Updated");
         printDivider();
         
         for (Application app : myApps) {
-            System.out.printf("%-15s %-25s %-10s %-15s %-15s\n",
-                    truncate(app.getApplicationId(), 15),
+            System.out.printf("%-20s %-25s %-10s %-15s %-15s\n",
+                    app.getApplicationId(), // No truncation for Application ID
                     truncate(app.getProjectName(), 25),
                     app.getUnitType(),
                     app.getStatus(),
@@ -577,6 +615,12 @@ public class ApplicantMenu {
         
         // Submit the enquiry
         enquiryFacade.submitEnquiry(enquiry);
+        
+        // Save changes immediately to ensure the enquiry is stored in the CSV file
+        if (enquiryFacade instanceof access.enquiry.EnquiryHandler) {
+            ((access.enquiry.EnquiryHandler) enquiryFacade).saveChanges();
+        }
+        
         printSuccess("Enquiry submitted successfully.");
     }
 
@@ -589,7 +633,7 @@ public class ApplicantMenu {
             return;
         }
         
-        // Updated formatting to show full enquiry ID
+        // Improved formatting to ensure proper alignment
         System.out.printf("%-5s %-25s %-25s %-30s %-15s\n", 
             "No.", "Enquiry ID", "Project", "Message", "Status");
         printDivider();
@@ -601,19 +645,46 @@ public class ApplicantMenu {
             
             System.out.printf("%-5d %-25s %-25s %-30s %-15s\n", 
                 i++,
-                enq.getEnquiryId(), // Full ID shown, no truncation
+                enq.getEnquiryId(),
                 truncate(enq.getProjectName(), 25),
-                truncate(enq.getMessage(), 30),
+                truncate(enq.getMessage(), 15), // Reduced to 15 characters
                 status
             );
         }
         
-        System.out.print("\nEnter enquiry number to view details (0 to go back): ");
-        int choice = readChoice(0, enquiries.size());
-        if (choice == 0 || choice == -1) return;
+        System.out.print("\nEnter enquiry number to view details (or enquiry ID, 0 to go back): ");
+        String input = scanner.nextLine().trim();
         
-        Enquiry selectedEnq = enquiries.get(choice - 1);
+        // If the user enters 0 or nothing, go back
+        if (input.equals("0") || input.isEmpty()) return;
         
+        Enquiry selectedEnq = null;
+        
+        // Try to parse as a number (row number)
+        try {
+            int choice = Integer.parseInt(input);
+            if (choice > 0 && choice <= enquiries.size()) {
+                selectedEnq = enquiries.get(choice - 1);
+            } else {
+                printError("Invalid enquiry number. Please enter a number between 1 and " + enquiries.size() + ".");
+                return;
+            }
+        } catch (NumberFormatException e) {
+            // If not a number, try to match by Enquiry ID
+            for (Enquiry enq : enquiries) {
+                if (enq.getEnquiryId().equals(input)) {
+                    selectedEnq = enq;
+                    break;
+                }
+            }
+            
+            if (selectedEnq == null) {
+                printError("Invalid enquiry ID. Please enter a valid enquiry ID or number.");
+                return;
+            }
+        }
+        
+        // Display the selected enquiry details
         printHeader("ENQUIRY DETAILS");
         System.out.println("Enquiry ID: " + selectedEnq.getEnquiryId());
         System.out.println("Project: " + selectedEnq.getProjectName());
@@ -648,36 +719,66 @@ public class ApplicantMenu {
             return;
         }
         
-        // Display the list of enquiries
+        // Filter out enquiries that have been responded to
+        List<Enquiry> editableEnquiries = new ArrayList<>();
+        for (Enquiry enq : enquiries) {
+            if (enq.getReply() == null || enq.getReply().isEmpty()) {
+                editableEnquiries.add(enq);
+            }
+        }
+        
+        if (editableEnquiries.isEmpty()) {
+            printMessage("You don't have any enquiries that can be edited. Enquiries that have been responded to cannot be modified.");
+            return;
+        }
+        
+        // Display only the list of editable enquiries
         System.out.printf("%-5s %-25s %-25s %-30s %-15s\n", 
             "No.", "Enquiry ID", "Project", "Message", "Status");
         printDivider();
         
         int i = 1;
-        for (Enquiry enq : enquiries) {
-            String status = (enq.getReply() == null || enq.getReply().isEmpty()) ? 
-                            "Pending" : "Responded";
-            
+        for (Enquiry enq : editableEnquiries) {
             System.out.printf("%-5d %-25s %-25s %-30s %-15s\n", 
                 i++,
-                enq.getEnquiryId(), // Show full enquiry ID
+                enq.getEnquiryId(),
                 truncate(enq.getProjectName(), 25),
-                truncate(enq.getMessage(), 30),
-                status
+                truncate(enq.getMessage(), 15),
+                "Pending"
             );
         }
         
         // Let user select which enquiry to edit
-        System.out.print("\nEnter enquiry number to edit (0 to cancel): ");
-        int choice = readChoice(0, enquiries.size());
-        if (choice == 0 || choice == -1) return;
+        System.out.print("\nEnter enquiry number to edit (or enquiry ID, 0 to cancel): ");
+        String input = scanner.nextLine().trim();
         
-        Enquiry selectedEnq = enquiries.get(choice - 1);
+        // If the user enters 0 or nothing, go back
+        if (input.equals("0") || input.isEmpty()) return;
         
-        // Check if the enquiry already has a response
-        if (selectedEnq.getReply() != null && !selectedEnq.getReply().isEmpty()) {
-            printError("Cannot edit an enquiry that has already been responded to.");
-            return;
+        Enquiry selectedEnq = null;
+        
+        // Try to parse as a number (row number)
+        try {
+            int choice = Integer.parseInt(input);
+            if (choice > 0 && choice <= editableEnquiries.size()) {
+                selectedEnq = editableEnquiries.get(choice - 1);
+            } else {
+                printError("Invalid enquiry number. Please enter a number between 1 and " + editableEnquiries.size() + ".");
+                return;
+            }
+        } catch (NumberFormatException e) {
+            // If not a number, try to match by Enquiry ID
+            for (Enquiry enq : editableEnquiries) {
+                if (enq.getEnquiryId().equals(input)) {
+                    selectedEnq = enq;
+                    break;
+                }
+            }
+            
+            if (selectedEnq == null) {
+                printError("Invalid enquiry ID. Please enter a valid enquiry ID or number.");
+                return;
+            }
         }
         
         System.out.println("\nCurrent message:");
@@ -695,6 +796,12 @@ public class ApplicantMenu {
         // Submit the edit
         try {
             enquiryFacade.editEnquiry(selectedEnq.getEnquiryId(), newMessage);
+            
+            // Save changes immediately to ensure the edit is stored in the CSV file
+            if (enquiryFacade instanceof access.enquiry.EnquiryHandler) {
+                ((access.enquiry.EnquiryHandler) enquiryFacade).saveChanges();
+            }
+            
             printSuccess("Enquiry updated successfully.");
         } catch (Exception e) {
             printError("Error updating enquiry: " + e.getMessage());
@@ -712,76 +819,162 @@ public class ApplicantMenu {
             return;
         }
         
-        // Display the list of enquiries
+        // Filter out enquiries that have been responded to
+        List<Enquiry> deletableEnquiries = new ArrayList<>();
+        for (Enquiry enq : enquiries) {
+            if (enq.getReply() == null || enq.getReply().isEmpty()) {
+                deletableEnquiries.add(enq);
+            }
+        }
+        
+        if (deletableEnquiries.isEmpty()) {
+            printMessage("You don't have any enquiries that can be deleted. Enquiries that have been responded to cannot be deleted.");
+            return;
+        }
+        
+        // Display only deletable enquiries
         System.out.printf("%-5s %-25s %-25s %-30s %-15s\n", 
             "No.", "Enquiry ID", "Project", "Message", "Status");
         printDivider();
         
         int i = 1;
-        for (Enquiry enq : enquiries) {
-            String status = (enq.getReply() == null || enq.getReply().isEmpty()) ? 
-                            "Pending" : "Responded";
-            
+        for (Enquiry enq : deletableEnquiries) {
             System.out.printf("%-5d %-25s %-25s %-30s %-15s\n", 
                 i++,
-                enq.getEnquiryId(), // Show full enquiry ID, no truncation
+                enq.getEnquiryId(),
                 truncate(enq.getProjectName(), 25),
-                truncate(enq.getMessage(), 30),
-                status
+                truncate(enq.getMessage(), 15),  // Changed to 15 chars to match other methods
+                "Pending"
             );
         }
         
         // Let user select which enquiry to delete
-        System.out.print("\nEnter enquiry number to delete (0 to cancel): ");
-        int choice = readChoice(0, enquiries.size());
-        if (choice == 0 || choice == -1) return;
+        System.out.print("\nEnter enquiry number to delete (or enquiry ID, 0 to cancel): ");
+        String input = scanner.nextLine().trim();
         
-        Enquiry selectedEnq = enquiries.get(choice - 1);
+        // If the user enters 0 or nothing, go back
+        if (input.equals("0") || input.isEmpty()) return;
         
-        // Check if the enquiry already has a response
-        if (selectedEnq.getReply() != null && !selectedEnq.getReply().isEmpty()) {
-            printWarning("You are about to delete an enquiry that has been responded to.");
-            if (!readYesNo("Are you sure you want to continue? (Y/N): ")) {
-                printMessage("Delete cancelled.");
+        Enquiry selectedEnq = null;
+        
+        // Try to parse as a number (row number)
+        try {
+            int choice = Integer.parseInt(input);
+            if (choice > 0 && choice <= deletableEnquiries.size()) {
+                selectedEnq = deletableEnquiries.get(choice - 1);
+            } else {
+                printError("Invalid enquiry number. Please enter a number between 1 and " + deletableEnquiries.size() + ".");
                 return;
             }
-        } else {
-            // Confirm deletion
-            if (!readYesNo("Are you sure you want to delete this enquiry? (Y/N): ")) {
-                printMessage("Delete cancelled.");
+        } catch (NumberFormatException e) {
+            // If not a number, try to match by Enquiry ID
+            for (Enquiry enq : deletableEnquiries) {
+                if (enq.getEnquiryId().equals(input)) {
+                    selectedEnq = enq;
+                    break;
+                }
+            }
+            
+            if (selectedEnq == null) {
+                printError("Invalid enquiry ID. Please enter a valid enquiry ID or number.");
                 return;
             }
+        }
+        
+        // Confirm deletion
+        if (!readYesNo("Are you sure you want to delete this enquiry? (Y/N): ")) {
+            printMessage("Delete cancelled.");
+            return;
         }
         
         // Submit the delete request
         try {
             enquiryFacade.deleteEnquiry(selectedEnq.getEnquiryId());
+            
+            // Save changes immediately to ensure the deletion is reflected in the CSV file
+            if (enquiryFacade instanceof access.enquiry.EnquiryHandler) {
+                ((access.enquiry.EnquiryHandler) enquiryFacade).saveChanges();
+            }
+            
             printSuccess("Enquiry deleted successfully.");
         } catch (Exception e) {
             printError("Error deleting enquiry: " + e.getMessage());
         }
     }
     
-    private void requestWithdrawal() {
-        printHeader("REQUEST WITHDRAWAL");
+    private void manageWithdrawal() {
+        while (true) {
+            printHeader("MANAGE WITHDRAWAL");
+            System.out.println("1. Submit Withdrawal Request");
+            System.out.println("2. View My Withdrawal Requests");
+            System.out.println("3. Back to Main Menu");
+            printDivider();
+            
+            int choice = readChoice(1, 3);
+            if (choice == -1) continue;
+            
+            switch (choice) {
+                case 1:
+                    submitWithdrawalRequest();
+                    break;
+                case 2:
+                    viewWithdrawalRequests();
+                    break;
+                case 3:
+                    return;
+            }
+        }
+    }
+
+    private void submitWithdrawalRequest() {
+        printHeader("SUBMIT WITHDRAWAL REQUEST");
         
         // First, check if the applicant has any applications
         List<Application> myApps = appFacade.getApplicationsForApplicant(applicant.getNric());
         if (myApps.isEmpty()) {
             printError("You don't have any applications to withdraw.");
+            System.out.println("\nPress Enter to continue...");
+            scanner.nextLine();
             return;
         }
         
-        // Display the applications for the user to select from
-        System.out.printf("%-5s %-15s %-25s %-10s %-15s\n", 
+        // Get existing withdrawal requests to check for duplicates
+        List<WithdrawalRequest> existingRequests = withdrawalFacade.getWithdrawalRequestsForApplicant(applicant.getNric());
+        
+        // Filter out applications that already have withdrawal requests
+        List<Application> withdrawableApps = new ArrayList<>();
+        for (Application app : myApps) {
+            boolean hasExistingRequest = false;
+            for (WithdrawalRequest request : existingRequests) {
+                if (request.getApplicationId().equals(app.getApplicationId())) {
+                    hasExistingRequest = true;
+                    break;
+                }
+            }
+            
+            if (!hasExistingRequest) {
+                withdrawableApps.add(app);
+            }
+        }
+        
+        if (withdrawableApps.isEmpty()) {
+            printError("You don't have any applications available for withdrawal. You may have already submitted withdrawal requests for all your applications.");
+            
+            System.out.println("\nPress Enter to continue...");
+            scanner.nextLine();
+            return;
+        }
+        
+        // Display the applications for the user to select from - with application ID in full
+        System.out.printf("%-5s %-25s %-25s %-10s %-15s\n", 
                           "No.", "Application ID", "Project", "Unit Type", "Status");
         printDivider();
         
         int i = 1;
-        for (Application app : myApps) {
-            System.out.printf("%-5d %-15s %-25s %-10s %-15s\n", 
+        for (Application app : withdrawableApps) {
+            System.out.printf("%-5d %-25s %-25s %-10s %-15s\n", 
                 i++, 
-                truncate(app.getApplicationId(), 15),
+                app.getApplicationId(),
                 truncate(app.getProjectName(), 25),
                 app.getUnitType(),
                 app.getStatus()
@@ -790,22 +983,28 @@ public class ApplicantMenu {
         
         // Let the user select which application to withdraw
         System.out.print("\nSelect application number to withdraw (0 to cancel): ");
-        int choice = readChoice(0, myApps.size());
+        int choice = readChoice(0, withdrawableApps.size());
         if (choice == 0 || choice == -1) {
             printMessage("Withdrawal request cancelled.");
+            System.out.println("\nPress Enter to continue...");
+            scanner.nextLine();
             return;
         }
         
-        Application selectedApp = myApps.get(choice - 1);
+        Application selectedApp = withdrawableApps.get(choice - 1);
         
         // Check if this application can be withdrawn (not already withdrawn or rejected)
         if (selectedApp.getStatus().toString().equalsIgnoreCase("WITHDRAWN")) {
             printError("This application has already been withdrawn.");
+            System.out.println("\nPress Enter to continue...");
+            scanner.nextLine();
             return;
         }
         
         if (selectedApp.getStatus().toString().equalsIgnoreCase("REJECTED")) {
             printError("You cannot withdraw a rejected application.");
+            System.out.println("\nPress Enter to continue...");
+            scanner.nextLine();
             return;
         }
         
@@ -820,6 +1019,8 @@ public class ApplicantMenu {
         
         if (!readYesNo("Are you sure you want to withdraw this application? (Y/N): ")) {
             printMessage("Withdrawal request cancelled.");
+            System.out.println("\nPress Enter to continue...");
+            scanner.nextLine();
             return;
         }
         
@@ -840,21 +1041,190 @@ public class ApplicantMenu {
         );
         
         withdrawalFacade.requestWithdrawal(request);
+        
+        // Save changes immediately to ensure the withdrawal request is stored in the CSV file
+        if (withdrawalFacade instanceof access.withdrawal.WithdrawalHandler) {
+            ((access.withdrawal.WithdrawalHandler) withdrawalFacade).saveChanges();
+        }
+        
         printSuccess("Withdrawal request submitted successfully. Your request will be processed by a manager.");
+        System.out.println("\nPress Enter to continue...");
+        scanner.nextLine();
+    }
+
+    private void viewWithdrawalRequests() {
+        printHeader("MY WITHDRAWAL REQUESTS");
+        
+        // Get existing withdrawal requests
+        List<WithdrawalRequest> myRequests = withdrawalFacade.getWithdrawalRequestsForApplicant(applicant.getNric());
+        
+        if (myRequests.isEmpty()) {
+            printMessage("You haven't submitted any withdrawal requests yet.");
+            System.out.println("\nPress Enter to continue...");
+            scanner.nextLine();
+            return;
+        }
+        
+        // Display the withdrawal requests
+        System.out.printf("%-5s %-25s %-25s %-15s %-15s\n", 
+                        "No.", "Request ID", "Application ID", "Status", "Request Date");
+        printDivider();
+        
+        int i = 1;
+        for (WithdrawalRequest req : myRequests) {
+            System.out.printf("%-5d %-25s %-25s %-15s %-15s\n", 
+                i++, 
+                req.getRequestId(),
+                req.getApplicationId(),
+                req.getStatus(),
+                req.getRequestDate().toLocalDate()
+            );
+        }
+        
+        // Let the user select a request to view details
+        System.out.print("\nSelect request number for details (or request ID, 0 to go back): ");
+        String input = scanner.nextLine().trim();
+        
+        // If the user enters 0 or nothing, go back
+        if (input.equals("0") || input.isEmpty()) return;
+        
+        // Try to find the selected request
+        WithdrawalRequest selectedReq = null;
+        
+        // Try to parse as a number (row number)
+        try {
+            int choice = Integer.parseInt(input);
+            if (choice > 0 && choice <= myRequests.size()) {
+                selectedReq = myRequests.get(choice - 1);
+            } else {
+                printError("Invalid request number. Please enter a number between 1 and " + myRequests.size() + ".");
+                System.out.println("\nPress Enter to continue...");
+                scanner.nextLine();
+                return;
+            }
+        } catch (NumberFormatException e) {
+            // If not a number, try to match by Request ID
+            for (WithdrawalRequest req : myRequests) {
+                if (req.getRequestId().equals(input)) {
+                    selectedReq = req;
+                    break;
+                }
+            }
+            
+            if (selectedReq == null) {
+                printError("Invalid request ID. Please enter a valid request ID or number.");
+                System.out.println("\nPress Enter to continue...");
+                scanner.nextLine();
+                return;
+            }
+        }
+        
+        // Display the selected request details
+        printHeader("WITHDRAWAL REQUEST DETAILS");
+        System.out.println("Request ID: " + selectedReq.getRequestId());
+        System.out.println("Application ID: " + selectedReq.getApplicationId());
+        System.out.println("Project: " + selectedReq.getProjectName());
+        System.out.println("Status: " + selectedReq.getStatus());
+        System.out.println("Request Date: " + selectedReq.getRequestDate().toLocalDate());
+        
+        if (selectedReq.getRemarks() != null && !selectedReq.getRemarks().isEmpty()) {
+            System.out.println("\nReason for withdrawal:");
+            System.out.println(selectedReq.getRemarks());
+        }
+        
+        if (selectedReq.getStatus().toString().equalsIgnoreCase("APPROVED")) {
+            System.out.println("\nYour withdrawal request has been approved.");
+            System.out.println("Processed Date: " + (selectedReq.getProcessDate() != null ? 
+                              selectedReq.getProcessDate().toLocalDate() : "N/A"));
+        } else if (selectedReq.getStatus().toString().equalsIgnoreCase("REJECTED")) {
+            System.out.println("\nYour withdrawal request has been rejected.");
+            System.out.println("Processed Date: " + (selectedReq.getProcessDate() != null ? 
+                              selectedReq.getProcessDate().toLocalDate() : "N/A"));
+        } else {
+            System.out.println("\nYour withdrawal request is still pending.");
+            System.out.println("Please check back later for updates.");
+        }
+        
+        System.out.println("\nPress Enter to continue...");
+        scanner.nextLine();
     }
 
     private void changePassword() {
         printHeader("CHANGE PASSWORD");
+        
         System.out.print("Enter your current password: ");
         String current = scanner.nextLine().trim();
+        
         if (!applicant.getPassword().equals(current)) {
             printError("Incorrect current password.");
             return;
         }
+        
         System.out.print("Enter your new password: ");
         String newPass = scanner.nextLine().trim();
+        
+        System.out.print("Confirm your new password: ");
+        String confirmPass = scanner.nextLine().trim();
+        
+        if (!newPass.equals(confirmPass)) {
+            printError("Passwords do not match. Password change cancelled.");
+            return;
+        }
+        
+        if (newPass.isEmpty()) {
+            printError("Password cannot be empty.");
+            return;
+        }
+        
         applicant.setPassword(newPass);
-        printSuccess("Password changed successfully.");
+        
+        // Save the updated password to the ApplicantList.csv file
+        if (updateUserPassword()) {
+            printSuccess("Password changed successfully.");
+        } else {
+            printError("Failed to save the new password. Please try again.");
+        }
+    }
+
+    /**
+     * Updates the password in the ApplicantList.csv file
+     * @return true if successful, false otherwise
+     */
+    private boolean updateUserPassword() {
+        try {
+            // Read all lines from the ApplicantList.csv file
+            java.nio.file.Path path = java.nio.file.Paths.get("Datasets/ApplicantList.csv");
+            List<String> lines = java.nio.file.Files.readAllLines(path);
+            
+            boolean updated = false;
+            
+            // Update the applicant's line with the new password
+            for (int i = 1; i < lines.size(); i++) { // Start from 1 to skip header
+                String[] fields = lines.get(i).split(",");
+                if (fields.length >= 2 && fields[1].equals(applicant.getNric())) {
+                    // Reconstruct the line with the new password
+                    String updatedLine = fields[0] + "," + 
+                                        fields[1] + "," + 
+                                        fields[2] + "," + 
+                                        fields[3] + "," + 
+                                        applicant.getPassword();
+                    lines.set(i, updatedLine);
+                    updated = true;
+                    break;
+                }
+            }
+            
+            if (updated) {
+                // Write the updated lines back to the CSV file
+                java.nio.file.Files.write(path, lines);
+                return true;
+            }
+            
+            return false;
+        } catch (Exception e) {
+            System.err.println("Error updating password: " + e.getMessage());
+            return false;
+        }
     }
 
     private void printHeader(String title) {
