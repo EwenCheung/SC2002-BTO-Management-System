@@ -1224,7 +1224,11 @@ public class ManagerMenu {
             java.nio.file.Files.createDirectories(java.nio.file.Paths.get("Reports"));
             
             String filePath = "Reports/" + filename;
-            java.nio.file.Files.writeString(java.nio.file.Paths.get(filePath), content);
+            
+            // Java 8 compatible way to write string to file
+            java.nio.file.Path path = java.nio.file.Paths.get(filePath);
+            java.nio.file.Files.write(path, content.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            
             printSuccess("Report saved to " + filePath);
         } catch (Exception e) {
             printError("Error saving report: " + e.getMessage());

@@ -6,7 +6,9 @@ import users.HDBOfficer;
 import users.ProjectManager;
 import users.enums.MaritalStatus;
 import users.enums.UserType;
+import io.FileIO;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 public class RegistrationSystem {
@@ -50,7 +52,7 @@ public class RegistrationSystem {
         return newUser;
     }
 
-    // Helper validation methods can be retained if needed.
+    // Helper validation methods
     public boolean isValidNRIC(String nric) {
         if (nric == null || nric.length() != 9) {
             return false;
@@ -86,8 +88,8 @@ public class RegistrationSystem {
 
     /**
      * Attempts to register a new user (applicant, officer, or manager) based on the input parameters.
-     * Validates input, checks if the NRIC already exists in the provided user list, and creates the correct
-     * user object if all validations pass.
+     * Validates input, checks if the NRIC already exists, and creates the correct user object.
+     * Saves the new user to the appropriate type-specific file.
      *
      * @param name             the user's name.
      * @param nric             the user's NRIC.
@@ -111,15 +113,53 @@ public class RegistrationSystem {
             return null;
         }
 
-        // Check if the NRIC already exists in the in-memory list.
-        for (User user : userList) {
-            if (user.getNric().equalsIgnoreCase(nric.trim())) {
-                System.out.println("NRIC already exists. Please login instead.");
-                return null;
-            }
+        // Check for existing NRIC in the appropriate user list
+        boolean nricExists = false;
+        UserType userTypeEnum;
+        try {
+            userTypeEnum = UserType.valueOf(userTypeStr.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            System.out.println("Invalid user type. Must be APPLICANT, OFFICER, or MANAGER.");
+            return null;
+        }
+        
+        // Check for duplicate NRIC in the appropriate file
+        switch (userTypeEnum) {
+            case APPLICANT:
+                List<Applicant> applicants = FileIO.loadApplicants();
+                for (Applicant applicant : applicants) {
+                    if (applicant.getNric().equalsIgnoreCase(nric.trim())) {
+                        nricExists = true;
+                        break;
+                    }
+                }
+                break;
+            case OFFICER:
+                List<HDBOfficer> officers = FileIO.loadOfficers();
+                for (HDBOfficer officer : officers) {
+                    if (officer.getNric().equalsIgnoreCase(nric.trim())) {
+                        nricExists = true;
+                        break;
+                    }
+                }
+                break;
+            case MANAGER:
+                List<ProjectManager> managers = FileIO.loadManagers();
+                for (ProjectManager manager : managers) {
+                    if (manager.getNric().equalsIgnoreCase(nric.trim())) {
+                        nricExists = true;
+                        break;
+                    }
+                }
+                break;
+        }
+        
+        if (nricExists) {
+            System.out.println("NRIC already exists. Please login instead.");
+            return null;
         }
 
-        // Convert marital status and user type strings to enums.
+        // Convert marital status string to enum.
         MaritalStatus maritalStatus;
         try {
             maritalStatus = MaritalStatus.valueOf(maritalStatusStr.trim().toUpperCase());
@@ -128,25 +168,26 @@ public class RegistrationSystem {
             return null;
         }
 
-        UserType userType;
-        try {
-            userType = UserType.valueOf(userTypeStr.trim().toUpperCase());
-        } catch (IllegalArgumentException e) {
-            System.out.println("Invalid user type. Must be APPLICANT, OFFICER, or MANAGER.");
-            return null;
-        }
-
         // Create the correct user object based on the user type.
         User newUser = null;
-        switch (userType) {
+        switch (userTypeEnum) {
             case APPLICANT:
                 newUser = new Applicant(name.trim(), nric.trim(), age, maritalStatus, password.trim());
+                List<Applicant> applicants = FileIO.loadApplicants();
+                applicants.add((Applicant) newUser);
+                FileIO.saveApplicants(applicants);
                 break;
             case OFFICER:
                 newUser = new HDBOfficer(name.trim(), nric.trim(), age, maritalStatus, password.trim());
+                List<HDBOfficer> officers = FileIO.loadOfficers();
+                officers.add((HDBOfficer) newUser);
+                FileIO.saveOfficers(officers);
                 break;
             case MANAGER:
                 newUser = new ProjectManager(name.trim(), nric.trim(), age, maritalStatus, password.trim());
+                List<ProjectManager> managers = FileIO.loadManagers();
+                managers.add((ProjectManager) newUser);
+                FileIO.saveManagers(managers);
                 break;
             default:
                 System.out.println("Unknown user type encountered.");

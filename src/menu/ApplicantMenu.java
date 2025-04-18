@@ -5,11 +5,14 @@ import access.enquiry.ApplicantEnquiryFeatures;
 import access.project.ApplicantProjectFeatures;
 import access.withdrawal.ApplicantWithdrawalFeatures;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
+import java.util.ArrayList; // Added import for ArrayList
 import models.Application;
 import models.Enquiry;
 import models.Project;
 import models.WithdrawalRequest;
+import models.UnitInfo;
 import users.Applicant;
 import utils.FileUtils;
 
@@ -157,34 +160,191 @@ public class ApplicantMenu {
     }
     
     private void displayProjects(List<Project> projects) {
-        if (projects.isEmpty()) {
+        // First, filter projects based on applicant's eligibility
+        List<Project> eligibleProjects = new ArrayList<>();
+        
+        String maritalStatus = applicant.getMaritalStatus().toString();
+        int applicantAge = applicant.getAge();
+        
+        // Determine eligibility based on marital status and age
+        boolean isSingleEligible = maritalStatus.equals("SINGLE") && applicantAge >= 35;
+        boolean isMarriedEligible = maritalStatus.equals("MARRIED") && applicantAge >= 21;
+        
+        for (Project project : projects) {
+            // For singles, 35 years old and above, can ONLY apply for 2-Room
+            if (isSingleEligible && project.getUnits().containsKey("2-Room") && project.getAvailableUnits("2-Room") > 0) {
+                eligibleProjects.add(project);
+            }
+            // For married, 21 years old and above, can apply for any flat types (2-Room or 3-Room)
+            else if (isMarriedEligible) {
+                if ((project.getUnits().containsKey("2-Room") && project.getAvailableUnits("2-Room") > 0) || 
+                    (project.getUnits().containsKey("3-Room") && project.getAvailableUnits("3-Room") > 0)) {
+                    eligibleProjects.add(project);
+                }
+            }
+        }
+        
+        // If no eligible projects found, provide feedback based on eligibility
+        if (eligibleProjects.isEmpty()) {
             printMessage("No projects found matching your criteria.");
+            
+            // Enhanced feedback based on applicant's profile
+            System.out.println("\nEligibility information:");
+            if (maritalStatus.equals("SINGLE")) {
+                if (applicantAge < 35) {
+                    System.out.println("As a single applicant under 35 years old, you are not eligible for BTO applications yet.");
+                    System.out.println("Singles must be 35 years old and above to apply for 2-Room flats only.");
+                } else {
+                    System.out.println("As a single applicant 35 years old and above, you are eligible for 2-Room flats only.");
+                    System.out.println("Currently there are no 2-Room flats available for application.");
+                }
+            } else if (maritalStatus.equals("MARRIED")) {
+                if (applicantAge < 21) {
+                    System.out.println("As a married applicant under 21 years old, you are not eligible for BTO applications yet.");
+                    System.out.println("Married applicants must be 21 years old and above to apply for any flat type.");
+                } else {
+                    System.out.println("As a married applicant 21 years old and above, you are eligible for any flat type (2-Room or 3-Room).");
+                    System.out.println("Currently there are no flats available for application.");
+                }
+            }
+            
+            // Get ALL visible projects to show total availability
+            List<Project> allVisibleProjects = projectFacade.getVisibleProjects();
+            int total2Room = 0;
+            int total3Room = 0;
+            
+            for (Project p : allVisibleProjects) {
+                Map<String, UnitInfo> units = p.getUnits();
+                if (units.containsKey("2-Room") && units.get("2-Room").getAvailableUnits() > 0) {
+                    total2Room++;
+                }
+                if (units.containsKey("3-Room") && units.get("3-Room").getAvailableUnits() > 0) {
+                    total3Room++;
+                }
+            }
+            
+            System.out.println("\nSystem-wide availability:");
+            System.out.println("Projects with 2-Room flats available: " + total2Room);
+            System.out.println("Projects with 3-Room flats available: " + total3Room);
+            System.out.println("Please check back later for updates or adjust your filter criteria.");
+            
             return;
         }
         
+        // Display total projects and eligible projects count
+        System.out.println("Total Projects: " + projects.size());
+        System.out.println("Projects that match with you: " + eligibleProjects.size());
+        
         printHeader("PROJECT LIST");
-        System.out.printf("%-4s %-20s %-15s %-25s %-10s\n", "No.", "Project Name", "Neighborhood", "Application Period", "Visibility");
+        // Improved header alignment
+        System.out.printf("%-4s %-25s %-12s %-12s %-15s %-25s\n", 
+            "No.", "Project Name", "Flat Type", "Price", "Units Left", "Application Period");
         printDivider();
         
-        int i = 1;
-        for (Project project : projects) {
-            System.out.printf("%-4d %-20s %-15s %-12s to %-10s %-10s\n", 
-                i++, 
-                truncate(project.getProjectName(), 20),
-                truncate(project.getNeighborhood(), 15),
-                project.getApplicationOpeningDate(),
-                project.getApplicationClosingDate(),
-                project.isVisible() ? "Visible" : "Hidden"
-            );
+        // New display format with grouped flat types and empty line between projects
+        int projectCounter = 1;
+        for (Project project : eligibleProjects) {
+            Map<String, UnitInfo> units = project.getUnits();
+            
+            // For singles, only show 2-Room flats
+            if (isSingleEligible) {
+                if (units.containsKey("2-Room") && units.get("2-Room").getAvailableUnits() > 0) {
+                    UnitInfo info = units.get("2-Room");
+                    System.out.printf("%-4d %-25s a) %-8s $%-10.0f %-15d %-25s\n", 
+                        projectCounter, 
+                        project.getProjectName(),
+                        "2-Room",
+                        info.getSellingPrice(),
+                        info.getAvailableUnits(),
+                        project.getApplicationOpeningDate() + " to " + project.getApplicationClosingDate()
+                    );
+                }
+            } 
+            // For married, show both flat types if available
+            else if (isMarriedEligible) {
+                boolean has2Room = units.containsKey("2-Room") && units.get("2-Room").getAvailableUnits() > 0;
+                boolean has3Room = units.containsKey("3-Room") && units.get("3-Room").getAvailableUnits() > 0;
+                
+                if (has2Room) {
+                    UnitInfo info = units.get("2-Room");
+                    System.out.printf("%-4d %-25s a) %-8s $%-10.0f %-15d %-25s\n", 
+                        projectCounter, 
+                        project.getProjectName(),
+                        "2-Room",
+                        info.getSellingPrice(),
+                        info.getAvailableUnits(),
+                        project.getApplicationOpeningDate() + " to " + project.getApplicationClosingDate()
+                    );
+                }
+                
+                if (has3Room) {
+                    UnitInfo info = units.get("3-Room");
+                    if (!has2Room) {
+                        // If no 2-Room, this becomes the 'a)' option
+                        System.out.printf("%-4d %-25s a) %-8s $%-10.0f %-15d %-25s\n", 
+                            projectCounter, 
+                            project.getProjectName(),
+                            "3-Room",
+                            info.getSellingPrice(),
+                            info.getAvailableUnits(),
+                            project.getApplicationOpeningDate() + " to " + project.getApplicationClosingDate()
+                        );
+                    } else {
+                        // If has 2-Room, this becomes the 'b)' option
+                        System.out.printf("%-4s %-25s b) %-8s $%-10.0f %-15d %-25s\n", 
+                            "", 
+                            "",
+                            "3-Room",
+                            info.getSellingPrice(),
+                            info.getAvailableUnits(),
+                            project.getApplicationOpeningDate() + " to " + project.getApplicationClosingDate()
+                        );
+                    }
+                }
+            }
+            
+            // Add an empty line between projects
+            System.out.println();
+            projectCounter++;
         }
         
         System.out.println("\nEnter project number for details (0 to go back): ");
-        int choice = readChoice(0, projects.size());
+        int choice = readChoice(0, eligibleProjects.size());
         if (choice == 0 || choice == -1) return;
         
-        Project selected = projects.get(choice - 1);
-        printHeader("PROJECT DETAILS: " + selected.getProjectName());
-        System.out.println(selected.toString());
+        // Get the selected project directly from the eligibleProjects list
+        Project selected = eligibleProjects.get(choice - 1);
+        
+        if (selected != null) {
+            printHeader("PROJECT DETAILS: " + selected.getProjectName());
+            System.out.println("Project: " + selected.getProjectName());
+            System.out.println("Neighborhood: " + selected.getNeighborhood());
+            System.out.println("Application Period: " + selected.getApplicationOpeningDate() + " to " + selected.getApplicationClosingDate());
+            System.out.println("\nUnit Types Available:");
+            
+            Map<String, UnitInfo> units = selected.getUnits();
+            
+            // Display only eligible unit types based on marital status and age
+            if (isSingleEligible) {
+                if (units.containsKey("2-Room")) {
+                    UnitInfo info = units.get("2-Room");
+                    System.out.println("  - 2-Room: " + info.getAvailableUnits() + "/" + info.getTotalUnits() + 
+                                      " units available, Price: $" + String.format("%.2f", info.getSellingPrice()));
+                }
+            } else if (isMarriedEligible) {
+                if (units.containsKey("2-Room")) {
+                    UnitInfo info = units.get("2-Room");
+                    System.out.println("  - 2-Room: " + info.getAvailableUnits() + "/" + info.getTotalUnits() + 
+                                      " units available, Price: $" + String.format("%.2f", info.getSellingPrice()));
+                }
+                
+                if (units.containsKey("3-Room")) {
+                    UnitInfo info = units.get("3-Room");
+                    System.out.println("  - 3-Room: " + info.getAvailableUnits() + "/" + info.getTotalUnits() + 
+                                      " units available, Price: $" + String.format("%.2f", info.getSellingPrice()));
+                }
+            }
+        }
     }
 
     private void submitApplication() {
@@ -375,12 +535,47 @@ public class ApplicantMenu {
 
     private void submitEnquiry() {
         printHeader("SUBMIT NEW ENQUIRY");
-        System.out.print("Enter the project name for your enquiry: ");
-        String projectName = scanner.nextLine().trim();
+        
+        // Get all visible projects for this applicant
+        List<Project> visibleProjects = projectFacade.getVisibleProjects();
+        
+        if (visibleProjects.isEmpty()) {
+            printError("No projects are currently available for enquiry.");
+            return;
+        }
+        
+        // Display available projects
+        System.out.println("Available projects for enquiry:");
+        printDivider();
+        for (int i = 0; i < visibleProjects.size(); i++) {
+            System.out.printf("%d. %s (%s)\n", i + 1, visibleProjects.get(i).getProjectName(), 
+                              visibleProjects.get(i).getNeighborhood());
+        }
+        printDivider();
+        
+        // Let user select project by number
+        System.out.print("Choose project number (0 to cancel): ");
+        int projectChoice = readChoice(0, visibleProjects.size());
+        if (projectChoice == 0 || projectChoice == -1) {
+            printMessage("Enquiry cancelled.");
+            return;
+        }
+        
+        String projectName = visibleProjects.get(projectChoice - 1).getProjectName();
+        
+        // Get enquiry message
         System.out.print("Enter your enquiry message: ");
         String message = scanner.nextLine().trim();
-        // Create a new Enquiry with the three-parameter constructor
+        
+        if (message.isEmpty()) {
+            printError("Enquiry message cannot be empty.");
+            return;
+        }
+        
+        // Create the Enquiry object with the correct constructor (3 parameters)
         Enquiry enquiry = new Enquiry(applicant.getNric(), projectName, message);
+        
+        // Submit the enquiry
         enquiryFacade.submitEnquiry(enquiry);
         printSuccess("Enquiry submitted successfully.");
     }
@@ -394,7 +589,8 @@ public class ApplicantMenu {
             return;
         }
         
-        System.out.printf("%-5s %-15s %-25s %-30s %-15s\n", 
+        // Updated formatting to show full enquiry ID
+        System.out.printf("%-5s %-25s %-25s %-30s %-15s\n", 
             "No.", "Enquiry ID", "Project", "Message", "Status");
         printDivider();
         
@@ -403,9 +599,9 @@ public class ApplicantMenu {
             String status = (enq.getReply() == null || enq.getReply().isEmpty()) ? 
                             "Pending" : "Responded";
             
-            System.out.printf("%-5d %-15s %-25s %-30s %-15s\n", 
+            System.out.printf("%-5d %-25s %-25s %-30s %-15s\n", 
                 i++,
-                truncate(enq.getEnquiryId(), 15),
+                enq.getEnquiryId(), // Full ID shown, no truncation
                 truncate(enq.getProjectName(), 25),
                 truncate(enq.getMessage(), 30),
                 status
@@ -453,7 +649,7 @@ public class ApplicantMenu {
         }
         
         // Display the list of enquiries
-        System.out.printf("%-5s %-15s %-25s %-30s %-15s\n", 
+        System.out.printf("%-5s %-25s %-25s %-30s %-15s\n", 
             "No.", "Enquiry ID", "Project", "Message", "Status");
         printDivider();
         
@@ -462,9 +658,9 @@ public class ApplicantMenu {
             String status = (enq.getReply() == null || enq.getReply().isEmpty()) ? 
                             "Pending" : "Responded";
             
-            System.out.printf("%-5d %-15s %-25s %-30s %-15s\n", 
+            System.out.printf("%-5d %-25s %-25s %-30s %-15s\n", 
                 i++,
-                truncate(enq.getEnquiryId(), 15),
+                enq.getEnquiryId(), // Show full enquiry ID
                 truncate(enq.getProjectName(), 25),
                 truncate(enq.getMessage(), 30),
                 status
@@ -517,7 +713,7 @@ public class ApplicantMenu {
         }
         
         // Display the list of enquiries
-        System.out.printf("%-5s %-15s %-25s %-30s %-15s\n", 
+        System.out.printf("%-5s %-25s %-25s %-30s %-15s\n", 
             "No.", "Enquiry ID", "Project", "Message", "Status");
         printDivider();
         
@@ -526,9 +722,9 @@ public class ApplicantMenu {
             String status = (enq.getReply() == null || enq.getReply().isEmpty()) ? 
                             "Pending" : "Responded";
             
-            System.out.printf("%-5d %-15s %-25s %-30s %-15s\n", 
+            System.out.printf("%-5d %-25s %-25s %-30s %-15s\n", 
                 i++,
-                truncate(enq.getEnquiryId(), 15),
+                enq.getEnquiryId(), // Show full enquiry ID, no truncation
                 truncate(enq.getProjectName(), 25),
                 truncate(enq.getMessage(), 30),
                 status

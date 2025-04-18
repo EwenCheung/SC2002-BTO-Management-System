@@ -3,7 +3,11 @@ package auth;
 import java.util.List;
 import java.util.Scanner;
 import users.User;
+import users.Applicant;
+import users.HDBOfficer;
+import users.ProjectManager;
 import users.enums.UserType;
+import io.FileIO;
 
 public class AuthenticationSystem {
     /**
@@ -18,47 +22,73 @@ public class AuthenticationSystem {
         System.out.print("Enter NRIC: ");
         String nric = scanner.nextLine().trim();
 
-        // Find the user by NRIC
+        // Instead of checking the combined user list, load and check the appropriate type-specific list
         User foundUser = null;
-        for (User user : users) {
-            if (user.getNric().equalsIgnoreCase(nric)) {
-                // Check if the user type matches the selected one
-                if (userTypeChoice == 1 && user.getUserType() != UserType.APPLICANT) {
-                    System.out.println("This NRIC is not registered as an Applicant.");
-                    return null;
-                } else if (userTypeChoice == 2 && user.getUserType() != UserType.OFFICER) {
-                    System.out.println("This NRIC is not registered as an Officer.");
-                    return null;
-                } else if (userTypeChoice == 3 && user.getUserType() != UserType.MANAGER) {
-                    System.out.println("This NRIC is not registered as a Manager.");
-                    return null;
+        
+        // Based on the user type choice, load the appropriate user list
+        if (userTypeChoice == 1) {
+            // Applicant login
+            List<Applicant> applicants = FileIO.loadApplicants();
+            for (User user : applicants) {
+                if (user.getNric().equalsIgnoreCase(nric)) {
+                    foundUser = user;
+                    break;
                 }
-                
-                foundUser = user;
-                break;
             }
-        }
-
-        if (foundUser == null) {
-            System.out.println("User not found. Please register if you're a first-time user.");
-            return null;
+            if (foundUser == null) {
+                System.out.println("Applicant not found. Please register if you're a first-time user.");
+                return null;
+            }
+        } else if (userTypeChoice == 2) {
+            // Officer login
+            List<HDBOfficer> officers = FileIO.loadOfficers();
+            for (User user : officers) {
+                if (user.getNric().equalsIgnoreCase(nric)) {
+                    foundUser = user;
+                    break;
+                }
+            }
+            if (foundUser == null) {
+                System.out.println("Officer not found. Please contact administrator if this is an error.");
+                return null;
+            }
+        } else if (userTypeChoice == 3) {
+            // Manager login
+            List<ProjectManager> managers = FileIO.loadManagers();
+            for (User user : managers) {
+                if (user.getNric().equalsIgnoreCase(nric)) {
+                    foundUser = user;
+                    break;
+                }
+            }
+            if (foundUser == null) {
+                System.out.println("Manager not found. Please contact administrator if this is an error.");
+                return null;
+            }
         }
 
         // Allow up to 3 attempts for correct password.
         int attempts = 0;
-        while (attempts < 3) {
+        final int MAX_ATTEMPTS = 3;
+        
+        while (attempts < MAX_ATTEMPTS) {
             System.out.print("Enter Password: ");
             String password = scanner.nextLine().trim();
+            
             if (foundUser.getPassword().equals(password)) {
                 System.out.println("Login successful!");
                 return foundUser;
             } else {
                 attempts++;
-                System.out.println("Wrong password. Please try again (" + (3 - attempts) + " attempts left).");
+                if (attempts < MAX_ATTEMPTS) {
+                    System.out.println("Incorrect password. You have " + (MAX_ATTEMPTS - attempts) + " attempts remaining.");
+                } else {
+                    System.out.println("Too many failed attempts. Please try again later.");
+                    return null;
+                }
             }
         }
-
-        System.out.println("Too many incorrect attempts. Returning to main menu.");
+        
         return null;
     }
     

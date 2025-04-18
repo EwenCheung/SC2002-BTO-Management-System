@@ -4,18 +4,58 @@ import java.util.*;
 import utils.*;
 import users.*;
 import models.*;
+import users.enums.UserType;
 
 public class FileIO {
     public static List<User> loadUsers() {
-        List<String[]> rows = FileUtils.readFile(Constants.USER_FILE);
-        List<User> users = new ArrayList<>();
+        List<User> allUsers = new ArrayList<>();
+        
+        // Load applicants
+        allUsers.addAll(loadApplicants());
+        
+        // Load officers
+        allUsers.addAll(loadOfficers());
+        
+        // Load managers
+        allUsers.addAll(loadManagers());
+        
+        return allUsers;
+    }
+    
+    public static List<Applicant> loadApplicants() {
+        List<String[]> rows = FileUtils.readFile(Constants.APPLICANT_FILE);
+        List<Applicant> applicants = new ArrayList<>();
         for (int i = 1; i < rows.size(); i++) { // skip header
             String[] tokens = rows.get(i);
-            if (tokens.length == 6) {
-                users.add(UserFactory.createUser(tokens));
+            if (tokens.length >= 5) { // Name, NRIC, Age, Marital Status, Password
+                applicants.add((Applicant)UserFactory.createApplicant(tokens));
             }
         }
-        return users;
+        return applicants;
+    }
+    
+    public static List<HDBOfficer> loadOfficers() {
+        List<String[]> rows = FileUtils.readFile(Constants.OFFICER_FILE);
+        List<HDBOfficer> officers = new ArrayList<>();
+        for (int i = 1; i < rows.size(); i++) { // skip header
+            String[] tokens = rows.get(i);
+            if (tokens.length >= 5) { // Name, NRIC, Age, Marital Status, Password
+                officers.add((HDBOfficer)UserFactory.createOfficer(tokens));
+            }
+        }
+        return officers;
+    }
+    
+    public static List<ProjectManager> loadManagers() {
+        List<String[]> rows = FileUtils.readFile(Constants.MANAGER_FILE);
+        List<ProjectManager> managers = new ArrayList<>();
+        for (int i = 1; i < rows.size(); i++) { // skip header
+            String[] tokens = rows.get(i);
+            if (tokens.length >= 5) { // Name, NRIC, Age, Marital Status, Password
+                managers.add((ProjectManager)UserFactory.createManager(tokens));
+            }
+        }
+        return managers;
     }
 
     public static List<String[]> loadRaw(String fileName) {
@@ -32,7 +72,7 @@ public class FileIO {
         List<Project> projects = new ArrayList<>();
         for (int i = 1; i < rows.size(); i++) {
             String[] tokens = rows.get(i);
-            if (tokens.length == 15) {
+            if (tokens.length == 16) {  // Changed from 15 to 16 to match expected column count
                 projects.add(ProjectFactory.createProject(tokens));
             }
         }
@@ -78,17 +118,64 @@ public class FileIO {
     // ------------------ Save functions --------------------
 
     public static void saveUsers(List<User> users) {
-        List<String[]> data = new ArrayList<>();
-        // Header for User file
-        data.add(new String[]{"Name", "NRIC", "Age", "Marital Status", "Password", "UserType"});
+        List<Applicant> applicants = new ArrayList<>();
+        List<HDBOfficer> officers = new ArrayList<>();
+        List<ProjectManager> managers = new ArrayList<>();
         
+        // Sort users by type
         for (User user : users) {
-            String serialized = UserSerializer.serialize(user);
-            // Use the escaped delimiter for splitting
+            if (user instanceof Applicant) {
+                applicants.add((Applicant) user);
+            } else if (user instanceof HDBOfficer) {
+                officers.add((HDBOfficer) user);
+            } else if (user instanceof ProjectManager) {
+                managers.add((ProjectManager) user);
+            }
+        }
+        
+        // Save each type to its respective file
+        saveApplicants(applicants);
+        saveOfficers(officers);
+        saveManagers(managers);
+    }
+    
+    public static void saveApplicants(List<Applicant> applicants) {
+        List<String[]> data = new ArrayList<>();
+        // Header for Applicant file
+        data.add(new String[]{"Name", "NRIC", "Age", "Marital Status", "Password"});
+        
+        for (Applicant user : applicants) {
+            String serialized = UserSerializer.serializeApplicant(user);
             String[] tokens = serialized.split(Constants.DELIMITER_REGEX);
             data.add(tokens);
         }
-        saveRaw(Constants.USER_FILE, data);
+        saveRaw(Constants.APPLICANT_FILE, data);
+    }
+    
+    public static void saveOfficers(List<HDBOfficer> officers) {
+        List<String[]> data = new ArrayList<>();
+        // Header for Officer file
+        data.add(new String[]{"Name", "NRIC", "Age", "Marital Status", "Password"});
+        
+        for (HDBOfficer user : officers) {
+            String serialized = UserSerializer.serializeOfficer(user);
+            String[] tokens = serialized.split(Constants.DELIMITER_REGEX);
+            data.add(tokens);
+        }
+        saveRaw(Constants.OFFICER_FILE, data);
+    }
+    
+    public static void saveManagers(List<ProjectManager> managers) {
+        List<String[]> data = new ArrayList<>();
+        // Header for Manager file
+        data.add(new String[]{"Name", "NRIC", "Age", "Marital Status", "Password"});
+        
+        for (ProjectManager user : managers) {
+            String serialized = UserSerializer.serializeManager(user);
+            String[] tokens = serialized.split(Constants.DELIMITER_REGEX);
+            data.add(tokens);
+        }
+        saveRaw(Constants.MANAGER_FILE, data);
     }
     
     public static void saveProjects(List<Project> projects) {

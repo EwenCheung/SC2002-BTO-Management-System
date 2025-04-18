@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import static utils.Constants.DELIMITER;
 import static utils.Constants.DELIMITER_REGEX;
+import static utils.Constants.QUOTE;
 
 public class FileUtils {
     private static final String DATASET_PATH = "Datasets/";
@@ -15,8 +16,8 @@ public class FileUtils {
         try (BufferedReader reader = new BufferedReader(new FileReader(DATASET_PATH + fileName))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                // Use the escaped delimiter pattern for regex operations
-                data.add(line.split(DELIMITER_REGEX));
+                // Split by comma but respect quoted values
+                data.add(parseCsvLine(line));
             }
         } catch (IOException e) {
             System.err.println("Error reading file: " + e.getMessage());
@@ -25,10 +26,48 @@ public class FileUtils {
         return data;
     }
 
+    /**
+     * Parses a CSV line respecting quoted values that may contain commas
+     */
+    private static String[] parseCsvLine(String line) {
+        List<String> tokens = new ArrayList<>();
+        StringBuilder currentToken = new StringBuilder();
+        boolean inQuotes = false;
+        
+        for (int i = 0; i < line.length(); i++) {
+            char c = line.charAt(i);
+            
+            if (c == '"') {
+                inQuotes = !inQuotes;
+            } else if (c == ',' && !inQuotes) {
+                tokens.add(cleanToken(currentToken.toString()));
+                currentToken.setLength(0);
+            } else {
+                currentToken.append(c);
+            }
+        }
+        
+        // Add the last token
+        tokens.add(cleanToken(currentToken.toString()));
+        
+        return tokens.toArray(new String[0]);
+    }
+
+    /**
+     * Cleans a token by removing surrounding quotes and trimming whitespace
+     */
+    private static String cleanToken(String token) {
+        token = token.trim();
+        if (token.startsWith("\"") && token.endsWith("\"")) {
+            token = token.substring(1, token.length() - 1);
+        }
+        return token;
+    }
+
     public static boolean writeFile(String fileName, List<String[]> data) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(DATASET_PATH + fileName))) {
             for (String[] row : data) {
-                writer.write(String.join(DELIMITER, row));
+                writer.write(toCsvLine(row));
                 writer.newLine();
             }
             return true;
@@ -36,6 +75,25 @@ public class FileUtils {
             System.err.println("Error writing to file: " + e.getMessage());
             return false;
         }
+    }
+
+    /**
+     * Converts an array of strings to a CSV line, properly escaping values that contain commas
+     */
+    private static String toCsvLine(String[] tokens) {
+        StringBuilder line = new StringBuilder();
+        for (int i = 0; i < tokens.length; i++) {
+            String token = tokens[i];
+            // Quote values that contain commas or quotes
+            if (token.contains(",") || token.contains("\"")) {
+                token = QUOTE + token.replace("\"", "\"\"") + QUOTE;
+            }
+            line.append(token);
+            if (i < tokens.length - 1) {
+                line.append(DELIMITER);
+            }
+        }
+        return line.toString();
     }
 
     public static boolean updateFile(String fileName, int rowIndex, int colIndex, String value) {
