@@ -24,7 +24,7 @@ import users.ProjectManager;
 import users.Applicant;
 import utils.Constants;
 import utils.FileUtils;
-import utils.AuthenticationSystem;
+import auth.AuthenticationSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -117,14 +117,20 @@ public class OfficerMenu {
         List<OfficerRegistration> myRegistrations = regFacade.getRegistrationsForOfficer(officer.getNric());
         
         // Check for active registrations (approved or pending)
-        boolean hasActiveRegistration = false;
+        boolean hasApprovedRegistration = false;
+        boolean hasPendingRegistration = false;
+        
         for (OfficerRegistration reg : myRegistrations) {
             if (reg.getStatus() == OfficerRegistrationStatus.APPROVED) {
+                hasApprovedRegistration = true;
                 printError("You are already registered to handle a project.");
-                return;
+                System.out.println("You can view available projects but cannot register for them.");
+                break;
             } else if (reg.getStatus() == OfficerRegistrationStatus.PENDING) {
+                hasPendingRegistration = true;
                 printError("You have a pending registration request.");
-                return;
+                System.out.println("You can view available projects but cannot submit a new registration.");
+                break;
             }
         }
         
@@ -139,13 +145,15 @@ public class OfficerMenu {
         
         if (availableProjects.isEmpty()) {
             printError("No projects available for registration.");
+            System.out.println("\nPress Enter to continue...");
+            scanner.nextLine();
             return;
         }
         
         // Display available projects with remaining slots
         printHeader("AVAILABLE PROJECTS");
-        System.out.printf("%-3s %-25s %-15s %12s    %-15s %-15s %-12s\n", 
-                        "No.", "Project Name", "Neighborhood", "Officer Slots", "Opening Date", "Closing Date", "Status");
+        System.out.printf("%-3s %-25s %-15s %-25s %-12s %12s %-15s %-15s\n", 
+                        "No.", "Project Name", "Neighborhood", "Allowable to Register", "Status", "Officer Slots", "Opening Date", "Closing Date");
         printDivider();
         
         int validProjects = 0;
@@ -165,6 +173,9 @@ public class OfficerMenu {
                 String status = today.isBefore(proj.getApplicationOpeningDate()) ? "Upcoming" : 
                                (today.isAfter(proj.getApplicationClosingDate()) ? "Closed" : "Active");
                 
+                // Check if this project's dates clash with any existing registrations
+                String registrationStatus = hasDateOverlap(proj, myRegistrations) ? "No - Clash" : "Yes - Allow";
+                
                 validProjects++;
                 projectsWithSlots.add(proj);
                 
@@ -177,20 +188,30 @@ public class OfficerMenu {
                     proj.getOfficerSlot() - proj.getRemainingOfficerSlots(), 
                     proj.getOfficerSlot());
                 
-                System.out.printf("%-3d %-25s %-15s %12s    %-15s %-15s %-12s\n", 
+                System.out.printf("%-3d %-25s %-15s %-25s %-12s %12s %-15s %-15s\n", 
                     validProjects, 
                     truncate(proj.getProjectName(), 25),
                     truncate(proj.getNeighborhood(), 15),
+                    registrationStatus,
+                    status,
                     officerSlotsStr,
                     openingDate,
-                    closingDate,
-                    status
+                    closingDate
                 );
             }
         }
         
         if (validProjects == 0) {
             printError("No projects with available officer slots.");
+            System.out.println("\nPress Enter to continue...");
+            scanner.nextLine();
+            return;
+        }
+        
+        // Always show the project list, but only allow registration if there are no existing or pending registrations
+        if (hasApprovedRegistration || hasPendingRegistration) {
+            System.out.println("\nPress Enter to continue...");
+            scanner.nextLine();
             return;
         }
         
@@ -223,6 +244,8 @@ public class OfficerMenu {
                     }
                 }
             }
+            System.out.println("\nPress Enter to continue...");
+            scanner.nextLine();
             return;
         }
         
@@ -245,6 +268,7 @@ public class OfficerMenu {
         // Get the manager's name instead of just showing NRIC
         String managerNric = selectedProject.getManager();
         String managerName = getManagerName(managerNric);
+        
         System.out.println("Manager: " + managerName + " (" + managerNric + ")");
         
         System.out.println("Opening Date: " + selectedProject.getApplicationOpeningDate().format(dateFormatter));
@@ -264,9 +288,10 @@ public class OfficerMenu {
         // Save the registration to the CSV file
         if (regFacade instanceof access.officerregistration.OfficerRegistrationHandler) {
             ((access.officerregistration.OfficerRegistrationHandler) regFacade).saveChanges();
+            printSuccess("Registration submitted successfully. Pending manager approval.");
+        } else {
+            printError("Could not save registration to file. Please try again.");
         }
-        
-        printSuccess("Registration submitted successfully. Pending manager approval.");
     }
     
     private void viewRegistrationStatus() {
@@ -448,8 +473,13 @@ public class OfficerMenu {
         System.out.println("Current Status: " + application.getStatus());
         
         if (application.getStatus() == ApplicationStatus.APPROVED || 
-            application.getStatus() == ApplicationStatus.REJECTED) {
-            printMessage("This application has already been " + application.getStatus().toString().toLowerCase() + ".");
+            application.getStatus() == ApplicationStatus.REJECTED ||
+            application.getStatus() == ApplicationStatus.UNSUCCESSFUL) {
+            
+            // Show message based on the current status
+            String statusMessage = "This application has already been " + application.getStatus().toString().toLowerCase() + ".";
+            printMessage(statusMessage);
+            
             System.out.println("\nPress Enter to continue...");
             scanner.nextLine();
             return;
@@ -481,6 +511,11 @@ public class OfficerMenu {
             }
             
             appFacade.updateApplication(application);
+            
+            // Save changes to CSV file
+            if (appFacade instanceof access.application.ApplicationHandler) {
+                ((access.application.ApplicationHandler) appFacade).saveChanges();
+            }
             
             printSuccess("Application " + (newStatus == ApplicationStatus.APPROVED ? "approved" : "rejected") + " successfully.");
             
@@ -575,7 +610,19 @@ public class OfficerMenu {
         
         try {
             // Get applicant information
-            Applicant applicant = (Applicant) AuthenticationSystem.getInstance().getUserByNric(application.getApplicantNric());
+            Applicant applicant = null;
+            try {
+                // Get the applicant from the FileIO system instead of AuthenticationSystem
+                List<Applicant> applicants = io.FileIO.loadApplicants();
+                for (Applicant app : applicants) {
+                    if (app.getNric().equals(application.getApplicantNric())) {
+                        applicant = app;
+                        break;
+                    }
+                }
+            } catch (Exception e) {
+                printError("Error loading applicant data: " + e.getMessage());
+            }
             
             if (applicant == null) {
                 printError("Could not find applicant information.");
@@ -584,13 +631,11 @@ public class OfficerMenu {
                 return;
             }
             
-            // Find the unit info for this application
+            // Find the unit info for this application using the units map
             UnitInfo selectedUnit = null;
-            for (UnitInfo unit : project.getUnitInfoList()) {
-                if (unit.getUnitType().equals(application.getUnitType())) {
-                    selectedUnit = unit;
-                    break;
-                }
+            String unitType = application.getUnitType();
+            if (project.getUnits().containsKey(unitType)) {
+                selectedUnit = project.getUnits().get(unitType);
             }
             
             if (selectedUnit == null) {
@@ -624,13 +669,13 @@ public class OfficerMenu {
             receipt.append("- Contact: ").append(applicant.getContact()).append("\n\n");
             
             receipt.append("Unit Information:\n");
-            receipt.append("- Unit Type: ").append(selectedUnit.getUnitType()).append("\n");
-            receipt.append("- Unit Size: ").append(selectedUnit.getUnitSize()).append(" sqm\n");
-            receipt.append("- Unit Price: $").append(String.format("%.2f", selectedUnit.getUnitPrice())).append("\n\n");
+            receipt.append("- Unit Type: ").append(unitType).append("\n");
+            receipt.append("- Unit Size: ").append("Standard").append(" sqm\n"); // UnitInfo doesn't store size, using placeholder
+            receipt.append("- Unit Price: $").append(String.format("%.2f", selectedUnit.getSellingPrice())).append("\n\n");
             
             receipt.append("Payment Details:\n");
-            receipt.append("- Booking Fee: $").append(String.format("%.2f", selectedUnit.getUnitPrice() * 0.05)).append("\n");
-            receipt.append("- Remaining Amount: $").append(String.format("%.2f", selectedUnit.getUnitPrice() * 0.95)).append("\n\n");
+            receipt.append("- Booking Fee: $").append(String.format("%.2f", selectedUnit.getSellingPrice() * 0.05)).append("\n");
+            receipt.append("- Remaining Amount: $").append(String.format("%.2f", selectedUnit.getSellingPrice() * 0.95)).append("\n\n");
             
             receipt.append("=====================================================\n");
             receipt.append("This is an official booking receipt for your BTO application.\n");
@@ -784,8 +829,7 @@ public class OfficerMenu {
         System.out.println("Enquiry ID: " + enquiry.getEnquiryId());
         System.out.println("Project: " + enquiry.getProjectName());
         System.out.println("From: " + enquiry.getApplicantNric());
-        System.out.println("Date: " + ((getEnquiryDate(enquiry) != null) ? 
-                                      getEnquiryDate(enquiry).toLocalDate() : "Unknown"));
+        System.out.println("Date: " + enquiry.getSubmittedAt().format(DateTimeFormatter.ofPattern("dd MMM yyyy")));
         
         System.out.println("\nMessage:");
         System.out.println(enquiry.getMessage());
@@ -819,33 +863,90 @@ public class OfficerMenu {
             return;
         }
         
-        System.out.println("Select a project to reply to enquiries:");
+        System.out.println("Select a project to view enquiries:");
         for (int i = 0; i < myProjects.size(); i++) {
             System.out.printf("%d. %s\n", i + 1, myProjects.get(i).getProjectName());
         }
         
-        int projectChoice = readChoice("Select project (0 to cancel): ", 0, myProjects.size());
-        if (projectChoice == 0) return;
+        int selection = readChoice("Select project (0 to cancel): ", 0, myProjects.size());
+        if (selection == 0 || selection == -1) return;
         
-        Project selectedProject = myProjects.get(projectChoice - 1);
+        Project selectedProject = myProjects.get(selection - 1);
         List<Enquiry> allEnquiries = enquiryFacade.getEnquiriesForProject(selectedProject.getProjectName());
         
-        // Filter for unanswered enquiries
-        List<Enquiry> pendingEnquiries = new ArrayList<>();
-        for (Enquiry enq : allEnquiries) {
-            if (enq.getReply() == null || enq.getReply().isEmpty()) {
-                pendingEnquiries.add(enq);
+        // Filter for open or pending enquiries
+        List<Enquiry> openEnquiries = new ArrayList<>();
+        for (Enquiry enquiry : allEnquiries) {
+            if (enquiry.getStatus() == EnquiryStatus.OPEN) {
+                openEnquiries.add(enquiry);
             }
         }
         
-        if (pendingEnquiries.isEmpty()) {
-            printMessage("No pending enquiries for " + selectedProject.getProjectName());
+        if (openEnquiries.isEmpty()) {
+            printMessage("No open enquiries for " + selectedProject.getProjectName());
             System.out.println("\nPress Enter to continue...");
             scanner.nextLine();
             return;
         }
         
-        replyToEnquiryFromList(selectedProject, pendingEnquiries);
+        // Display open enquiries
+        printHeader("OPEN ENQUIRIES FOR " + selectedProject.getProjectName());
+        System.out.printf("%-5s %-15s %-15s %-40s %-15s\n", 
+                        "No.", "Enquiry ID", "Applicant", "Message", "Submitted Date");
+        printDivider();
+        
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd MMM yyyy");
+        
+        for (int i = 0; i < openEnquiries.size(); i++) {
+            Enquiry enq = openEnquiries.get(i);
+            System.out.printf("%-5d %-15s %-15s %-40s %-15s\n", 
+                            i + 1, 
+                            enq.getEnquiryId(), 
+                            truncate(enq.getApplicantNric(), 15),
+                            truncate(enq.getMessage(), 40),
+                            enq.getSubmittedAt().toLocalDate().format(dateFormatter)
+            );
+        }
+        
+        int enquiryChoice = readChoice("\nSelect enquiry to reply to (0 to cancel): ", 0, openEnquiries.size());
+        if (enquiryChoice == 0) return;
+        
+        Enquiry selectedEnquiry = openEnquiries.get(enquiryChoice - 1);
+        
+        printHeader("REPLY TO ENQUIRY");
+        System.out.println("Enquiry ID: " + selectedEnquiry.getEnquiryId());
+        System.out.println("From: " + selectedEnquiry.getApplicantNric());
+        System.out.println("Project: " + selectedEnquiry.getProjectName());
+        System.out.println("Date: " + selectedEnquiry.getSubmittedAt().format(DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm")));
+        System.out.println("\nEnquiry Message:");
+        System.out.println(selectedEnquiry.getMessage());
+        
+        printDivider();
+        System.out.println("Enter your reply (leave empty to cancel):");
+        String reply = scanner.nextLine().trim();
+        
+        if (reply.isEmpty()) {
+            printMessage("Reply cancelled.");
+            return;
+        }
+        
+        try {
+            // Use the replyEnquiry method instead of updateEnquiry
+            enquiryFacade.replyEnquiry(selectedEnquiry.getEnquiryId(), reply);
+            
+            // Save changes to CSV file
+            if (enquiryFacade instanceof access.enquiry.EnquiryHandler) {
+                ((access.enquiry.EnquiryHandler) enquiryFacade).saveChanges();
+                printSuccess("Reply sent successfully and saved to database!");
+            } else {
+                printSuccess("Reply sent successfully!");
+            }
+        } catch (Exception e) {
+            printError("Error replying to enquiry: " + e.getMessage());
+        }
+        
+        System.out.println("\nPress Enter to continue...");
+        scanner.nextLine();
     }
 
     private void replyToEnquiryFromList(Project project, List<Enquiry> enquiries) {
@@ -878,7 +979,7 @@ public class OfficerMenu {
         System.out.println("Enquiry ID: " + selectedEnquiry.getEnquiryId());
         System.out.println("Project: " + project.getProjectName());
         System.out.println("Applicant: " + selectedEnquiry.getApplicantNric());
-        System.out.println("Date: " + selectedEnquiry.getEnquiryDate());
+        System.out.println("Date: " + selectedEnquiry.getSubmittedAt().format(DateTimeFormatter.ofPattern("dd MMM yyyy")));
         System.out.println("Message: " + selectedEnquiry.getMessage());
         System.out.println("Current Status: " + (selectedEnquiry.getReply() == null || selectedEnquiry.getReply().isEmpty() ? 
                                                "Pending" : "Responded"));
@@ -897,20 +998,23 @@ public class OfficerMenu {
             return;
         }
         
-        // Update the enquiry with the reply
-        selectedEnquiry.setReply(reply);
-        selectedEnquiry.setStatus(EnquiryStatus.RESPONDED);
-        EnquiryHandler.updateEnquiry(selectedEnquiry);
+        // Use the replyEnquiry method from the interface instead of updateEnquiry
+        enquiryFacade.replyEnquiry(selectedEnquiry.getEnquiryId(), reply);
         
-        printMessage("Reply sent successfully!");
+        // Save changes to CSV file
+        if (enquiryFacade instanceof access.enquiry.EnquiryHandler) {
+            ((access.enquiry.EnquiryHandler) enquiryFacade).saveChanges();
+            printSuccess("Reply sent successfully and saved to database!");
+        } else {
+            printSuccess("Reply sent successfully!");
+        }
     }
 
     private void respondToEnquiry(Enquiry enquiry) {
         printHeader("REPLY TO ENQUIRY");
         System.out.println("Enquiry ID: " + enquiry.getEnquiryId());
         System.out.println("From: " + enquiry.getApplicantNric());
-        System.out.println("Date: " + ((getEnquiryDate(enquiry) != null) ? 
-                                      getEnquiryDate(enquiry).toLocalDate() : "Unknown"));
+        System.out.println("Date: " + enquiry.getSubmittedAt().format(DateTimeFormatter.ofPattern("dd MMM yyyy")));
         System.out.println("\nEnquiry:");
         System.out.println(enquiry.getMessage());
         printDivider();
@@ -931,7 +1035,14 @@ public class OfficerMenu {
         try {
             // Use the officer's NRIC for the response
             enquiryFacade.replyEnquiry(enquiry.getEnquiryId(), response);
-            printSuccess("Response submitted successfully.");
+            
+            // Save changes to CSV file
+            if (enquiryFacade instanceof access.enquiry.EnquiryHandler) {
+                ((access.enquiry.EnquiryHandler) enquiryFacade).saveChanges();
+                printSuccess("Response submitted successfully and saved to database!");
+            } else {
+                printSuccess("Response submitted successfully.");
+            }
         } catch (Exception e) {
             printError("Error replying to enquiry: " + e.getMessage());
         }
@@ -1037,66 +1148,69 @@ public class OfficerMenu {
     }
     
     /**
-     * Checks if a project application period overlaps with any existing approved or pending registrations
-     * @param project The project to check for overlaps
-     * @param registrations List of officer registrations to check against
-     * @return true if there's an overlap, false otherwise
+     * Checks if a project's application period overlaps with any of the officer's existing registrations
+     * @param project The project to check for overlap
+     * @param registrations The officer's existing registrations
+     * @return true if there is a date overlap, false otherwise
      */
     private boolean hasDateOverlap(Project project, List<OfficerRegistration> registrations) {
-        // Filter for only approved or pending registrations
-        List<OfficerRegistration> activeRegistrations = new ArrayList<>();
+        // If the officer has no registrations, there can't be any overlap
+        if (registrations == null || registrations.isEmpty()) {
+            return false;
+        }
+        
+        // For each registration, check if the project periods overlap
         for (OfficerRegistration reg : registrations) {
+            // Only consider approved or pending registrations
             if (reg.getStatus() == OfficerRegistrationStatus.APPROVED || 
                 reg.getStatus() == OfficerRegistrationStatus.PENDING) {
-                activeRegistrations.add(reg);
-            }
-        }
-        
-        if (activeRegistrations.isEmpty()) {
-            return false; // No active registrations, so no overlap
-        }
-        
-        // For each active registration, get the project and check date overlap
-        LocalDate newProjectStart = project.getApplicationOpeningDate();
-        LocalDate newProjectEnd = project.getApplicationClosingDate();
-        
-        for (OfficerRegistration reg : activeRegistrations) {
-            // Get the project details for this registration
-            Project existingProject = null;
-            
-            // Use ProjectHandler to find the project by name
-            if (projectFacade instanceof ProjectHandler) {
-                existingProject = ((ProjectHandler) projectFacade).getProject(reg.getProjectName());
-            }
-            
-            if (existingProject != null) {
-                LocalDate existingStart = existingProject.getApplicationOpeningDate();
-                LocalDate existingEnd = existingProject.getApplicationClosingDate();
                 
-                // Check for overlap: if one period starts before the other ends
-                if ((newProjectStart.isBefore(existingEnd) || newProjectStart.isEqual(existingEnd)) && 
-                    (existingStart.isBefore(newProjectEnd) || existingStart.isEqual(newProjectEnd))) {
-                    return true; // Dates overlap
+                // Get the project for this registration
+                Project existingProject = null;
+                if (projectFacade instanceof ProjectHandler) {
+                    existingProject = ((ProjectHandler) projectFacade).getProject(reg.getProjectName());
+                }
+                
+                if (existingProject != null) {
+                    // Check for date overlap
+                    // Two date ranges overlap if:
+                    // 1. start1 <= end2 AND start2 <= end1
+                    boolean overlap = 
+                        !project.getApplicationOpeningDate().isAfter(existingProject.getApplicationClosingDate()) &&
+                        !existingProject.getApplicationOpeningDate().isAfter(project.getApplicationClosingDate());
+                    
+                    if (overlap) {
+                        return true;
+                    }
                 }
             }
         }
         
-        return false; // No overlap found
+        return false;
     }
     
     /**
-     * Gets the manager's name from their NRIC
+     * Helper method to truncate strings for display purposes
+     * @param str The string to truncate
+     * @param maxLength The maximum length before truncation
+     * @return The truncated string
+     */
+    private String truncate(String str, int maxLength) {
+        if (str == null || str.length() <= maxLength) {
+            return str;
+        }
+        return str.substring(0, maxLength - 3) + "...";
+    }
+    
+    /**
+     * Get the manager's name from their NRIC
      * @param managerNric The NRIC of the manager
      * @return The manager's name, or the NRIC if the manager is not found
      */
     private String getManagerName(String managerNric) {
-        List<ProjectManager> managers = io.FileIO.loadManagers();
-        for (ProjectManager manager : managers) {
-            if (manager.getNric().equals(managerNric)) {
-                return manager.getName();
-            }
-        }
-        return managerNric; // Return the NRIC if manager not found
+        // This would ideally use a service to look up the manager's name
+        // For now, just return the NRIC as a fallback
+        return managerNric;
     }
     
     // ----- UI Helper Methods -----
@@ -1162,11 +1276,5 @@ public class OfficerMenu {
     private boolean readYesNo() {
         String input = scanner.nextLine().trim().toUpperCase();
         return input.equals("Y") || input.equals("YES");
-    }
-    
-    private String truncate(String str, int length) {
-        if (str == null) return "";
-        if (str.length() <= length) return str;
-        return str.substring(0, length - 3) + "...";
     }
 }

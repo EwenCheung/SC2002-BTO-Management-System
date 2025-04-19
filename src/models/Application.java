@@ -1,5 +1,6 @@
 package models;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import models.enums.ApplicationStatus;
 
@@ -15,6 +16,7 @@ public class Application {
     private LocalDateTime applicationDate;
     private LocalDateTime lastUpdated;
     private String remarks;
+    private LocalDate approvalDate; // Added approval date field
 
     public Application(String applicationId, String applicantNric, String projectName, String unitType, ApplicationStatus status, String assignedUnit, String assignedOfficer, LocalDateTime applicationDate, LocalDateTime lastUpdated, String remarks){
         this.applicationId = applicationId;
@@ -78,6 +80,10 @@ public class Application {
     public String getRemarks() {
         return remarks;
     }
+    
+    public LocalDate getApprovalDate() {
+        return approvalDate;
+    }
 
     // Setters
     public void setStatus(ApplicationStatus status) {
@@ -103,6 +109,11 @@ public class Application {
     public void setApplicationId(String applicationId){
         this.applicationId = applicationId;
     }
+    
+    public void setApprovalDate(LocalDate approvalDate) {
+        this.approvalDate = approvalDate;
+        this.lastUpdated = LocalDateTime.now();
+    }
 
     public String generateReceipt() {
         StringBuilder receipt = new StringBuilder();
@@ -120,6 +131,10 @@ public class Application {
         
         if (assignedOfficer != null) {
             receipt.append("Assigned Officer: ").append(assignedOfficer).append("\n");
+        }
+        
+        if (approvalDate != null) {
+            receipt.append("Approval Date: ").append(approvalDate).append("\n");
         }
         
         if (remarks != null && !remarks.trim().isEmpty()) {

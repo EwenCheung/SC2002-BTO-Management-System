@@ -11,6 +11,7 @@ public class Enquiry {
     private String applicantNric;
     private String projectName;
     private String enquiryText;
+    private EnquiryStatus status;
     
     // New structure for multiple replies
     private List<Reply> replies;
@@ -61,6 +62,7 @@ public class Enquiry {
         this.submittedAt = submittedAt;
         this.respondentNric = respondentNric;
         this.repliedAt = repliedAt;
+        this.status = (responseText != null && !responseText.isEmpty() && !responseText.equals("No reply yet")) ? EnquiryStatus.CLOSE : EnquiryStatus.OPEN;
         
         // Initialize replies list
         this.replies = new ArrayList<>();
@@ -77,6 +79,7 @@ public class Enquiry {
         this.enquiryText = enquiryText;
         this.submittedAt = LocalDateTime.now();
         this.replies = new ArrayList<>();
+        this.status = EnquiryStatus.OPEN;
     }
     
     public String getEnquiryId(){
@@ -159,6 +162,7 @@ public class Enquiry {
     public void setReply(String reply){ //for administrator reply
         this.responseText = reply;
         this.repliedAt = LocalDateTime.now();
+        this.status = EnquiryStatus.CLOSE;
         
         // Also add to the replies list for the new implementation
         addReply(reply, respondentNric);
@@ -192,6 +196,14 @@ public class Enquiry {
 
     public void setEnquiryId(String enquiryId){
         this.enquiryId = enquiryId;
+    }
+
+    public EnquiryStatus getStatus() {
+        return status;
+    }
+    
+    public void setStatus(EnquiryStatus status) {
+        this.status = status;
     }
 
     @Override

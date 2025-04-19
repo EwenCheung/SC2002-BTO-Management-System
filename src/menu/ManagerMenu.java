@@ -78,23 +78,22 @@ public class ManagerMenu {
             
             System.out.println("\n=== Officer Management ===");
             System.out.println("7. View Officer Registrations");
-            System.out.println("8. Process Officer Registration");
             
             System.out.println("\n=== Application Management ===");
-            System.out.println("9. Process BTO Applications");
-            System.out.println("10. Process Withdrawal Requests");
+            System.out.println("8. Process BTO Applications");
+            System.out.println("9. Process Withdrawal Requests");
             
             System.out.println("\n=== Reports & Enquiries ===");
-            System.out.println("11. Generate Reports");
-            System.out.println("12. View All Project Enquiries");
-            System.out.println("13. View and Reply My Project Enquiries");
+            System.out.println("10. Generate Reports");
+            System.out.println("11. View All Project Enquiries");
+            System.out.println("12. View and Reply My Project Enquiries");
             
             System.out.println("\n=== System ===");
-            System.out.println("14. Change Password");
-            System.out.println("15. Logout");
+            System.out.println("13. Change Password");
+            System.out.println("14. Logout");
             printDivider();
             
-            int choice = readChoice("Enter your choice: ", 1, 15);
+            int choice = readChoice("Enter your choice: ", 1, 14);
             
             switch (choice) {
                 case 1: createProject(); break;
@@ -104,14 +103,13 @@ public class ManagerMenu {
                 case 5: viewMyProjects(); break;
                 case 6: toggleProjectVisibility(); break;
                 case 7: viewOfficerRegistrations(); break;
-                case 8: processOfficerRegistration(); break;
-                case 9: processBTOApplications(); break;
-                case 10: processWithdrawalRequests(); break;
-                case 11: generateReports(); break;
-                case 12: viewAllEnquiries(); break;
-                case 13: replyToEnquiries(); break;
-                case 14: changePassword(); break;
-                case 15:
+                case 8: processBTOApplications(); break;
+                case 9: processWithdrawalRequests(); break;
+                case 10: generateReports(); break;
+                case 11: viewAllEnquiries(); break;
+                case 12: replyToEnquiries(); break;
+                case 13: changePassword(); break;
+                case 14:
                     printMessage("Logging out...");
                     return;
                 default:
@@ -934,99 +932,140 @@ public class ManagerMenu {
     
     // --- Officer Management ---
     private void viewOfficerRegistrations() {
-        printHeader("View Officer Registrations");
-        List<OfficerRegistration> regs = officerRegFacade.getAllOfficerRegistrations();
-        if (regs.isEmpty()) {
-            printError("No officer registrations found.");
-        } else {
-            for (OfficerRegistration reg : regs) {
-                System.out.println("\n" + reg.toString());
+        while (true) {
+            printHeader("View Officer Registrations");
+            List<OfficerRegistration> regs = officerRegFacade.getAllOfficerRegistrations();
+            
+            // Filter for registrations for this manager's projects
+            List<Project> myProjects = getMyProjects();
+            List<String> myProjectNames = new ArrayList<>();
+            for (Project project : myProjects) {
+                myProjectNames.add(project.getProjectName());
             }
+            
+            List<OfficerRegistration> myRegs = new ArrayList<>();
+            for (OfficerRegistration reg : regs) {
+                if (myProjectNames.contains(reg.getProjectName())) {
+                    myRegs.add(reg);
+                }
+            }
+            
+            if (myRegs.isEmpty()) {
+                printError("No officer registrations found for your projects.");
+                return;
+            }
+            
+            // Display registrations in a table format
+            System.out.printf("%-4s %-20s %-15s %-25s %-15s %-15s%n", 
+                             "No.", "Registration ID", "Officer NRIC", "Project", "Status", "Date");
+            printDivider();
+            
+            int i = 1;
+            for (OfficerRegistration reg : myRegs) {
+                System.out.printf("%-4d %-20s %-15s %-25s %-15s %-15s%n", 
+                                i++, 
+                                truncate(reg.getRegistrationId(), 20),
+                                reg.getOfficerNric(),
+                                truncate(reg.getProjectName(), 25),
+                                reg.getStatus().toString(),
+                                reg.getRegistrationDate().toLocalDate());
+            }
+            
+            // User selection options
+            System.out.println("\nSelect a registration to view details (0 to return): ");
+            int choice = readChoice("", 0, myRegs.size());
+            
+            if (choice == 0) {
+                return;
+            }
+            
+            // View and potentially process the selected registration
+            OfficerRegistration selectedReg = myRegs.get(choice - 1);
+            processRegistrationDetails(selectedReg);
         }
     }
     
-    private void processOfficerRegistration() {
-        printHeader("PROCESS OFFICER REGISTRATION");
-        
-        // Get all pending registrations
-        List<OfficerRegistration> regs = officerRegFacade.getAllOfficerRegistrations();
-        List<OfficerRegistration> pendingRegs = new ArrayList<>();
-        
-        for (OfficerRegistration reg : regs) {
-            if (reg.getStatus().toString().equalsIgnoreCase("PENDING")) {
-                pendingRegs.add(reg);
-            }
-        }
-        
-        if (pendingRegs.isEmpty()) {
-            printMessage("No pending officer registrations to process.");
-            return;
-        }
-        
-        // Display pending registrations in a tabular format
-        System.out.printf("%-4s %-15s %-15s %-25s %-15s%n", 
-                         "No.", "Registration ID", "Officer NRIC", "Project", "Date");
-        printDivider();
-        
-        int i = 1;
-        for (OfficerRegistration reg : pendingRegs) {
-            System.out.printf("%-4d %-15s %-15s %-25s %-15s%n", 
-                             i++, 
-                             truncate(reg.getRegistrationId(), 15),
-                             reg.getOfficerNric(),
-                             truncate(reg.getProjectName(), 25),
-                             reg.getRegistrationDate().toLocalDate());
-        }
-        
-        // Let the manager select a registration to process
-        int choice = readChoice("Select registration to process (0 to cancel): ", 0, pendingRegs.size());
-        if (choice == 0) return;
-        
-        OfficerRegistration selectedReg = pendingRegs.get(choice - 1);
-        
-        // Get project details to show available slots
-        Project project = projectFacade.getProject(selectedReg.getProjectName());
-        if (project == null) {
-            printError("Error: Project not found.");
-            return;
-        }
-        
-        // Display registration details with project info for better decision making
-        printHeader("REGISTRATION DETAILS");
-        System.out.println("Registration ID: " + selectedReg.getRegistrationId());
-        System.out.println("Officer NRIC: " + selectedReg.getOfficerNric());
-        System.out.println("Project: " + selectedReg.getProjectName());
-        System.out.println("Registration Date: " + selectedReg.getRegistrationDate().toLocalDate());
-        System.out.println("\nProject Officer Slots: " + project.getOfficers().size() + "/" + project.getOfficerSlot());
-        
-        // Check if the project has available slots
-        if (project.getOfficers().size() >= project.getOfficerSlot()) {
-            printError("WARNING: This project has no available officer slots.");
-            if (!readYesNo("Do you still want to approve this registration? (Y/N): ")) {
-                officerRegFacade.rejectRegistration(selectedReg.getRegistrationId());
-                printSuccess("Registration rejected (no available slots).");
+    private void processRegistrationDetails(OfficerRegistration registration) {
+        while (true) {
+            printHeader("Officer Registration Details");
+            
+            // Display detailed information
+            System.out.println("Registration ID: " + registration.getRegistrationId());
+            System.out.println("Officer NRIC: " + registration.getOfficerNric());
+            System.out.println("Project: " + registration.getProjectName());
+            System.out.println("Status: " + registration.getStatus());
+            System.out.println("Registration Date: " + registration.getRegistrationDate().toLocalDate());
+            
+            // Get project details to show available slots
+            Project project = projectFacade.getProject(registration.getProjectName());
+            if (project == null) {
+                printError("Error: Project not found.");
                 return;
             }
-        }
-        
-        // Ask manager for decision
-        if (readYesNo("Approve this registration? (Y/N): ")) {
-            // Approve registration
-            officerRegFacade.approveRegistration(selectedReg.getRegistrationId());
             
-            // Update project with new officer
-            project.addOfficer(selectedReg.getOfficerNric());
-            projectFacade.updateProject(project);
+            System.out.println("\nProject Officer Slots: " + project.getOfficers().size() + "/" + project.getOfficerSlot());
             
-            printSuccess("Registration approved and officer assigned successfully.");
-        } else {
-            // Get reason for rejection
-            String reason = readString("Enter reason for rejection (optional): ");
-            
-            // Reject registration
-            officerRegFacade.rejectRegistration(selectedReg.getRegistrationId());
-            
-            printSuccess("Registration rejected successfully.");
+            // Only show process options if status is PENDING
+            if (registration.getStatus().toString().equalsIgnoreCase("PENDING")) {
+                printDivider();
+                System.out.println("1. Approve Registration");
+                System.out.println("2. Reject Registration");
+                System.out.println("Enter 0 to Go Back");
+                
+                int choice = readChoice("Enter your choice: ", 0, 2);
+                
+                if (choice == 0) {
+                    return;
+                } else if (choice == 1) {
+                    // Check if the project has available slots
+                    if (project.getOfficers().size() >= project.getOfficerSlot()) {
+                        printError("WARNING: This project has no available officer slots.");
+                        if (!readYesNo("Do you still want to approve this registration? (Y/N): ")) {
+                            continue;
+                        }
+                    }
+                    
+                    // Approve registration
+                    officerRegFacade.approveRegistration(registration.getRegistrationId());
+                    
+                    // Save the registration changes to CSV
+                    if (officerRegFacade instanceof access.officerregistration.OfficerRegistrationHandler) {
+                        ((access.officerregistration.OfficerRegistrationHandler) officerRegFacade).saveChanges();
+                    }
+                    
+                    // Update project with new officer
+                    project.addOfficer(registration.getOfficerNric());
+                    projectFacade.updateProject(project);
+                    saveProjectChanges();
+                    
+                    printSuccess("Registration approved successfully.");
+                    System.out.println("Enter 0 to Go Back");
+                    readChoice("", 0, 0);
+                    return;
+                } else if (choice == 2) {
+                    // Get reason for rejection (optional)
+                    String reason = readString("Enter reason for rejection (optional): ");
+                    
+                    // Reject registration
+                    officerRegFacade.rejectRegistration(registration.getRegistrationId());
+                    
+                    // Save the registration changes to CSV
+                    if (officerRegFacade instanceof access.officerregistration.OfficerRegistrationHandler) {
+                        ((access.officerregistration.OfficerRegistrationHandler) officerRegFacade).saveChanges();
+                    }
+                    
+                    printSuccess("Registration rejected successfully.");
+                    System.out.println("Enter 0 to Go Back");
+                    readChoice("", 0, 0);
+                    return;
+                }
+            } else {
+                // If already processed, just show return option
+                printDivider();
+                System.out.println("Enter 0 to Go Back");
+                readChoice("", 0, 0);
+                return;
+            }
         }
     }
     
@@ -1088,6 +1127,8 @@ public class ManagerMenu {
             
             if (pendingApplications.isEmpty()) {
                 printMessage("No pending applications for this project.");
+                System.out.println("\nEnter 0 to go back: ");
+                readChoice("", 0, 0);
                 return;
             }
             
@@ -1138,6 +1179,7 @@ public class ManagerMenu {
         int availableUnits = project.getAvailableUnits(unitType);
         
         System.out.println("Application ID: " + application.getApplicationId());
+        System.out.println("Project: " + application.getProjectName());
         System.out.println("Applicant NRIC: " + application.getApplicantNric());
         
         if (applicant != null) {
@@ -1149,7 +1191,19 @@ public class ManagerMenu {
         System.out.println("Unit Type: " + unitType);
         System.out.println("Available Units: " + availableUnits);
         System.out.println("Application Date: " + application.getApplicationDate().toLocalDate());
+        System.out.println("Current Status: " + application.getStatus());
         printDivider();
+        
+        // Check if application already has a final status
+        String remarks = application.getRemarks();
+        if (remarks != null && (remarks.startsWith("SUCCESSFUL") || remarks.startsWith("UNSUCCESSFUL"))) {
+            System.out.println("This application has already been " + 
+                              (remarks.startsWith("SUCCESSFUL") ? "successful" : "unsuccessful") + ".");
+            
+            System.out.println("\nPress Enter to continue...");
+            scanner.nextLine();
+            return;
+        }
         
         if (availableUnits <= 0) {
             System.out.println("WARNING: No available units of type " + unitType);
