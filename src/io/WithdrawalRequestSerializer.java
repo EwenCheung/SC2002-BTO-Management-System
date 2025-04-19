@@ -3,6 +3,7 @@ package io;
 import java.time.format.DateTimeFormatter;
 
 import models.WithdrawalRequest;
+import utils.FileUtils;
 import static utils.Constants.DELIMITER;
 import static utils.Constants.DATE_TIME_FORMAT;
 
@@ -25,7 +26,7 @@ public class WithdrawalRequestSerializer {
           .append(request.getStatus()).append(DELIMITER)
           .append(request.getRequestDate() != null ? DATE_TIME_FORMATTER.format(request.getRequestDate()) : "").append(DELIMITER)
           .append(request.getProcessDate() != null ? DATE_TIME_FORMATTER.format(request.getProcessDate()) : "").append(DELIMITER)
-          .append(request.getRemarks() != null ? request.getRemarks() : "");
+          .append(request.getRemarks() != null ? FileUtils.escapeCsvField(request.getRemarks()) : "");
         return sb.toString();
     }
 }

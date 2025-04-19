@@ -848,8 +848,8 @@ public class ManagerMenu {
         for (Application app : applications) {
             String status = app.getStatus().toString();
             if (status.equalsIgnoreCase("PENDING")) pendingApps++;
-            else if (status.equalsIgnoreCase("APPROVED")) approvedApps++;
-            else if (status.equalsIgnoreCase("REJECTED")) rejectedApps++;
+            else if (status.equalsIgnoreCase("SUCCESSFUL")) approvedApps++;
+            else if (status.equalsIgnoreCase("UNSUCCESSFUL")) rejectedApps++;
             else if (status.equalsIgnoreCase("BOOKED")) bookedApps++;
             else if (status.equalsIgnoreCase("WITHDRAWN")) withdrawnApps++;
         }
@@ -1224,8 +1224,8 @@ public class ManagerMenu {
                 }
             }
             
-            // Create a special ApplicationStatus for SUCCESSFUL (using APPROVED internally)
-            application.setStatus(ApplicationStatus.APPROVED);
+            // Create a special ApplicationStatus for SUCCESSFUL
+            application.setStatus(ApplicationStatus.SUCCESSFUL);
             application.setRemarks("SUCCESSFUL");
             
             // Generate a unit number
@@ -1250,8 +1250,8 @@ public class ManagerMenu {
             // Reject application
             String reason = readString("Enter rejection reason: ");
             
-            // Set to REJECTED internally but display as UNSUCCESSFUL
-            application.setStatus(ApplicationStatus.REJECTED);
+            // Set to UNSUCCESSFUL internally but display as UNSUCCESSFUL
+            application.setStatus(ApplicationStatus.UNSUCCESSFUL);
             application.setRemarks("UNSUCCESSFUL: " + reason);
             
             // Save the application changes
@@ -1356,14 +1356,14 @@ public class ManagerMenu {
                 selectedWithdrawal.setProcessDate(LocalDateTime.now());
                 
                 // Update the application status based on its current state
-                boolean wasSuccessful = application.getStatus() == ApplicationStatus.APPROVED || 
+                boolean wasSuccessful = application.getStatus() == ApplicationStatus.SUCCESSFUL || 
                                         application.getStatus() == ApplicationStatus.BOOKED;
                 
                 // Mark as WITHDRAWN in system and "Unsuccessful" in the remarks
                 application.setStatus(ApplicationStatus.WITHDRAWN);
                 application.setRemarks("Application unsuccessful - Withdrawal approved by manager: " + projectManager.getName());
                 
-                // If the application was previously approved/booked, return the unit to available pool
+                // If the application was previously successful/booked, return the unit to available pool
                 if (wasSuccessful) {
                     String unitType = application.getUnitType();
                     project.incrementAvailableUnits(unitType);
@@ -1601,11 +1601,11 @@ public class ManagerMenu {
                     threeRoomApplications++;
                 }
                 
-                if (app.getStatus() == ApplicationStatus.APPROVED || app.getStatus() == ApplicationStatus.BOOKED) {
+                if (app.getStatus() == ApplicationStatus.SUCCESSFUL || app.getStatus() == ApplicationStatus.BOOKED) {
                     approvedApplications++;
                 } else if (app.getStatus() == ApplicationStatus.PENDING) {
                     pendingApplications++;
-                } else if (app.getStatus() == ApplicationStatus.REJECTED) {
+                } else if (app.getStatus() == ApplicationStatus.UNSUCCESSFUL) {
                     rejectedApplications++;
                 }
             }
@@ -1739,11 +1739,11 @@ public class ManagerMenu {
                 threeRoomApplications++;
             }
             
-            if (app.getStatus() == ApplicationStatus.APPROVED || app.getStatus() == ApplicationStatus.BOOKED) {
+            if (app.getStatus() == ApplicationStatus.SUCCESSFUL || app.getStatus() == ApplicationStatus.BOOKED) {
                 approvedApplications++;
             } else if (app.getStatus() == ApplicationStatus.PENDING) {
                 pendingApplications++;
-            } else if (app.getStatus() == ApplicationStatus.REJECTED) {
+            } else if (app.getStatus() == ApplicationStatus.UNSUCCESSFUL) {
                 rejectedApplications++;
             }
         }

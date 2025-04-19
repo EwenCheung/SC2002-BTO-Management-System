@@ -3,6 +3,7 @@ package io;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import models.Enquiry;
+import utils.FileUtils;
 import static utils.Constants.DATE_TIME_FORMAT;
 
 public class EnquiryFactory {
@@ -24,10 +25,10 @@ public class EnquiryFactory {
         String enquiryId = tokens[0];
         String nric = tokens[1];
         String projectName = tokens[2];
-        String enquiryText = tokens[3];
+        String enquiryText = FileUtils.unescapeCsvField(tokens[3]);
         
         // Handle optional fields safely
-        String responseText = (tokens.length > 4 && !tokens[4].isEmpty()) ? tokens[4] : null;
+        String responseText = (tokens.length > 4 && !tokens[4].isEmpty()) ? FileUtils.unescapeCsvField(tokens[4]) : null;
         LocalDateTime timestamp = (tokens.length > 5 && !tokens[5].isEmpty()) ? LocalDateTime.parse(tokens[5], DATE_FORMATTER) : LocalDateTime.now();
         String respondentNric = (tokens.length > 6 && !tokens[6].isEmpty()) ? tokens[6] : null;
         LocalDateTime responseDate = (tokens.length > 7 && !tokens[7].isEmpty()) ? LocalDateTime.parse(tokens[7], DATE_FORMATTER) : null;

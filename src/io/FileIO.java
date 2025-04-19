@@ -146,7 +146,8 @@ public class FileIO {
         
         for (Applicant user : applicants) {
             String serialized = UserSerializer.serializeApplicant(user);
-            String[] tokens = serialized.split(Constants.DELIMITER_REGEX);
+            // Use parseCsvLine instead of split to properly handle quoted fields with commas
+            String[] tokens = FileUtils.parseCsvLine(serialized);
             data.add(tokens);
         }
         saveRaw(Constants.APPLICANT_FILE, data);
@@ -159,7 +160,8 @@ public class FileIO {
         
         for (HDBOfficer user : officers) {
             String serialized = UserSerializer.serializeOfficer(user);
-            String[] tokens = serialized.split(Constants.DELIMITER_REGEX);
+            // Use parseCsvLine instead of split to properly handle quoted fields with commas
+            String[] tokens = FileUtils.parseCsvLine(serialized);
             data.add(tokens);
         }
         saveRaw(Constants.OFFICER_FILE, data);
@@ -172,7 +174,8 @@ public class FileIO {
         
         for (ProjectManager user : managers) {
             String serialized = UserSerializer.serializeManager(user);
-            String[] tokens = serialized.split(Constants.DELIMITER_REGEX);
+            // Use parseCsvLine instead of split to properly handle quoted fields with commas
+            String[] tokens = FileUtils.parseCsvLine(serialized);
             data.add(tokens);
         }
         saveRaw(Constants.MANAGER_FILE, data);
@@ -185,7 +188,8 @@ public class FileIO {
         
         for (Project project : projects) {
             String serialized = ProjectSerializer.serialize(project);
-            String[] tokens = serialized.split(Constants.DELIMITER_REGEX);
+            // Use parseCsvLine instead of split to properly handle quoted fields with commas
+            String[] tokens = FileUtils.parseCsvLine(serialized);
             data.add(tokens);
         }
         saveRaw(Constants.PROJECT_FILE, data);
@@ -198,7 +202,8 @@ public class FileIO {
         
         for (Application app : applications) {
             String serialized = ApplicationSerializer.serialize(app);
-            String[] tokens = serialized.split(Constants.DELIMITER_REGEX);
+            // Use parseCsvLine instead of simple splitting to handle quoted fields with commas
+            String[] tokens = FileUtils.parseCsvLine(serialized);
             data.add(tokens);
         }
         saveRaw(Constants.APPLICATION_FILE, data);
@@ -211,7 +216,10 @@ public class FileIO {
         
         for (Enquiry enquiry : enquiries) {
             String serialized = EnquirySerializer.serialize(enquiry);
-            String[] tokens = serialized.split(Constants.DELIMITER_REGEX);
+            
+            // Use the parseCsvLine method from FileUtils to correctly parse the CSV line
+            // respecting quotes around fields that contain commas
+            String[] tokens = FileUtils.parseCsvLine(serialized);
             data.add(tokens);
         }
         saveRaw(Constants.ENQUIRY_FILE, data);
@@ -224,7 +232,8 @@ public class FileIO {
         
         for (WithdrawalRequest request : withdrawals) {
             String serialized = WithdrawalRequestSerializer.serialize(request);
-            String[] tokens = serialized.split(Constants.DELIMITER_REGEX);
+            // Use parseCsvLine instead of split to properly handle quotes and commas
+            String[] tokens = FileUtils.parseCsvLine(serialized);
             data.add(tokens);
         }
         saveRaw(Constants.WITHDRAWAL_FILE, data);
@@ -237,7 +246,8 @@ public class FileIO {
         
         for (OfficerRegistration reg : registrations) {
             String serialized = OfficerRegistrationSerializer.serialize(reg);
-            String[] tokens = serialized.split(Constants.DELIMITER_REGEX);
+            // Use parseCsvLine instead of split to properly handle quotes and commas
+            String[] tokens = FileUtils.parseCsvLine(serialized);
             data.add(tokens);
         }
         saveRaw(Constants.OFFICER_REGISTRATION_FILE, data);

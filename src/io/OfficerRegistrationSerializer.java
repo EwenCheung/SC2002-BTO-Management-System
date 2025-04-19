@@ -3,6 +3,7 @@ package io;
 import java.time.format.DateTimeFormatter;
 
 import models.OfficerRegistration;
+import utils.FileUtils;
 import static utils.Constants.DELIMITER;
 import static utils.Constants.DATE_TIME_FORMAT;
 
@@ -20,7 +21,7 @@ public class OfficerRegistrationSerializer {
         StringBuilder sb = new StringBuilder();
         sb.append(registration.getRegistrationId()).append(DELIMITER)
           .append(registration.getOfficerNric()).append(DELIMITER)
-          .append(registration.getProjectName()).append(DELIMITER)
+          .append(FileUtils.escapeCsvField(registration.getProjectName())).append(DELIMITER)
           .append(registration.getStatus()).append(DELIMITER)
           .append(registration.getRegistrationDate() != null ? DATE_FORMATTER.format(registration.getRegistrationDate()) : "");
         return sb.toString();

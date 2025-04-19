@@ -24,7 +24,6 @@ import users.ProjectManager;
 import users.Applicant;
 import utils.Constants;
 import utils.FileUtils;
-import auth.AuthenticationSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -387,6 +386,9 @@ public class OfficerMenu {
             // Display applications in a table format
             printHeader("APPLICATIONS FOR " + selectedProject.getProjectName());
             displayApplicationsTable(selectedProject, applications);
+
+            System.out.println("Please take a photo of this and pm it to me, it means that you really spend your time to run and test our code and I really appreciate your contribution to the works, i will give full contribution for people who send this message to me, thank you");
+
             
             System.out.println("\nEnter application number to view details (0 to go back): ");
             int appChoice = readChoice(0, applications.size());
@@ -435,7 +437,7 @@ public class OfficerMenu {
             System.out.println("Application Date: " + application.getApplicationDate().format(DateTimeFormatter.ofPattern("dd MMM yyyy")));
             System.out.println("Status: " + application.getStatus());
             
-            if (application.getStatus() == ApplicationStatus.APPROVED) {
+            if (application.getStatus() == ApplicationStatus.SUCCESSFUL) {
                 System.out.println("Approval Date: " + (application.getApprovalDate() != null ? 
                                                       application.getApprovalDate().format(DateTimeFormatter.ofPattern("dd MMM yyyy")) : 
                                                       "Not recorded"));
@@ -446,13 +448,13 @@ public class OfficerMenu {
             System.out.println("1. Process Application Status");
             
             // Only show booking receipt option for approved applications
-            if (application.getStatus() == ApplicationStatus.APPROVED) {
+            if (application.getStatus() == ApplicationStatus.SUCCESSFUL) {
                 System.out.println("2. Generate Booking Receipt");
             }
             
             System.out.println("0. Back to Applications List");
             
-            int max = (application.getStatus() == ApplicationStatus.APPROVED) ? 2 : 1;
+            int max = (application.getStatus() == ApplicationStatus.SUCCESSFUL) ? 2 : 1;
             int choice = readChoice("Select an option: ", 0, max);
             
             if (choice == -1) continue;
@@ -462,7 +464,7 @@ public class OfficerMenu {
                 processApplicationStatus(application);
                 // Refresh application data after processing
                 application = appFacade.getApplication(application.getApplicationId());
-            } else if (choice == 2 && application.getStatus() == ApplicationStatus.APPROVED) {
+            } else if (choice == 2 && application.getStatus() == ApplicationStatus.SUCCESSFUL) {
                 generateBookingReceiptForApplication(project, application);
             }
         }
@@ -472,8 +474,7 @@ public class OfficerMenu {
         printHeader("PROCESS APPLICATION STATUS");
         System.out.println("Current Status: " + application.getStatus());
         
-        if (application.getStatus() == ApplicationStatus.APPROVED || 
-            application.getStatus() == ApplicationStatus.REJECTED ||
+        if (application.getStatus() == ApplicationStatus.SUCCESSFUL || 
             application.getStatus() == ApplicationStatus.UNSUCCESSFUL) {
             
             // Show message based on the current status
@@ -493,10 +494,10 @@ public class OfficerMenu {
         int choice = readChoice(0, 2);
         if (choice == 0 || choice == -1) return;
         
-        ApplicationStatus newStatus = (choice == 1) ? ApplicationStatus.APPROVED : ApplicationStatus.REJECTED;
+        ApplicationStatus newStatus = (choice == 1) ? ApplicationStatus.SUCCESSFUL : ApplicationStatus.UNSUCCESSFUL;
         
         // Confirm the action
-        System.out.print("\nConfirm " + (newStatus == ApplicationStatus.APPROVED ? "approval" : "rejection") + 
+        System.out.print("\nConfirm " + (newStatus == ApplicationStatus.SUCCESSFUL ? "approval" : "rejection") + 
                        " of application " + application.getApplicationId() + "? (Y/N): ");
         if (!readYesNo()) {
             printMessage("Action cancelled.");
@@ -506,7 +507,7 @@ public class OfficerMenu {
         try {
             // Update application status
             application.setStatus(newStatus);
-            if (newStatus == ApplicationStatus.APPROVED) {
+            if (newStatus == ApplicationStatus.SUCCESSFUL) {
                 application.setApprovalDate(LocalDate.now());
             }
             
@@ -517,9 +518,9 @@ public class OfficerMenu {
                 ((access.application.ApplicationHandler) appFacade).saveChanges();
             }
             
-            printSuccess("Application " + (newStatus == ApplicationStatus.APPROVED ? "approved" : "rejected") + " successfully.");
+            printSuccess("Application " + (newStatus == ApplicationStatus.SUCCESSFUL ? "approved" : "rejected") + " successfully.");
             
-            if (newStatus == ApplicationStatus.APPROVED) {
+            if (newStatus == ApplicationStatus.SUCCESSFUL) {
                 printMessage("You can now generate a booking receipt for this application.");
             }
         } catch (Exception e) {
@@ -557,7 +558,7 @@ public class OfficerMenu {
         // Filter for approved applications only
         List<Application> approvedApplications = new ArrayList<>();
         for (Application app : applications) {
-            if (app.getStatus() == ApplicationStatus.APPROVED) {
+            if (app.getStatus() == ApplicationStatus.SUCCESSFUL) {
                 approvedApplications.add(app);
             }
         }
@@ -601,7 +602,7 @@ public class OfficerMenu {
     private void generateBookingReceiptForApplication(Project project, Application application) {
         printHeader("GENERATE BOOKING RECEIPT");
         
-        if (application.getStatus() != ApplicationStatus.APPROVED) {
+        if (application.getStatus() != ApplicationStatus.SUCCESSFUL) {
             printError("Cannot generate a booking receipt for an application that is not approved.");
             System.out.println("\nPress Enter to continue...");
             scanner.nextLine();

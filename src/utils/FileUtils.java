@@ -28,8 +28,10 @@ public class FileUtils {
 
     /**
      * Parses a CSV line respecting quoted values that may contain commas
+     * @param line The CSV line to parse
+     * @return Array of string tokens from the CSV line
      */
-    private static String[] parseCsvLine(String line) {
+    public static String[] parseCsvLine(String line) {
         List<String> tokens = new ArrayList<>();
         StringBuilder currentToken = new StringBuilder();
         boolean inQuotes = false;
@@ -125,5 +127,51 @@ public class FileUtils {
             sb.append(c);
         }
         return sb.toString();
+    }
+    
+    /**
+     * Escapes a field value for CSV by wrapping it in quotes if it contains commas or quotes.
+     * Use this method in all serializers to properly handle user input.
+     * 
+     * @param field The field value to escape
+     * @return The escaped field value
+     */
+    public static String escapeCsvField(String field) {
+        if (field == null) {
+            return "";
+        }
+        
+        // If the field contains a comma or quote, escape it
+        if (field.contains(DELIMITER) || field.contains(QUOTE)) {
+            // Replace any quotes with double quotes (CSV standard for escaping quotes)
+            String escapedField = field.replace(QUOTE, QUOTE + QUOTE);
+            // Wrap the field in quotes
+            return QUOTE + escapedField + QUOTE;
+        }
+        
+        return field;
+    }
+    
+    /**
+     * Unescapes a field value from CSV by removing surrounding quotes and converting double quotes back to single quotes.
+     * Use this method in all factories to properly handle fields that might contain commas.
+     * 
+     * @param field The field value to unescape
+     * @return The unescaped field value
+     */
+    public static String unescapeCsvField(String field) {
+        if (field == null || field.isEmpty()) {
+            return field;
+        }
+        
+        // Check if the field is wrapped in quotes
+        if (field.startsWith(QUOTE) && field.endsWith(QUOTE)) {
+            // Remove the surrounding quotes
+            String unquoted = field.substring(1, field.length() - 1);
+            // Convert double quotes to single quotes
+            return unquoted.replace(QUOTE + QUOTE, QUOTE);
+        }
+        
+        return field;
     }
 }

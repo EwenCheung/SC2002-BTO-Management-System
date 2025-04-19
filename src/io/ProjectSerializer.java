@@ -5,6 +5,7 @@ import java.util.Map;
 import models.Project;
 import models.UnitInfo;
 import utils.Constants;
+import utils.FileUtils;
 
 public class ProjectSerializer {  
     // Create a separate formatter for LocalDate objects without time components
@@ -23,8 +24,8 @@ public class ProjectSerializer {
      */
     public static String serialize(Project project) {
         StringBuilder sb = new StringBuilder();
-        sb.append(project.getProjectName()).append(Constants.DELIMITER)
-          .append(project.getNeighborhood()).append(Constants.DELIMITER);
+        sb.append(FileUtils.escapeCsvField(project.getProjectName())).append(Constants.DELIMITER)
+          .append(FileUtils.escapeCsvField(project.getNeighborhood())).append(Constants.DELIMITER);
         
         // Process unit info from the map.
         Map<String, UnitInfo> units = project.getUnits();

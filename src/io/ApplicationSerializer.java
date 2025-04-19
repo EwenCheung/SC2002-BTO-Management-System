@@ -2,6 +2,7 @@ package io;
 
 import java.time.format.DateTimeFormatter;
 import models.Application;
+import utils.FileUtils;
 import static utils.Constants.DATE_TIME_FORMAT;
 import static utils.Constants.DELIMITER;
 
@@ -20,7 +21,7 @@ public class ApplicationSerializer {
         StringBuilder sb = new StringBuilder();
         sb.append(app.getApplicationId()).append(DELIMITER)
           .append(app.getApplicantNric()).append(DELIMITER)
-          .append(app.getProjectName()).append(DELIMITER)
+          .append(FileUtils.escapeCsvField(app.getProjectName())).append(DELIMITER)
           .append(app.getUnitType()).append(DELIMITER)
           .append(app.getStatus().toString()).append(DELIMITER)
           // Check for nulls to avoid "null" string output.
@@ -29,7 +30,8 @@ public class ApplicationSerializer {
           .append(DATE_FORMATTER.format(app.getApplicationDate())).append(DELIMITER)
           .append(DATE_FORMATTER.format(app.getLastUpdated())).append(DELIMITER)
           // Always append the remarks field, even if it's empty - this ensures consistent CSV columns
-          .append(app.getRemarks() != null ? app.getRemarks() : "");
+          // Escape the remarks field to handle commas
+          .append(app.getRemarks() != null ? FileUtils.escapeCsvField(app.getRemarks()) : "");
           
         return sb.toString();
     }

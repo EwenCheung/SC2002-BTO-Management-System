@@ -26,7 +26,7 @@ public class ApplicationHandler implements ManagerApplicationFeatures, OfficerAp
         if (app == null) {
             throw new IllegalArgumentException("Application not found: " + applicationId);
         }
-        app.setStatus(ApplicationStatus.APPROVED);
+        app.setStatus(ApplicationStatus.SUCCESSFUL);
         saveChanges(); // Add this line to save changes to CSV
     }
     
@@ -36,7 +36,7 @@ public class ApplicationHandler implements ManagerApplicationFeatures, OfficerAp
         if (app == null) {
             throw new IllegalArgumentException("Application not found: " + applicationId);
         }
-        app.setStatus(ApplicationStatus.REJECTED);
+        app.setStatus(ApplicationStatus.UNSUCCESSFUL);
         saveChanges(); // Add this line to save changes to CSV
     }
 
@@ -87,7 +87,7 @@ public class ApplicationHandler implements ManagerApplicationFeatures, OfficerAp
         if (app == null) {
             throw new IllegalArgumentException("Application not found: " + applicationId);
         }
-        if (app.getStatus() != ApplicationStatus.APPROVED) {
+        if (app.getStatus() != ApplicationStatus.SUCCESSFUL) {
             throw new IllegalArgumentException("Only applications with 'Successful' status can be processed to 'Booked'.");
         }
         app.setStatus(ApplicationStatus.BOOKED);

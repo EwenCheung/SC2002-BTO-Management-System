@@ -1,6 +1,7 @@
 package io;
 
 import users.*;
+import utils.FileUtils;
 import static utils.Constants.DELIMITER;
 
 public class UserSerializer {
@@ -13,7 +14,7 @@ public class UserSerializer {
      */
     public static String serialize(User user) {
         StringBuilder sb = new StringBuilder();
-        sb.append(user.getName()).append(DELIMITER)
+        sb.append(FileUtils.escapeCsvField(user.getName())).append(DELIMITER)
           .append(user.getNric()).append(DELIMITER)
           .append(user.getAge()).append(DELIMITER)
           .append(user.getMaritalStatus().toString()).append(DELIMITER)
@@ -31,7 +32,7 @@ public class UserSerializer {
      */
     public static String serializeApplicant(Applicant applicant) {
         StringBuilder sb = new StringBuilder();
-        sb.append(applicant.getName()).append(DELIMITER)
+        sb.append(FileUtils.escapeCsvField(applicant.getName())).append(DELIMITER)
           .append(applicant.getNric()).append(DELIMITER)
           .append(applicant.getAge()).append(DELIMITER)
           .append(applicant.getMaritalStatus().toString()).append(DELIMITER)
@@ -48,7 +49,7 @@ public class UserSerializer {
      */
     public static String serializeOfficer(HDBOfficer officer) {
         StringBuilder sb = new StringBuilder();
-        sb.append(officer.getName()).append(DELIMITER)
+        sb.append(FileUtils.escapeCsvField(officer.getName())).append(DELIMITER)
           .append(officer.getNric()).append(DELIMITER)
           .append(officer.getAge()).append(DELIMITER)
           .append(officer.getMaritalStatus().toString()).append(DELIMITER)
@@ -65,7 +66,7 @@ public class UserSerializer {
      */
     public static String serializeManager(ProjectManager manager) {
         StringBuilder sb = new StringBuilder();
-        sb.append(manager.getName()).append(DELIMITER)
+        sb.append(FileUtils.escapeCsvField(manager.getName())).append(DELIMITER)
           .append(manager.getNric()).append(DELIMITER)
           .append(manager.getAge()).append(DELIMITER)
           .append(manager.getMaritalStatus().toString()).append(DELIMITER)

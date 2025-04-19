@@ -150,12 +150,10 @@ public class ProjectHandler implements ManagerProjectFeatures, OfficerProjectFea
         
         for (Project p : projects) {
             // Project is visible if:
-            // 1. It's marked as visible AND current date is within application period
+            // 1. It's marked as visible AND hasn't reached closing date yet (includes upcoming projects)
             // OR
             // 2. The applicant has already applied to this project (regardless of visibility)
-            if ((p.isVisible() && 
-                 !currentDate.isBefore(p.getApplicationOpeningDate()) && 
-                 !currentDate.isAfter(p.getApplicationClosingDate())) || 
+            if ((p.isVisible() && !currentDate.isAfter(p.getApplicationClosingDate())) || 
                 (appliedProjectNames != null && appliedProjectNames.contains(p.getProjectName()))) {
                 visibleProjects.add(p);
             }
