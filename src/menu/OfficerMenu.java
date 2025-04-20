@@ -690,7 +690,9 @@ public class OfficerMenu {
                     Files.createDirectory(receiptPath);
                 }
                 
-                Files.writeString(Paths.get("Receipts", receiptFileName), receipt.toString());
+                // Replace Files.writeString (JDK 11+) with Files.write (JDK 8 compatible)
+                Files.write(Paths.get("Receipts", receiptFileName), 
+                           receipt.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
                 
                 printSuccess("Booking receipt generated successfully!");
                 System.out.println("Receipt saved to: Receipts/" + receiptFileName);
