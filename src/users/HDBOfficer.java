@@ -1,11 +1,7 @@
 package users;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 
-import models.Application;
-import models.Project;
 import users.enums.MaritalStatus;
 import users.enums.UserType;
 import utils.FileUtils;
