@@ -35,14 +35,20 @@ This architecture allows for components to be developed and tested independently
 We encapsulated the internal state of our classes by making attributes private and providing controlled access through getters and setters:
 
 ```java
-public class User {
+public abstract class User {
+    private String name;
     private String nric;
+    private int age;
+    private MaritalStatus maritalStatus;
+    private UserType userType;
     private String password;
     
+    // Getter example
     public String getNric() {
         return nric;
     }
     
+    // Setter example
     public void setPassword(String password) {
         this.password = password;
     }
@@ -56,19 +62,29 @@ We designed a clear inheritance hierarchy for user types:
 
 ```java
 public abstract class User {
-    // Common user attributes and methods
+    private String name;
+    private String nric;
+    private int age;
+    private MaritalStatus maritalStatus;
+    private UserType userType;
+    private String password;
+    // Other common fields and methods...
 }
 
 public class Applicant extends User {
-    // Applicant-specific attributes and methods
+    // Constructor reuses parent class constructor
+    public Applicant(String name, String nric, int age, MaritalStatus maritalStatus, String password) {
+        super(name, nric, age, maritalStatus, UserType.APPLICANT, password);
+    }
+    // Applicant-specific methods...
 }
 
 public class HDBOfficer extends User {
-    // Officer-specific attributes and methods
-}
-
-public class ProjectManager extends User {
-    // Manager-specific attributes and methods
+    // Constructor reuses parent class constructor
+    public HDBOfficer(String name, String nric, int age, MaritalStatus maritalStatus, String password) {
+        super(name, nric, age, maritalStatus, UserType.OFFICER, password);
+    }
+    // Officer-specific methods...
 }
 ```
 
@@ -80,24 +96,36 @@ We used polymorphism extensively through interfaces and method overriding:
 ```java
 // Interface defining project features for applicants
 public interface ApplicantProjectFeatures {
-    List<Project> getProjectsForApplicant(String nric, int age, MaritalStatus status);
+    List<Project> getVisibleProjects();
+    List<Project> getVisibleProjects(String applicantNric, List<String> appliedProjectNames);
 }
 
 // Interface defining project features for officers
 public interface OfficerProjectFeatures {
-    List<Project> getProjectsForOfficer(String nric);
+    List<Project> getProjectsForOfficer(String officerNric);
+    void decreaseAvailableUnits(String projectName, String unitType, int count);
 }
 
 // Handler implementing both interfaces
 public class ProjectHandler implements ApplicantProjectFeatures, OfficerProjectFeatures {
     @Override
-    public List<Project> getProjectsForApplicant(String nric, int age, MaritalStatus status) {
-        // Implementation for applicants with filtering based on eligibility
+    public List<Project> getVisibleProjects() {
+        // Implementation for getting visible projects
     }
     
     @Override
-    public List<Project> getProjectsForOfficer(String nric) {
-        // Implementation for officers that shows projects they're handling
+    public List<Project> getVisibleProjects(String applicantNric, List<String> appliedProjectNames) {
+        // Implementation for getting projects visible to a specific applicant
+    }
+    
+    @Override
+    public List<Project> getProjectsForOfficer(String officerNric) {
+        // Implementation for getting projects assigned to an officer
+    }
+    
+    @Override
+    public void decreaseAvailableUnits(String projectName, String unitType, int count) {
+        // Implementation for decreasing available units
     }
 }
 ```
@@ -105,16 +133,33 @@ public class ProjectHandler implements ApplicantProjectFeatures, OfficerProjectF
 This approach enables runtime binding of methods based on the specific interface being used.
 
 #### 4. Abstraction
-We used abstraction to hide implementation details behind interfaces and abstract classes:
+We used abstraction to hide implementation details behind interfaces and abstract classes. For example, our menus depend on interfaces rather than concrete implementations:
 
 ```java
-// Abstract method in User class
-public abstract boolean isEligibleForProject(Project project);
-
-// Implementation in Applicant class
-@Override
-public boolean isEligibleForProject(Project project) {
-    // Check age and marital status against project requirements
+public class OfficerMenu {
+    private Scanner scanner;
+    private HDBOfficer officer;
+    
+    // Interfaces for officer-specific features
+    private OfficerProjectFeatures projectFacade;
+    private OfficerApplicationFeatures appFacade;
+    private OfficerEnquiryFeatures enquiryFacade;
+    private OfficerRegistrationApplicantFeatures regFacade;
+    
+    public OfficerMenu(HDBOfficer officer,
+                       OfficerProjectFeatures projectFacade,
+                       OfficerApplicationFeatures appFacade,
+                       OfficerEnquiryFeatures enquiryFacade,
+                       OfficerRegistrationApplicantFeatures regFacade) {
+        this.scanner = new Scanner(System.in);
+        this.officer = officer;
+        this.projectFacade = projectFacade;
+        this.appFacade = appFacade;
+        this.enquiryFacade = enquiryFacade;
+        this.regFacade = regFacade;
+    }
+    
+    // Menu methods only interact with the interfaces, not concrete implementations
 }
 ```
 
@@ -133,7 +178,6 @@ Example from `ApplicationHandler.java`:
 ```java
 public class ApplicationHandler implements ManagerApplicationFeatures, OfficerApplicationFeatures, ApplicantApplicationFeatures {
     
-    // Single responsibility: Application management
     private List<Application> applications;
     
     // Officer methods for managing applications
@@ -150,7 +194,6 @@ public class ApplicationHandler implements ManagerApplicationFeatures, OfficerAp
         saveChanges(); // Ensure changes are saved to CSV
     }
     
-    // Each method has a single, focused responsibility
     @Override
     public String generateReceipt(String applicationId) {
         Application app = findApplicationById(applicationId);
@@ -170,11 +213,26 @@ Our design is open for extension but closed for modification. For example, addin
 
 ```java
 public enum ApplicationStatus {
-    PENDING,
-    APPROVED,
-    REJECTED,
-    UNSUCCESSFUL,
-    BOOKED
+    PENDING("Pending"),
+    UNDER_REVIEW("Under Review"),
+    PENDING_DOCUMENTS("Pending Documents"),
+    BACKGROUND_CHECK("Background Check"),
+    WITHDRAW_REQUESTED("Withdraw Requested"),
+    SUCCESSFUL("Successful"),
+    UNSUCCESSFUL("Unsuccessful"),
+    BOOKED("Booked"),
+    WITHDRAWN("Unsuccessful");
+
+    private final String displayName;
+
+    ApplicationStatus(String displayName) {
+        this.displayName = displayName;
+    }
+
+    @Override
+    public String toString() {
+        return displayName;
+    }
 }
 ```
 
@@ -184,10 +242,12 @@ private void processApplicationStatus(Application application) {
     printHeader("PROCESS APPLICATION STATUS");
     System.out.println("Current Status: " + application.getStatus());
     
-    // Logic based on status enum value rather than hardcoded strings
     if (application.getStatus() == ApplicationStatus.SUCCESSFUL) {
-        // Logic for SUCCESSFUL applications
-        // ...
+        // If application is successful but doesn't have a unit assigned, offer to assign a unit
+        if (application.getAssignedUnit() == null || application.getAssignedUnit().isEmpty()) {
+            printMessage("This application has been marked as successful by a manager and is ready for unit assignment.");
+            // ...implementation for processing SUCCESSFUL applications
+        }
     } else if (application.getStatus() == ApplicationStatus.UNSUCCESSFUL) {
         printMessage("This application is unsuccessful and cannot be processed further.");
         // ...
@@ -198,30 +258,29 @@ private void processApplicationStatus(Application application) {
         printMessage("Officers cannot process pending applications. Only managers can mark applications as successful or unsuccessful.");
         // ...
     }
-    
-    // The method never has to be modified when new status types are added to the enum
 }
 ```
 
 #### 3. Liskov Substitution Principle (LSP)
-Child classes can be used wherever their parent classes are expected. For example, all User types provide proper implementations of shared methods like `changePassword()`.
+Child classes can be used wherever their parent classes are expected. For example, all User types are handled correctly in the `handleUserSession` method:
 
-Example from `MainMenu.java`:
 ```java
 private void handleUserSession(User user) {
-    // All User subtypes can be passed into this method and work correctly
     boolean keepSessionActive = true;
+    boolean officerMode = false; // Track if we're currently in officer mode
+    boolean skipModeSelection = false; // Flag to skip mode selection when switching
     
     while (keepSessionActive) {
         if (user.getUserType() == UserType.APPLICANT) {
             // Regular applicant - just display the menu and then logout
             new ApplicantMenu((Applicant) user, projectHandler, applicationHandler, enquiryHandler, withdrawalHandler).display();
-            keepSessionActive = false;
+            keepSessionActive = false; // Regular applicants don't have mode switching
         } else if (user.getUserType() == UserType.MANAGER) {
             // Manager - just display the menu and then logout
             new ManagerMenu((ProjectManager) user, projectHandler, applicationHandler, enquiryHandler, registrationHandler, withdrawalHandler).display();
-            keepSessionActive = false;
+            keepSessionActive = false; // Managers don't have mode switching
         } else if (user.getUserType() == UserType.OFFICER) {
+            HDBOfficer officer = (HDBOfficer) user;
             // Special handling for officers who can switch between roles
             // ...
         }
@@ -231,17 +290,9 @@ private void handleUserSession(User user) {
 
 #### 4. Interface Segregation Principle (ISP)
 We created multiple focused interfaces instead of one large interface:
-- `ApplicantProjectFeatures` for applicant-specific project features
-- `OfficerProjectFeatures` for officer-specific project features
-- `ManagerProjectFeatures` for manager-specific project features
 
-Example from `OfficerApplicationFeatures.java`:
 ```java
-/**
- * Interface defining application functionality available to HDB Officers.
- */
 public interface OfficerApplicationFeatures {
-    
     /**
      * Retrieves all applications for a specific project.
      */
@@ -261,24 +312,22 @@ public interface OfficerApplicationFeatures {
      * Retrieves a specific application by its ID.
      */
     Application getApplication(String applicationId);
+    
+    /**
+     * Updates an existing application with new data.
+     */
+    void updateApplication(Application application);
 }
 ```
+
+Each user type has its own tailored interface for accessing only the features it needs:
+- `ApplicantProjectFeatures` has methods for viewing projects relevant to applicants
+- `OfficerProjectFeatures` focuses on officer-specific project operations
+- `ManagerProjectFeatures` includes methods for project creation and management
 
 #### 5. Dependency Inversion Principle (DIP)
 High-level modules depend on abstractions rather than concrete implementations:
 
-```java
-// Menu depends on interface, not concrete implementation
-public class ApplicantMenu {
-    private ApplicantProjectFeatures projectFacade;
-    
-    public ApplicantMenu(ApplicantProjectFeatures projectFacade) {
-        this.projectFacade = projectFacade;
-    }
-}
-```
-
-Example from `OfficerMenu.java` constructor:
 ```java
 public class OfficerMenu {
     private OfficerProjectFeatures projectFacade;
@@ -286,7 +335,6 @@ public class OfficerMenu {
     private OfficerEnquiryFeatures enquiryFacade;
     private OfficerRegistrationApplicantFeatures regFacade;
     
-    // Dependencies are passed in as interfaces rather than concrete implementations
     public OfficerMenu(HDBOfficer officer,
                       OfficerProjectFeatures projectFacade,
                       OfficerApplicationFeatures appFacade,
@@ -300,7 +348,6 @@ public class OfficerMenu {
         this.regFacade = regFacade;
     }
     
-    // Method that uses interface rather than implementation
     private void registerForProject() {
         // Get projects using the interface method
         List<Project> availableProjects;
@@ -315,6 +362,8 @@ public class OfficerMenu {
     }
 }
 ```
+
+This ensures that the menu class is not tightly coupled to specific implementations of the feature interfaces.
 
 ### Assumptions Made
 

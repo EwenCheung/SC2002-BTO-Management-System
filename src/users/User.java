@@ -9,8 +9,6 @@ public abstract class User {
     private MaritalStatus maritalStatus;
     private UserType userType;
     private String password;
-    private String address;
-    private String contact;
 
     public User(String name, String nric, int age, MaritalStatus maritalStatus, UserType userType, String password) {
         this.name = name;
@@ -19,20 +17,6 @@ public abstract class User {
         this.maritalStatus = maritalStatus;
         this.userType = userType;
         this.password = password;
-        this.address = "";
-        this.contact = "";
-    }
-
-    // Constructor with address and contact
-    public User(String name, String nric, int age, MaritalStatus maritalStatus, UserType userType, String password, String address, String contact) {
-        this.name = name;
-        this.nric = nric;
-        this.age = age;
-        this.maritalStatus = maritalStatus;
-        this.userType = userType;
-        this.password = password;
-        this.address = address;
-        this.contact = contact;
     }
 
     // Getters
@@ -59,14 +43,6 @@ public abstract class User {
     public String getPassword(){
         return password;
     }
-    
-    public String getAddress() {
-        return address;
-    }
-    
-    public String getContact() {
-        return contact;
-    }
 
     // Setters
     public void setName(String name) {
@@ -87,13 +63,5 @@ public abstract class User {
 
     public void setPassword(String password){
         this.password = password;
-    }
-    
-    public void setAddress(String address) {
-        this.address = address;
-    }
-    
-    public void setContact(String contact) {
-        this.contact = contact;
     }
 }
