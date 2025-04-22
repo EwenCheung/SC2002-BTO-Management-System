@@ -19,35 +19,35 @@ public class ProjectFactory {
         String name = tokens[0];
         String neighborhood = tokens[1];
         
-        // Type 1 info
-        String type1 = tokens[2];
-        int num1 = Integer.parseInt(tokens[3]);
-        int avail1 = Integer.parseInt(tokens[4]);
-        double price1 = Double.parseDouble(tokens[5]);
-        
-        // Type 2 info
-        String type2 = tokens[6];
-        int num2 = Integer.parseInt(tokens[7]);
-        int avail2 = Integer.parseInt(tokens[8]);
-        double price2 = Double.parseDouble(tokens[9]);
-
-        // Create a more flexible approach to date parsing
+        // Create the project first
         LocalDate openDate = parseDate(tokens[10]);
         LocalDate closeDate = parseDate(tokens[11]);
-        
         String managerNric = tokens[12]; // Manager
-        int officerSlot = Integer.parseInt(tokens[13]); // Officer Slot
+        int officerSlot = parseIntSafely(tokens[13], 0); // Officer Slot (default to 0 if empty)
         List<String> officers = tokens[14].isEmpty() ? new ArrayList<>() : Arrays.asList(tokens[14].split(";"));
         boolean visible = Boolean.parseBoolean(tokens[15]); // Visibility
 
         Project project = new Project(name, neighborhood, openDate, closeDate, managerNric, officerSlot);
         
-        // Add unit types
-        project.addUnitType(type1, num1, price1);
-        project.setAvailableUnits(type1, avail1);
+        // Type 1 info - handle empty values safely
+        String type1 = tokens[2];
+        if (!type1.isEmpty()) {
+            int num1 = parseIntSafely(tokens[3], 0);
+            int avail1 = parseIntSafely(tokens[4], 0);
+            double price1 = parseDoubleSafely(tokens[5], 0.0);
+            project.addUnitType(type1, num1, price1);
+            project.setAvailableUnits(type1, avail1);
+        }
         
-        project.addUnitType(type2, num2, price2);
-        project.setAvailableUnits(type2, avail2);
+        // Type 2 info - handle empty values safely
+        String type2 = tokens[6];
+        if (!type2.isEmpty()) {
+            int num2 = parseIntSafely(tokens[7], 0);
+            int avail2 = parseIntSafely(tokens[8], 0);
+            double price2 = parseDoubleSafely(tokens[9], 0.0);
+            project.addUnitType(type2, num2, price2);
+            project.setAvailableUnits(type2, avail2);
+        }
 
         for (String officer : officers) {
             if (!officer.isEmpty()) {
@@ -57,6 +57,42 @@ public class ProjectFactory {
 
         project.setVisible(visible);
         return project;
+    }
+    
+    /**
+     * Safely parse an integer from a string, returning a default value if parsing fails
+     * @param value The string to parse
+     * @param defaultValue The default value to return if parsing fails
+     * @return The parsed integer or the default value
+     */
+    private static int parseIntSafely(String value, int defaultValue) {
+        if (value == null || value.trim().isEmpty()) {
+            return defaultValue;
+        }
+        try {
+            return Integer.parseInt(value.trim());
+        } catch (NumberFormatException e) {
+            System.err.println("Warning: Could not parse integer from '" + value + "', using default: " + defaultValue);
+            return defaultValue;
+        }
+    }
+    
+    /**
+     * Safely parse a double from a string, returning a default value if parsing fails
+     * @param value The string to parse
+     * @param defaultValue The default value to return if parsing fails
+     * @return The parsed double or the default value
+     */
+    private static double parseDoubleSafely(String value, double defaultValue) {
+        if (value == null || value.trim().isEmpty()) {
+            return defaultValue;
+        }
+        try {
+            return Double.parseDouble(value.trim());
+        } catch (NumberFormatException e) {
+            System.err.println("Warning: Could not parse double from '" + value + "', using default: " + defaultValue);
+            return defaultValue;
+        }
     }
     
     // Helper method to parse dates with various formats

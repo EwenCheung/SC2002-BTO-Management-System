@@ -414,6 +414,56 @@ public class ApplicantMenu {
         return true;
     }
 
+    /**
+     * Check if the applicant (who is also an officer) has any pending or approved registration for a specific project
+     * @param projectName The name of the project to check
+     * @return true if the applicant has registered for the project as an officer, false otherwise
+     */
+    private boolean hasOfficerRegistrationForProject(String projectName) {
+        // Only check if this applicant is also an officer
+        if (applicant.getUserType() != users.enums.UserType.OFFICER) {
+            return false;
+        }
+        
+        try {
+            // Try to load officer registrations from file
+            java.nio.file.Path path = java.nio.file.Paths.get("Datasets/OfficerRegistrations.csv");
+            
+            if (java.nio.file.Files.exists(path)) {
+                List<String> lines = java.nio.file.Files.readAllLines(path);
+                
+                // Skip header row
+                for (int i = 1; i < lines.size(); i++) {
+                    String line = lines.get(i);
+                    if (line == null || line.trim().isEmpty()) {
+                        continue;
+                    }
+                    
+                    String[] data = line.split(",");
+                    
+                    // Registration ID (0), Officer NRIC (1), Project Name (2), Status (3), Date (4)
+                    if (data.length >= 4) {
+                        String officerNric = data[1].trim();
+                        String regProjectName = data[2].trim();
+                        String status = data[3].trim();
+                        
+                        // If this registration belongs to the current user and is for the specified project
+                        if (officerNric.equals(applicant.getNric()) && regProjectName.equals(projectName)) {
+                            // Check if status is PENDING or APPROVED - using case-insensitive comparison
+                            if (status.equalsIgnoreCase("PENDING") || status.equalsIgnoreCase("APPROVED")) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error checking officer registrations: " + e.getMessage());
+        }
+        
+        return false;
+    }
+
     private void submitApplication() {
         printHeader("SUBMIT APPLICATION");
         
@@ -423,9 +473,25 @@ public class ApplicantMenu {
             return;
         }
         
-        List<Project> projects = projectFacade.getVisibleProjects();
-        if (projects.isEmpty()) {
+        // Get all visible projects
+        List<Project> allProjects = projectFacade.getVisibleProjects();
+        if (allProjects.isEmpty()) {
             printError("No projects available for application.");
+            return;
+        }
+        
+        // Filter out projects that the applicant has registered for as an officer
+        List<Project> availableProjects = new ArrayList<>();
+        
+        for (Project project : allProjects) {
+            boolean hasOfficerRegistration = hasOfficerRegistrationForProject(project.getProjectName());
+            if (!hasOfficerRegistration) {
+                availableProjects.add(project);
+            }
+        }
+        
+        if (availableProjects.isEmpty()) {
+            printError("You cannot apply for any projects as you have pending or approved officer registrations for all available projects.");
             return;
         }
         
@@ -433,18 +499,18 @@ public class ApplicantMenu {
         printDivider();
         
         int i = 1;
-        for (Project project : projects) {
+        for (Project project : availableProjects) {
             System.out.printf("%-2d. %-25s (%s)\n", i++, project.getProjectName(), project.getNeighborhood());
         }
         
         System.out.print("\nSelect project number (0 to cancel): ");
-        int projectChoice = readChoice(0, projects.size());
+        int projectChoice = readChoice(0, availableProjects.size());
         if (projectChoice == 0 || projectChoice == -1) {
             printMessage("Application cancelled.");
             return;
         }
         
-        Project selectedProject = projects.get(projectChoice - 1);
+        Project selectedProject = availableProjects.get(projectChoice - 1);
         
         String allowedUnitType = null;
         

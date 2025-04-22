@@ -1209,35 +1209,27 @@ public class ManagerMenu {
             System.out.println("WARNING: No available units of type " + unitType);
         }
         
-        System.out.println("1. Approve application");
-        System.out.println("2. Reject application");
+        System.out.println("1. Mark application as successful");
+        System.out.println("2. Mark application as unsuccessful");
         System.out.println("3. Back to application list");
         
         int choice = readChoice("Enter choice: ", 1, 3);
         if (choice == 3) return;
         
         if (choice == 1) {
-            // Approve application
+            // Mark application as successful
             if (availableUnits <= 0) {
-                if (!readYesNo("No available units. Are you sure you want to approve? (Y/N): ")) {
+                if (!readYesNo("No available units. Are you sure you want to mark as successful? (Y/N): ")) {
                     return;
                 }
             }
             
             // Create a special ApplicationStatus for SUCCESSFUL
             application.setStatus(ApplicationStatus.SUCCESSFUL);
-            application.setRemarks("SUCCESSFUL");
+            application.setRemarks("SUCCESSFUL: Pending unit assignment by officer");
+            application.setApprovalDate(LocalDate.now());
             
-            // Generate a unit number
-            String unitNumber = generateUnitNumber(unitType, project.getProjectName());
-            application.setAssignedUnit(unitNumber);
-            
-            // Update available units in the project
-            project.decrementAvailableUnits(unitType);
-            
-            // Save project changes to update unit count in CSV
-            projectFacade.updateProject(project);
-            saveProjectChanges();
+            // Note: Unit assignment will now be done by the officer, not by the manager
             
             // Save the application changes
             if (appFacade instanceof access.application.ApplicationHandler) {
@@ -1245,10 +1237,10 @@ public class ManagerMenu {
                 ((access.application.ApplicationHandler) appFacade).saveChanges();
             }
             
-            printSuccess("Application approved successfully. Unit assigned: " + unitNumber);
+            printSuccess("Application marked as successful. Unit will be assigned by an officer.");
         } else if (choice == 2) {
-            // Reject application
-            String reason = readString("Enter rejection reason: ");
+            // Mark application as unsuccessful
+            String reason = readString("Enter reason for marking as unsuccessful: ");
             
             // Set to UNSUCCESSFUL internally but display as UNSUCCESSFUL
             application.setStatus(ApplicationStatus.UNSUCCESSFUL);
@@ -1260,7 +1252,7 @@ public class ManagerMenu {
                 ((access.application.ApplicationHandler) appFacade).saveChanges();
             }
             
-            printSuccess("Application rejected successfully.");
+            printSuccess("Application marked as unsuccessful.");
         }
     }
 

@@ -109,6 +109,29 @@ public class OfficerMenu {
     
     // ----- Project Management Methods -----
     
+    private boolean hasAppliedForProjectAsApplicant(String projectName) {
+        try {
+            // Get all applications
+            List<Application> allApplications = new ArrayList<>();
+            if (appFacade instanceof access.application.ApplicationHandler) {
+                allApplications = ((access.application.ApplicationHandler) appFacade).getAllApplications();
+            }
+            
+            // Check if the officer has applied for this project as an applicant
+            for (Application app : allApplications) {
+                if (app.getProjectName().equals(projectName) && 
+                    app.getApplicantNric().equals(officer.getNric())) {
+                    return true;
+                }
+            }
+        } catch (Exception e) {
+            // If there's an error, return false to be safe
+            return false;
+        }
+        
+        return false;
+    }
+
     private void registerForProject() {
         printHeader("REGISTER FOR PROJECT");
         
@@ -173,7 +196,20 @@ public class OfficerMenu {
                                (today.isAfter(proj.getApplicationClosingDate()) ? "Closed" : "Active");
                 
                 // Check if this project's dates clash with any existing registrations
-                String registrationStatus = hasDateOverlap(proj, myRegistrations) ? "No - Clash" : "Yes - Allow";
+                boolean hasDateOverlap = hasDateOverlap(proj, myRegistrations);
+                
+                // Check if officer has applied for this project as an applicant
+                boolean hasAppliedAsApplicant = hasAppliedForProjectAsApplicant(proj.getProjectName());
+                
+                // Determine registration status based on both date overlap and application status
+                String registrationStatus;
+                if (hasAppliedAsApplicant) {
+                    registrationStatus = "No - You Applied";
+                } else if (hasDateOverlap) {
+                    registrationStatus = "No - Clash";
+                } else {
+                    registrationStatus = "Yes - Allow";
+                }
                 
                 validProjects++;
                 projectsWithSlots.add(proj);
@@ -223,6 +259,14 @@ public class OfficerMenu {
         }
         
         Project selectedProject = projectsWithSlots.get(selection - 1);
+        
+        // Check if officer has applied for this project as an applicant
+        if (hasAppliedForProjectAsApplicant(selectedProject.getProjectName())) {
+            printError("You cannot register as an officer for this project as you have already applied as an applicant.");
+            System.out.println("\nPress Enter to continue...");
+            scanner.nextLine();
+            return;
+        }
         
         // Check if this project's dates clash with any existing registrations
         if (hasDateOverlap(selectedProject, myRegistrations)) {
@@ -443,18 +487,22 @@ public class OfficerMenu {
                                                       "Not recorded"));
             }
             
+            if (application.getStatus() == ApplicationStatus.BOOKED && application.getAssignedUnit() != null) {
+                System.out.println("Assigned Unit: " + application.getAssignedUnit());
+            }
+            
             printDivider();
             System.out.println("Options:");
             System.out.println("1. Process Application Status");
             
-            // Only show booking receipt option for approved applications
-            if (application.getStatus() == ApplicationStatus.SUCCESSFUL) {
+            // Only show booking receipt option for BOOKED applications
+            if (application.getStatus() == ApplicationStatus.BOOKED) {
                 System.out.println("2. Generate Booking Receipt");
             }
             
             System.out.println("0. Back to Applications List");
             
-            int max = (application.getStatus() == ApplicationStatus.SUCCESSFUL) ? 2 : 1;
+            int max = (application.getStatus() == ApplicationStatus.BOOKED) ? 2 : 1;
             int choice = readChoice("Select an option: ", 0, max);
             
             if (choice == -1) continue;
@@ -464,7 +512,7 @@ public class OfficerMenu {
                 processApplicationStatus(application);
                 // Refresh application data after processing
                 application = appFacade.getApplication(application.getApplicationId());
-            } else if (choice == 2 && application.getStatus() == ApplicationStatus.SUCCESSFUL) {
+            } else if (choice == 2 && application.getStatus() == ApplicationStatus.BOOKED) {
                 generateBookingReceiptForApplication(project, application);
             }
         }
@@ -474,61 +522,156 @@ public class OfficerMenu {
         printHeader("PROCESS APPLICATION STATUS");
         System.out.println("Current Status: " + application.getStatus());
         
-        if (application.getStatus() == ApplicationStatus.SUCCESSFUL || 
-            application.getStatus() == ApplicationStatus.UNSUCCESSFUL) {
-            
+        if (application.getStatus() == ApplicationStatus.SUCCESSFUL) {
+            // If application is successful but doesn't have a unit assigned, offer to assign a unit
+            if (application.getAssignedUnit() == null || application.getAssignedUnit().isEmpty()) {
+                printMessage("This application has been marked as successful by a manager and is ready for unit assignment.");
+                
+                if (!readYesNo("Would you like to assign a unit and mark as BOOKED? (Y/N): ")) {
+                    System.out.println("\nPress Enter to continue...");
+                    scanner.nextLine();
+                    return;
+                }
+                
+                // Get project to check for available units
+                Project project = getProjectByName(application.getProjectName());
+                if (project == null) {
+                    printError("Could not find project information.");
+                    System.out.println("\nPress Enter to continue...");
+                    scanner.nextLine();
+                    return;
+                }
+                
+                String unitType = application.getUnitType();
+                int availableUnits = project.getAvailableUnits(unitType);
+                
+                if (availableUnits <= 0) {
+                    printError("There are no available units of type " + unitType + " for this project.");
+                    if (!readYesNo("Continue with assignment anyway? (Y/N): ")) {
+                        return;
+                    }
+                }
+                
+                // Generate a unit number
+                String unitNumber = generateUnitNumber(unitType, project.getProjectName());
+                
+                // Confirm the assignment
+                System.out.println("\nAssigning unit: " + unitNumber);
+                System.out.println("Unit Type: " + unitType);
+                
+                if (!readYesNo("Confirm unit assignment? (Y/N): ")) {
+                    printMessage("Unit assignment cancelled.");
+                    return;
+                }
+                
+                try {
+                    // Preserve the approval date or set it to today if it's null
+                    LocalDate approvalDate = application.getApprovalDate();
+                    if (approvalDate == null) {
+                        approvalDate = LocalDate.now();
+                    }
+                    
+                    // Update application status
+                    application.setStatus(ApplicationStatus.BOOKED);
+                    application.setAssignedUnit(unitNumber);
+                    application.setAssignedOfficer(officer.getNric());
+                    application.setRemarks("BOOKED: Unit assigned by " + officer.getName());
+                    
+                    // Ensure approval date is set
+                    application.setApprovalDate(approvalDate);
+                    
+                    // Decrease available units count in project
+                    project.decrementAvailableUnits(unitType);
+                    
+                    // Save project changes
+                    if (projectFacade instanceof ProjectHandler) {
+                        ((ProjectHandler) projectFacade).updateProject(project);
+                        ((ProjectHandler) projectFacade).saveChanges();
+                    }
+                    
+                    // Update application
+                    appFacade.updateApplication(application);
+                    
+                    // Save changes to CSV file
+                    if (appFacade instanceof access.application.ApplicationHandler) {
+                        ((access.application.ApplicationHandler) appFacade).saveChanges();
+                    }
+                    
+                    printSuccess("Unit successfully assigned! Application status updated to BOOKED.");
+                    printMessage("You can now generate a booking receipt for this application.");
+                    
+                } catch (Exception e) {
+                    printError("Error assigning unit: " + e.getMessage());
+                }
+                
+                System.out.println("\nPress Enter to continue...");
+                scanner.nextLine();
+                return;
+            } else {
+                // Application already has a unit assigned
+                printMessage("This application already has unit " + application.getAssignedUnit() + " assigned.");
+                System.out.println("\nPress Enter to continue...");
+                scanner.nextLine();
+                return;
+            }
+        } else if (application.getStatus() == ApplicationStatus.UNSUCCESSFUL) {
             // Show message based on the current status
-            String statusMessage = "This application has already been " + application.getStatus().toString().toLowerCase() + ".";
-            printMessage(statusMessage);
-            
+            printMessage("This application is unsuccessful and cannot be processed further.");
+            System.out.println("\nPress Enter to continue...");
+            scanner.nextLine();
+            return;
+        } else if (application.getStatus() == ApplicationStatus.BOOKED) {
+            printMessage("This application has already been processed and a unit has been assigned.");
+            System.out.println("Assigned Unit: " + application.getAssignedUnit());
+            System.out.println("\nPress Enter to continue...");
+            scanner.nextLine();
+            return;
+        } else if (application.getStatus() == ApplicationStatus.PENDING) {
+            // For pending applications, show that officers cannot process them
+            printMessage("Officers cannot process pending applications. Only managers can mark applications as successful or unsuccessful.");
+            printMessage("Please refer this application to a project manager for initial processing.");
             System.out.println("\nPress Enter to continue...");
             scanner.nextLine();
             return;
         }
         
-        System.out.println("\nSelect new status:");
-        System.out.println("1. Approve Application");
-        System.out.println("2. Reject Application");
-        System.out.println("0. Cancel");
-        
-        int choice = readChoice(0, 2);
-        if (choice == 0 || choice == -1) return;
-        
-        ApplicationStatus newStatus = (choice == 1) ? ApplicationStatus.SUCCESSFUL : ApplicationStatus.UNSUCCESSFUL;
-        
-        // Confirm the action
-        System.out.print("\nConfirm " + (newStatus == ApplicationStatus.SUCCESSFUL ? "approval" : "rejection") + 
-                       " of application " + application.getApplicationId() + "? (Y/N): ");
-        if (!readYesNo()) {
-            printMessage("Action cancelled.");
-            return;
-        }
-        
-        try {
-            // Update application status
-            application.setStatus(newStatus);
-            if (newStatus == ApplicationStatus.SUCCESSFUL) {
-                application.setApprovalDate(LocalDate.now());
-            }
-            
-            appFacade.updateApplication(application);
-            
-            // Save changes to CSV file
-            if (appFacade instanceof access.application.ApplicationHandler) {
-                ((access.application.ApplicationHandler) appFacade).saveChanges();
-            }
-            
-            printSuccess("Application " + (newStatus == ApplicationStatus.SUCCESSFUL ? "approved" : "rejected") + " successfully.");
-            
-            if (newStatus == ApplicationStatus.SUCCESSFUL) {
-                printMessage("You can now generate a booking receipt for this application.");
-            }
-        } catch (Exception e) {
-            printError("Error updating application: " + e.getMessage());
-        }
-        
         System.out.println("\nPress Enter to continue...");
         scanner.nextLine();
+    }
+    
+    /**
+     * Get a project by its name
+     * @param projectName The name of the project to find
+     * @return The Project object if found, null otherwise
+     */
+    private Project getProjectByName(String projectName) {
+        List<Project> projects = projectFacade.getProjectsForOfficer(officer.getNric());
+        for (Project project : projects) {
+            if (project.getProjectName().equals(projectName)) {
+                return project;
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * Generates a unique unit number for a new assignment
+     * @param unitType The type of unit (2-Room or 3-Room)
+     * @param projectName The project name
+     * @return A generated unit number
+     */
+    private String generateUnitNumber(String unitType, String projectName) {
+        // Generate a unique identifier based on project name
+        String projectCode = projectName.substring(0, Math.min(3, projectName.length())).toUpperCase();
+        
+        // Get the unit type prefix
+        String typePrefix = unitType.startsWith("2") ? "2R" : "3R";
+        
+        // Generate a random number between 100 and 999
+        int random = 100 + (int)(Math.random() * 900);
+        
+        // Combine to form a unit number
+        return projectCode + "-" + typePrefix + "-" + random;
     }
     
     private void generateBookingReceipt() {
@@ -555,51 +698,45 @@ public class OfficerMenu {
         // Get all applications for the project
         List<Application> applications = appFacade.getApplicationsForProject(selectedProject.getProjectName());
         
-        // Filter for approved applications only
-        List<Application> approvedApplications = new ArrayList<>();
+        // Filter for BOOKED applications only
+        List<Application> bookedApplications = new ArrayList<>();
         for (Application app : applications) {
-            if (app.getStatus() == ApplicationStatus.SUCCESSFUL) {
-                approvedApplications.add(app);
+            if (app.getStatus() == ApplicationStatus.BOOKED) {
+                bookedApplications.add(app);
             }
         }
         
-        if (approvedApplications.isEmpty()) {
-            printError("No approved applications found for this project.");
+        if (bookedApplications.isEmpty()) {
+            printError("No booked applications found for this project. Only applications with BOOKED status can have receipts generated.");
             System.out.println("\nPress Enter to continue...");
             scanner.nextLine();
             return;
         }
         
-        // Display approved applications in a table format
-        printHeader("APPROVED APPLICATIONS FOR " + selectedProject.getProjectName());
+        // Display booked applications in a table format
+        printHeader("BOOKED APPLICATIONS FOR " + selectedProject.getProjectName());
         System.out.printf("%-5s %-15s %-15s %-15s %-20s\n", 
-                        "No.", "Application ID", "Applicant", "Unit Type", "Approval Date");
+                        "No.", "Application ID", "Applicant", "Unit Type", "Unit Number");
         printDivider();
         
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd MMM yyyy");
         
-        for (int i = 0; i < approvedApplications.size(); i++) {
-            Application app = approvedApplications.get(i);
-            
-            // Format the approval date only if it's not null
-            String approvalDateStr = "Not set";
-            if (app.getApprovalDate() != null) {
-                approvalDateStr = app.getApprovalDate().format(dateFormatter);
-            }
+        for (int i = 0; i < bookedApplications.size(); i++) {
+            Application app = bookedApplications.get(i);
             
             System.out.printf("%-5d %-15s %-15s %-15s %-20s\n", 
                             i + 1, 
                             app.getApplicationId(), 
                             truncate(app.getApplicantNric(), 15),
                             truncate(app.getUnitType(), 15),
-                            approvalDateStr
+                            app.getAssignedUnit() != null ? app.getAssignedUnit() : "Not assigned"
             );
         }
         
-        int appChoice = readChoice("\nSelect application to generate booking receipt (0 to cancel): ", 0, approvedApplications.size());
+        int appChoice = readChoice("\nSelect application to generate booking receipt (0 to cancel): ", 0, bookedApplications.size());
         if (appChoice == 0) return;
         
-        Application selectedApp = approvedApplications.get(appChoice - 1);
+        Application selectedApp = bookedApplications.get(appChoice - 1);
         
         // Generate booking receipt for selected application
         generateBookingReceiptForApplication(selectedProject, selectedApp);
@@ -608,8 +745,8 @@ public class OfficerMenu {
     private void generateBookingReceiptForApplication(Project project, Application application) {
         printHeader("GENERATE BOOKING RECEIPT");
         
-        if (application.getStatus() != ApplicationStatus.SUCCESSFUL) {
-            printError("Cannot generate a booking receipt for an application that is not approved.");
+        if (application.getStatus() != ApplicationStatus.BOOKED) {
+            printError("Cannot generate a booking receipt for an application that is not booked. Only BOOKED applications can have receipts generated.");
             System.out.println("\nPress Enter to continue...");
             scanner.nextLine();
             return;
@@ -667,22 +804,31 @@ public class OfficerMenu {
             receipt.append("- Application ID: ").append(application.getApplicationId()).append("\n");
             receipt.append("- Project Name: ").append(project.getProjectName()).append("\n");
             receipt.append("- Project Location: ").append(project.getNeighborhood()).append("\n");
-            receipt.append("- Approval Date: ").append(application.getApprovalDate().format(DateTimeFormatter.ofPattern("dd MMM yyyy"))).append("\n\n");
+            
+            // Handle null approval date by using the current date
+            LocalDate approvalDate = application.getApprovalDate();
+            if (approvalDate == null) {
+                approvalDate = LocalDate.now();
+            }
+            receipt.append("- Approval Date: ").append(approvalDate.format(DateTimeFormatter.ofPattern("dd MMM yyyy"))).append("\n\n");
             
             receipt.append("Applicant Information:\n");
             receipt.append("- Name: ").append(applicant.getName()).append("\n");
             receipt.append("- NRIC: ").append(applicant.getNric()).append("\n");
-            receipt.append("- Address: ").append(applicant.getAddress()).append("\n");
-            receipt.append("- Contact: ").append(applicant.getContact()).append("\n\n");
             
-            receipt.append("Unit Information:\n");
+            receipt.append("\nUnit Information:\n");
+            receipt.append("- Unit Number: ").append(application.getAssignedUnit()).append("\n");
             receipt.append("- Unit Type: ").append(unitType).append("\n");
             receipt.append("- Unit Size: ").append("Standard").append(" sqm\n"); // UnitInfo doesn't store size, using placeholder
             receipt.append("- Unit Price: $").append(String.format("%.2f", selectedUnit.getSellingPrice())).append("\n\n");
             
+            // Calculate booking fee as 5% of the selling price
+            double bookingFee = selectedUnit.getSellingPrice() * 0.05;
+            double remainingAmount = selectedUnit.getSellingPrice() - bookingFee;
+            
             receipt.append("Payment Details:\n");
-            receipt.append("- Booking Fee: $").append(String.format("%.2f", selectedUnit.getSellingPrice() * 0.05)).append("\n");
-            receipt.append("- Remaining Amount: $").append(String.format("%.2f", selectedUnit.getSellingPrice() * 0.95)).append("\n\n");
+            receipt.append("- Booking Fee (5% of unit price): $").append(String.format("%.2f", bookingFee)).append("\n");
+            receipt.append("- Remaining Amount: $").append(String.format("%.2f", remainingAmount)).append("\n\n");
             
             receipt.append("=====================================================\n");
             receipt.append("This is an official booking receipt for your BTO application.\n");
