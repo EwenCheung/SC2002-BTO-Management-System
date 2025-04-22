@@ -129,6 +129,42 @@ Each class in our system has a single responsibility:
 - `EnquiryHandler` handles enquiries
 - Menu classes focus solely on user interaction
 
+Example from `ApplicationHandler.java`:
+```java
+public class ApplicationHandler implements ManagerApplicationFeatures, OfficerApplicationFeatures, ApplicantApplicationFeatures {
+    
+    // Single responsibility: Application management
+    private List<Application> applications;
+    
+    // Officer methods for managing applications
+    @Override
+    public void processApplication(String applicationId) {
+        Application app = findApplicationById(applicationId);
+        if (app == null) {
+            throw new IllegalArgumentException("Application not found: " + applicationId);
+        }
+        if (app.getStatus() != ApplicationStatus.SUCCESSFUL) {
+            throw new IllegalArgumentException("Only applications with 'Successful' status can be processed to 'Booked'.");
+        }
+        app.setStatus(ApplicationStatus.BOOKED);
+        saveChanges(); // Ensure changes are saved to CSV
+    }
+    
+    // Each method has a single, focused responsibility
+    @Override
+    public String generateReceipt(String applicationId) {
+        Application app = findApplicationById(applicationId);
+        if (app == null) {
+            throw new IllegalArgumentException("Application not found: " + applicationId);
+        }
+        if (app.getStatus() != ApplicationStatus.BOOKED) {
+            throw new IllegalArgumentException("Receipt can only be generated for applications with 'Booked' status.");
+        }
+        return app.generateReceipt();
+    }
+}
+```
+
 #### 2. Open/Closed Principle (OCP)
 Our design is open for extension but closed for modification. For example, adding new application statuses only requires adding new enum values without changing the core application logic:
 
@@ -142,8 +178,56 @@ public enum ApplicationStatus {
 }
 ```
 
+Implementation example from `OfficerMenu.java`:
+```java
+private void processApplicationStatus(Application application) {
+    printHeader("PROCESS APPLICATION STATUS");
+    System.out.println("Current Status: " + application.getStatus());
+    
+    // Logic based on status enum value rather than hardcoded strings
+    if (application.getStatus() == ApplicationStatus.SUCCESSFUL) {
+        // Logic for SUCCESSFUL applications
+        // ...
+    } else if (application.getStatus() == ApplicationStatus.UNSUCCESSFUL) {
+        printMessage("This application is unsuccessful and cannot be processed further.");
+        // ...
+    } else if (application.getStatus() == ApplicationStatus.BOOKED) {
+        printMessage("This application has already been processed and a unit has been assigned.");
+        // ...
+    } else if (application.getStatus() == ApplicationStatus.PENDING) {
+        printMessage("Officers cannot process pending applications. Only managers can mark applications as successful or unsuccessful.");
+        // ...
+    }
+    
+    // The method never has to be modified when new status types are added to the enum
+}
+```
+
 #### 3. Liskov Substitution Principle (LSP)
 Child classes can be used wherever their parent classes are expected. For example, all User types provide proper implementations of shared methods like `changePassword()`.
+
+Example from `MainMenu.java`:
+```java
+private void handleUserSession(User user) {
+    // All User subtypes can be passed into this method and work correctly
+    boolean keepSessionActive = true;
+    
+    while (keepSessionActive) {
+        if (user.getUserType() == UserType.APPLICANT) {
+            // Regular applicant - just display the menu and then logout
+            new ApplicantMenu((Applicant) user, projectHandler, applicationHandler, enquiryHandler, withdrawalHandler).display();
+            keepSessionActive = false;
+        } else if (user.getUserType() == UserType.MANAGER) {
+            // Manager - just display the menu and then logout
+            new ManagerMenu((ProjectManager) user, projectHandler, applicationHandler, enquiryHandler, registrationHandler, withdrawalHandler).display();
+            keepSessionActive = false;
+        } else if (user.getUserType() == UserType.OFFICER) {
+            // Special handling for officers who can switch between roles
+            // ...
+        }
+    }
+}
+```
 
 #### 4. Interface Segregation Principle (ISP)
 We created multiple focused interfaces instead of one large interface:
@@ -151,7 +235,34 @@ We created multiple focused interfaces instead of one large interface:
 - `OfficerProjectFeatures` for officer-specific project features
 - `ManagerProjectFeatures` for manager-specific project features
 
-This ensures classes only implement methods relevant to their responsibilities.
+Example from `OfficerApplicationFeatures.java`:
+```java
+/**
+ * Interface defining application functionality available to HDB Officers.
+ */
+public interface OfficerApplicationFeatures {
+    
+    /**
+     * Retrieves all applications for a specific project.
+     */
+    List<Application> getApplicationsForProject(String projectName);
+    
+    /**
+     * Processes an application, setting its status.
+     */
+    void processApplication(String applicationId);
+    
+    /**
+     * Generates a booking receipt for an approved application.
+     */
+    String generateReceipt(String applicationId);
+    
+    /**
+     * Retrieves a specific application by its ID.
+     */
+    Application getApplication(String applicationId);
+}
+```
 
 #### 5. Dependency Inversion Principle (DIP)
 High-level modules depend on abstractions rather than concrete implementations:
@@ -163,6 +274,44 @@ public class ApplicantMenu {
     
     public ApplicantMenu(ApplicantProjectFeatures projectFacade) {
         this.projectFacade = projectFacade;
+    }
+}
+```
+
+Example from `OfficerMenu.java` constructor:
+```java
+public class OfficerMenu {
+    private OfficerProjectFeatures projectFacade;
+    private OfficerApplicationFeatures appFacade;
+    private OfficerEnquiryFeatures enquiryFacade;
+    private OfficerRegistrationApplicantFeatures regFacade;
+    
+    // Dependencies are passed in as interfaces rather than concrete implementations
+    public OfficerMenu(HDBOfficer officer,
+                      OfficerProjectFeatures projectFacade,
+                      OfficerApplicationFeatures appFacade,
+                      OfficerEnquiryFeatures enquiryFacade,
+                      OfficerRegistrationApplicantFeatures regFacade) {
+        this.scanner = new Scanner(System.in);
+        this.officer = officer;
+        this.projectFacade = projectFacade;
+        this.appFacade = appFacade;
+        this.enquiryFacade = enquiryFacade;
+        this.regFacade = regFacade;
+    }
+    
+    // Method that uses interface rather than implementation
+    private void registerForProject() {
+        // Get projects using the interface method
+        List<Project> availableProjects;
+        if (projectFacade instanceof ProjectHandler) {
+            availableProjects = ((ProjectHandler) projectFacade).getProjectsWithOpenSlots();
+        } else {
+            // Fallback to interface method if different implementation
+            availableProjects = projectFacade.getProjectsForOfficer(officer.getNric());
+        }
+        
+        // ... rest of method
     }
 }
 ```
