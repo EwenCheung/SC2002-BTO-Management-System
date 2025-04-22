@@ -2047,15 +2047,87 @@ public class ManagerMenu {
     }
 
     private void changePassword() {
-        printHeader("Change Password");
-        String current = readString("Enter your current password: ");
-        if (!projectManager.getPassword().equals(current)) {
-            printError("Incorrect current password.");
-            return;
+        printHeader("CHANGE PASSWORD");
+        
+        System.out.println("Press 0 to quit");
+        
+        // Get current password
+        while (true) {
+            System.out.print("Enter your current password: ");
+            String current = scanner.nextLine().trim();
+            
+            // Check if user wants to quit
+            if (current.equals("0")) {
+                printMessage("Password change cancelled.");
+                return;
+            }
+            
+            if (!projectManager.getPassword().equals(current)) {
+                printError("Incorrect current password. Try again or enter 0 to quit.");
+                continue;
+            }
+            break;
         }
-        String newPass = readString("Enter your new password: ");
+        
+        // Get new password
+        String newPass;
+        while (true) {
+            System.out.print("Enter your new password: ");
+            newPass = scanner.nextLine().trim();
+            
+            // Check if user wants to quit
+            if (newPass.equals("0")) {
+                printMessage("Password change cancelled.");
+                return;
+            }
+            
+            // Validate new password
+            if (newPass.isEmpty()) {
+                printError("New password cannot be empty. Try again or enter 0 to quit.");
+                continue;
+            }
+            
+            // Confirm new password
+            System.out.print("Confirm your new password: ");
+            String confirmPass = scanner.nextLine().trim();
+            
+            if (!newPass.equals(confirmPass)) {
+                printError("Passwords do not match. Try again.");
+                continue;
+            }
+            
+            break;
+        }
+        
+        // Update password in memory
         projectManager.setPassword(newPass);
-        printSuccess("Password changed successfully.");
+        
+        // Update password in file system
+        try {
+            // Load all managers from file
+            List<ProjectManager> managers = io.FileIO.loadManagers();
+            
+            // Find and update the current manager's password
+            boolean managerFound = false;
+            for (int i = 0; i < managers.size(); i++) {
+                if (managers.get(i).getNric().equals(projectManager.getNric())) {
+                    managers.set(i, projectManager);
+                    managerFound = true;
+                    break;
+                }
+            }
+            
+            if (!managerFound) {
+                throw new IllegalStateException("Manager not found in the database");
+            }
+            
+            // Save the updated managers list back to the file
+            io.FileIO.saveManagers(managers);
+            
+            printSuccess("Password changed successfully.");
+        } catch (Exception e) {
+            printError("Error updating password: " + e.getMessage());
+        }
     }
 
     /**

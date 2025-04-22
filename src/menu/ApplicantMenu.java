@@ -1188,78 +1188,84 @@ public class ApplicantMenu {
     private void changePassword() {
         printHeader("CHANGE PASSWORD");
         
-        System.out.print("Enter your current password: ");
-        String current = scanner.nextLine().trim();
+        System.out.println("Press 0 to quit");
         
-        if (!applicant.getPassword().equals(current)) {
-            printError("Incorrect current password.");
-            return;
+        // Get current password
+        while (true) {
+            System.out.print("Enter your current password: ");
+            String current = scanner.nextLine().trim();
+            
+            // Check if user wants to quit
+            if (current.equals("0")) {
+                printMessage("Password change cancelled.");
+                return;
+            }
+            
+            if (!applicant.getPassword().equals(current)) {
+                printError("Incorrect current password. Try again or enter 0 to quit.");
+                continue;
+            }
+            break;
         }
         
-        System.out.print("Enter your new password: ");
-        String newPass = scanner.nextLine().trim();
-        
-        System.out.print("Confirm your new password: ");
-        String confirmPass = scanner.nextLine().trim();
-        
-        if (!newPass.equals(confirmPass)) {
-            printError("Passwords do not match. Password change cancelled.");
-            return;
+        // Get new password
+        String newPass;
+        while (true) {
+            System.out.print("Enter your new password: ");
+            newPass = scanner.nextLine().trim();
+            
+            // Check if user wants to quit
+            if (newPass.equals("0")) {
+                printMessage("Password change cancelled.");
+                return;
+            }
+            
+            // Validate new password
+            if (newPass.isEmpty()) {
+                printError("New password cannot be empty. Try again or enter 0 to quit.");
+                continue;
+            }
+            
+            // Confirm new password
+            System.out.print("Confirm your new password: ");
+            String confirmPass = scanner.nextLine().trim();
+            
+            if (!newPass.equals(confirmPass)) {
+                printError("Passwords do not match. Try again.");
+                continue;
+            }
+            
+            break;
         }
         
-        if (newPass.isEmpty()) {
-            printError("Password cannot be empty.");
-            return;
-        }
-        
+        // Update password in memory
         applicant.setPassword(newPass);
         
-        // Save the updated password to the ApplicantList.csv file
-        if (updateUserPassword()) {
-            printSuccess("Password changed successfully.");
-        } else {
-            printError("Failed to save the new password. Please try again.");
-        }
-    }
-
-    /**
-     * Updates the password in the ApplicantList.csv file
-     * @return true if successful, false otherwise
-     */
-    private boolean updateUserPassword() {
+        // Update password in file system
         try {
-            // Read all lines from the ApplicantList.csv file
-            java.nio.file.Path path = java.nio.file.Paths.get("Datasets/ApplicantList.csv");
-            List<String> lines = java.nio.file.Files.readAllLines(path);
+            // Load all applicants from file
+            List<Applicant> applicants = io.FileIO.loadApplicants();
             
-            boolean updated = false;
-            
-            // Update the applicant's line with the new password
-            for (int i = 1; i < lines.size(); i++) { // Start from 1 to skip header
-                String[] fields = lines.get(i).split(",");
-                if (fields.length >= 2 && fields[1].equals(applicant.getNric())) {
-                    // Reconstruct the line with the new password
-                    String updatedLine = fields[0] + "," + 
-                                        fields[1] + "," + 
-                                        fields[2] + "," + 
-                                        fields[3] + "," + 
-                                        applicant.getPassword();
-                    lines.set(i, updatedLine);
-                    updated = true;
+            // Find and update the current applicant's password
+            boolean applicantFound = false;
+            for (int i = 0; i < applicants.size(); i++) {
+                if (applicants.get(i).getNric().equals(applicant.getNric())) {
+                    applicants.set(i, applicant);
+                    applicantFound = true;
                     break;
                 }
             }
             
-            if (updated) {
-                // Write the updated lines back to the CSV file
-                java.nio.file.Files.write(path, lines);
-                return true;
+            if (!applicantFound) {
+                throw new IllegalStateException("Applicant not found in the database");
             }
             
-            return false;
+            // Save the updated applicants list back to the file
+            io.FileIO.saveApplicants(applicants);
+            
+            printSuccess("Password changed successfully.");
         } catch (Exception e) {
-            System.err.println("Error updating password: " + e.getMessage());
-            return false;
+            printError("Error updating password: " + e.getMessage());
         }
     }
 

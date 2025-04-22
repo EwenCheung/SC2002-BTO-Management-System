@@ -581,12 +581,18 @@ public class OfficerMenu {
         for (int i = 0; i < approvedApplications.size(); i++) {
             Application app = approvedApplications.get(i);
             
+            // Format the approval date only if it's not null
+            String approvalDateStr = "Not set";
+            if (app.getApprovalDate() != null) {
+                approvalDateStr = app.getApprovalDate().format(dateFormatter);
+            }
+            
             System.out.printf("%-5d %-15s %-15s %-15s %-20s\n", 
                             i + 1, 
                             app.getApplicationId(), 
                             truncate(app.getApplicantNric(), 15),
                             truncate(app.getUnitType(), 15),
-                            app.getApprovalDate().format(dateFormatter)
+                            approvalDateStr
             );
         }
         
@@ -1115,11 +1121,17 @@ public class OfficerMenu {
             List<HDBOfficer> officers = io.FileIO.loadOfficers();
             
             // Find and update the current officer's password
+            boolean officerFound = false;
             for (int i = 0; i < officers.size(); i++) {
                 if (officers.get(i).getNric().equals(officer.getNric())) {
                     officers.set(i, officer);
+                    officerFound = true;
                     break;
                 }
+            }
+            
+            if (!officerFound) {
+                throw new IllegalStateException("Officer not found in the database");
             }
             
             // Save the updated officers list back to the file
@@ -1129,7 +1141,7 @@ public class OfficerMenu {
         } catch (Exception e) {
             printError("Error updating password: " + e.getMessage());
             // Revert the password change in memory if file update failed
-            officer.setPassword(officer.getPassword());
+            // Note: we don't have the old password here, so we can't revert it
         }
     }
     
