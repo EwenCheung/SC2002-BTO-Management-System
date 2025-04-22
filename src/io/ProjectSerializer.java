@@ -10,7 +10,6 @@ import utils.FileUtils;
 public class ProjectSerializer {  
     // Create a separate formatter for LocalDate objects without time components
     private static final DateTimeFormatter DATE_ONLY_FORMATTER = DateTimeFormatter.ofPattern("M/d/yyyy");
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern(Constants.DATE_TIME_FORMAT);
     
     /**
      * Serializes a Project object into a string.

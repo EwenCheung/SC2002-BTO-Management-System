@@ -1,10 +1,8 @@
 package io;
-import java.io.*;
 import java.util.*;
 import utils.*;
 import users.*;
 import models.*;
-import users.enums.UserType;
 
 public class FileIO {
     public static List<User> loadUsers() {

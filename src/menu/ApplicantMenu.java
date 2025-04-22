@@ -1357,10 +1357,6 @@ public class ApplicantMenu {
         System.out.println("\n✗ " + message);
     }
     
-    private void printWarning(String message) {
-        System.out.println("\n⚠ " + message);
-    }
-    
     private int readChoice(int min, int max) {
         System.out.print("Enter your choice: ");
         try {

@@ -6,7 +6,6 @@ import users.User;
 import users.Applicant;
 import users.HDBOfficer;
 import users.ProjectManager;
-import users.enums.UserType;
 import io.FileIO;
 
 public class AuthenticationSystem {

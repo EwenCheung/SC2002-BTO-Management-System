@@ -6,7 +6,6 @@ import users.enums.MaritalStatus;
 import io.FileIO;
 import java.util.List;
 import java.util.Scanner;
-import utils.FileUtils;
 
 public class RegistrationSystem {
     /**
@@ -185,9 +184,4 @@ public class RegistrationSystem {
         return newUser;
     }
     
-    private void printHeader(String title) {
-        System.out.println("\n" + FileUtils.repeatChar('=', 60));
-        System.out.println(FileUtils.repeatChar(' ', (60 - title.length()) / 2) + title);
-        System.out.println(FileUtils.repeatChar('=', 60));
-    }
 }

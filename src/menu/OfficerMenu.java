@@ -20,9 +20,7 @@ import models.enums.ApplicationStatus;
 import models.enums.EnquiryStatus;
 import models.enums.OfficerRegistrationStatus;
 import users.HDBOfficer;
-import users.ProjectManager;
 import users.Applicant;
-import utils.Constants;
 import utils.FileUtils;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -718,9 +716,7 @@ public class OfficerMenu {
         System.out.printf("%-5s %-15s %-15s %-15s %-20s\n", 
                         "No.", "Application ID", "Applicant", "Unit Type", "Unit Number");
         printDivider();
-        
-        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd MMM yyyy");
-        
+                
         for (int i = 0; i < bookedApplications.size(); i++) {
             Application app = bookedApplications.get(i);
             
@@ -1296,11 +1292,6 @@ public class OfficerMenu {
     private List<Project> getAssignedProjects() {
         // Need to use the method provided by the interface, which is getProjectsForOfficer
         return projectFacade.getProjectsForOfficer(officer.getNric());
-    }
-    
-    // Helper method to get the enquiry date (submitted date) from an Enquiry
-    private LocalDateTime getEnquiryDate(Enquiry enquiry) {
-        return enquiry.getSubmittedAt();
     }
     
     // Helper method to get the response date (replied date) from an Enquiry

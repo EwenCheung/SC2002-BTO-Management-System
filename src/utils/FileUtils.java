@@ -4,7 +4,6 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import static utils.Constants.DELIMITER;
-import static utils.Constants.DELIMITER_REGEX;
 import static utils.Constants.QUOTE;
 
 public class FileUtils {

@@ -10,11 +10,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Scanner;
 import models.Application;
 import models.Enquiry;
@@ -22,12 +18,10 @@ import models.Project;
 import models.OfficerRegistration;
 import models.WithdrawalRequest;
 import models.enums.ApplicationStatus;
-import models.enums.OfficerRegistrationStatus;
 import models.enums.WithdrawalStatus;
 import models.UnitInfo;
 import users.ProjectManager;
 import users.User;
-import users.enums.MaritalStatus;
 import utils.Constants;
 import utils.FileUtils;
 
@@ -176,88 +170,7 @@ public class ManagerMenu {
         return str.substring(0, length - 3) + "...";
     }
     
-    /**
-     * Reads an integer with validation and retry logic
-     * @param prompt The prompt to display to the user
-     * @param errorMessage The error message to display if input is invalid
-     * @return The integer input or -1 if user wants to quit
-     */
-    private int readIntWithRetry(String prompt, String errorMessage) {
-        while (true) {
-            String input = readString(prompt);
-            if (input.equalsIgnoreCase("quit")) {
-                return -1;
-            }
-            
-            try {
-                int value = Integer.parseInt(input);
-                if (value < 0) {
-                    printError("Please enter a non-negative number.");
-                    continue;
-                }
-                return value;
-            } catch (NumberFormatException e) {
-                printError(errorMessage);
-            }
-        }
-    }
-    
-    /**
-     * Reads a double with validation and retry logic
-     * @param prompt The prompt to display to the user
-     * @param errorMessage The error message to display if input is invalid
-     * @return The double input or -1 if user wants to quit
-     */
-    private double readDoubleWithRetry(String prompt, String errorMessage) {
-        while (true) {
-            String input = readString(prompt);
-            if (input.equalsIgnoreCase("quit")) {
-                return -1;
-            }
-            
-            try {
-                double value = Double.parseDouble(input);
-                if (value < 0) {
-                    printError("Please enter a non-negative number.");
-                    continue;
-                }
-                return value;
-            } catch (NumberFormatException e) {
-                printError(errorMessage);
-            }
-        }
-    }
-    
-    /**
-     * Reads an integer with validation for min and max values and retry logic
-     * @param prompt The prompt to display to the user
-     * @param errorMessage The error message to display if input is invalid format
-     * @param min The minimum allowed value
-     * @param max The maximum allowed value
-     * @param rangeErrorMessage The error message for out of range values
-     * @return The integer input or -1 if user wants to quit
-     */
-    private int readIntWithValidationAndRetry(String prompt, String errorMessage, 
-                                            int min, int max, String rangeErrorMessage) {
-        while (true) {
-            String input = readString(prompt);
-            if (input.equalsIgnoreCase("quit")) {
-                return -1;
-            }
-            
-            try {
-                int value = Integer.parseInt(input);
-                if (value < min || value > max) {
-                    printError(rangeErrorMessage);
-                    continue;
-                }
-                return value;
-            } catch (NumberFormatException e) {
-                printError(errorMessage);
-            }
-        }
-    }
-    
+
     /**
      * Helper method to convert a string to camel case
      * @param input The input string
@@ -529,18 +442,6 @@ public class ManagerMenu {
         } catch (Exception e) {
             printError("Error creating project: " + e.getMessage());
         }
-    }
-    
-    private boolean isHandlingActiveProject() {
-        List<Project> projects = projectFacade.getProjectsByManager(projectManager.getNric());
-        LocalDate now = LocalDate.now();
-        for (Project project : projects) {
-            if (!now.isBefore(project.getApplicationOpeningDate()) &&
-                !now.isAfter(project.getApplicationClosingDate())) {
-                return true;
-            }
-        }
-        return false;
     }
     
     private void editProject() {
@@ -898,36 +799,6 @@ public class ManagerMenu {
         } catch (NumberFormatException e) {
             printError("Please enter a valid number.");
         }
-    }
-    
-    private void displayProjects(List<Project> projects) {
-        if (projects.isEmpty()) {
-            printMessage("No projects found.");
-            return;
-        }
-        
-        System.out.printf("%-4s %-25s %-15s %-15s %-15s %-10s %-10s%n", 
-                         "No.", "Project Name", "Neighborhood", "Opening Date", "Closing Date", "Manager", "Visibility");
-        printDivider();
-        
-        int i = 1;
-        for (Project project : projects) {
-            System.out.printf("%-4d %-25s %-15s %-15s %-15s %-10s %-10s%n", 
-                            i++, 
-                            truncate(project.getProjectName(), 25),
-                            truncate(project.getNeighborhood(), 15),
-                            project.getApplicationOpeningDate(),
-                            project.getApplicationClosingDate(),
-                            truncate(project.getManager(), 10),
-                            project.isVisible() ? "Visible" : "Hidden");
-        }
-        
-        System.out.print("\nSelect project number for details (0 to go back): ");
-        int choice = readChoice("", 0, projects.size());
-        if (choice == 0) return;
-        
-        Project selectedProject = projects.get(choice - 1);
-        displayProjectDetails(selectedProject);
     }
     
     // --- Officer Management ---
@@ -2120,27 +1991,6 @@ public class ManagerMenu {
         } catch (Exception e) {
             printError("Error updating password: " + e.getMessage());
         }
-    }
-
-    /**
-     * Generates a unique unit number for a new assignment
-     *
-     * @param unitType The type of unit (2-Room or 3-Room)
-     * @param projectName The project name
-     * @return A generated unit number
-     */
-    private String generateUnitNumber(String unitType, String projectName) {
-        // Generate a unique identifier based on project name
-        String projectCode = projectName.substring(0, Math.min(3, projectName.length())).toUpperCase();
-        
-        // Get the unit type prefix
-        String typePrefix = unitType.startsWith("2") ? "2R" : "3R";
-        
-        // Generate a random number between 100 and 999
-        int random = 100 + (int)(Math.random() * 900);
-        
-        // Combine to form a unit number
-        return projectCode + "-" + typePrefix + "-" + random;
     }
 
     /**
