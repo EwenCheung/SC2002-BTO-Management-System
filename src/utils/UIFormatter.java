@@ -241,6 +241,7 @@ public class UIFormatter {
      * @return true if colors are supported
      */
     public static boolean supportsColors() {
+        // In JDK 8, we'll use a simpler approach that works cross-platform
         String noColor = System.getenv("NO_COLOR");
         String cliNoColor = System.getenv("CLI_NO_COLOR");
         
@@ -255,31 +256,36 @@ public class UIFormatter {
             return true;
         }
         
-        // Check OS type
+        // Check OS type - simplified for Java 8 compatibility
         String osName = System.getProperty("os.name").toLowerCase();
         if (osName.contains("mac") || osName.contains("darwin")) {
-            // macOS terminals generally support colors
             return true;
         } else if (osName.contains("windows")) {
-            // Windows Terminal typically supports colors in newer versions
             String conEmuANSI = System.getenv("ConEmuANSI");
             if (conEmuANSI != null && conEmuANSI.equals("ON")) {
                 return true;
             }
             
-            // Windows 10 and above generally support ANSI codes in CMD/PowerShell
-            String osVersion = System.getProperty("os.version");
+            // Simplified Windows version check
             try {
-                int version = Integer.parseInt(osVersion.split("\\.")[0]);
-                if (version >= 10) {
-                    return true;
+                String osVersion = System.getProperty("os.version");
+                if (osVersion != null) {
+                    String[] versionParts = osVersion.split("\\.");
+                    if (versionParts.length > 0) {
+                        int majorVersion = Integer.parseInt(versionParts[0]);
+                        if (majorVersion >= 10) {
+                            return true;
+                        }
+                    }
                 }
-            } catch (NumberFormatException e) {
-                // If version parsing fails, default to no colors
+            } catch (Exception e) {
+                // If version parsing fails, default to no colors on Windows
                 return false;
             }
+            return false;
         }
         
-        return true; // Default to true for Unix-like systems
+        // Unix-like systems generally support colors
+        return true;
     }
 }

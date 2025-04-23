@@ -60,20 +60,20 @@ public class ApplicantMenu {
             System.out.println("3. View Application Status");
             System.out.println("4. Manage Enquiries");
             System.out.println("5. Manage Withdrawal");  // Changed from "Request Withdrawal" to "Manage Withdrawal"
-            System.out.println("6. Change Password");
             
             // Check if user is an HDB Officer (to show Change Mode option)
             boolean isOfficer = applicant.getUserType() == users.enums.UserType.OFFICER;
             if (isOfficer) {
-                System.out.println("7. Switch to Officer Mode");
-                System.out.println("8. Logout");
+                System.out.println("6. Switch to Officer Mode");
+                System.out.println("7. Logout");
             } else {
+                System.out.println("6. Change Password");
                 System.out.println("7. Logout");
             }
             
             printDivider();
             
-            int maxChoice = isOfficer ? 8 : 7;
+            int maxChoice = 7;
             int choice = readChoice(1, maxChoice);
             if (choice == -1) continue;
 
@@ -83,20 +83,17 @@ public class ApplicantMenu {
                 case 3: viewApplicationStatus(); break;
                 case 4: manageEnquiries(); break;
                 case 5: manageWithdrawal(); break;  // Changed method name
-                case 6: changePassword(); break;
-                case 7:
+                case 6:
                     if (isOfficer) {
                         printMessage("Switching to Officer Mode...");
                         return true; // Return true to switch to Officer mode
                     } else {
-                        printMessage("Logging out...");
-                        return false; // Return false to logout
+                        changePassword();
                     }
-                case 8:
-                    if (isOfficer) {
-                        printMessage("Logging out...");
-                        return false; // Return false to logout
-                    }
+                    break;
+                case 7:
+                    printMessage("Logging out...");
+                    return false; // Return false to logout
             }
         }
     }
