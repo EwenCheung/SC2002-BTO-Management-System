@@ -4,8 +4,19 @@ import java.util.Map;
 import java.util.HashMap;
 
 /**
- * Provides consistent UI formatting for CLI applications.
- * Centralizes all formatting logic to follow OCP (Open/Closed Principle).
+ * Provides consistent UI formatting for the BTO Management System command-line interface.
+ * This utility class centralizes all text formatting, color management, and display 
+ * standardization to ensure a consistent user experience throughout the application.
+ * 
+ * Features include:
+ * - Semantic color coding for different message types (success, error, warning, etc.)
+ * - Automatic detection of terminal color support
+ * - Status-based color highlighting for application states
+ * - Consistent header and divider formatting
+ * - Support for enabling/disabling colors globally
+ * 
+ * Follows the Open/Closed Principle by providing extension points for new formatting
+ * without modifying existing code.
  */
 public class UIFormatter {
     // ANSI color and style codes
@@ -17,9 +28,25 @@ public class UIFormatter {
     private static final String ANSI_BLUE = "\u001B[34m";
     private static final String ANSI_CYAN = "\u001B[36m";
     
-    // Semantic color types for different UI elements
+    /**
+     * Semantic color types for different UI elements.
+     * Each type maps to a specific ANSI color code for consistent representation.
+     */
     public enum ColorType {
-        SUCCESS, ERROR, WARNING, INFO, HEADER, PROMPT, NORMAL
+        /** For successful operations and positive states */
+        SUCCESS, 
+        /** For errors, failures, and negative states */
+        ERROR, 
+        /** For warnings and cautionary messages */
+        WARNING, 
+        /** For informational messages and neutral states */
+        INFO, 
+        /** For section and page headers */
+        HEADER, 
+        /** For user input prompts */
+        PROMPT, 
+        /** For regular, unformatted text */
+        NORMAL
     }
     
     // Map color types to their ANSI codes
@@ -39,7 +66,9 @@ public class UIFormatter {
     }
     
     /**
-     * Enables or disables color output
+     * Enables or disables color output globally.
+     * Useful for environments where ANSI colors are not supported.
+     * 
      * @param enable true to enable colors, false to disable
      */
     public static void setColorEnabled(boolean enable) {
@@ -47,9 +76,11 @@ public class UIFormatter {
     }
     
     /**
-     * Formats a header with appropriate styling
-     * @param title Header title
-     * @return Formatted header string
+     * Formats a main header with appropriate styling and centering.
+     * Used for page titles and major section headers.
+     * 
+     * @param title Header title text
+     * @return Formatted header string with border and centered text
      */
     public static String formatHeader(String title) {
         StringBuilder sb = new StringBuilder();
@@ -66,7 +97,8 @@ public class UIFormatter {
     }
     
     /**
-     * Creates a horizontal divider line
+     * Creates a horizontal divider line for separating content sections.
+     * 
      * @return Formatted divider string
      */
     public static String formatDivider() {
@@ -74,35 +106,43 @@ public class UIFormatter {
     }
     
     /**
-     * Formats a success message
-     * @param message Success message
-     * @return Formatted success message
+     * Formats a success message with appropriate styling and icon.
+     * Used for confirming successful operations to the user.
+     * 
+     * @param message Success message text
+     * @return Formatted success message with checkmark prefix
      */
     public static String formatSuccess(String message) {
         return "\n" + colorize("✓ " + message, ColorType.SUCCESS, true);
     }
     
     /**
-     * Formats an error message
-     * @param message Error message
-     * @return Formatted error message
+     * Formats an error message with appropriate styling and icon.
+     * Used for indicating errors or failures to the user.
+     * 
+     * @param message Error message text
+     * @return Formatted error message with X mark prefix
      */
     public static String formatError(String message) {
         return "\n" + colorize("✗ " + message, ColorType.ERROR, true);
     }
     
     /**
-     * Formats a warning message
-     * @param message Warning message
-     * @return Formatted warning message
+     * Formats a warning message with appropriate styling and icon.
+     * Used for cautionary messages that require attention but aren't errors.
+     * 
+     * @param message Warning message text
+     * @return Formatted warning message with exclamation mark prefix
      */
     public static String formatWarning(String message) {
         return "\n" + colorize("! " + message, ColorType.WARNING, true);
     }
     
     /**
-     * Formats an information message
-     * @param message Information message
+     * Formats an information message with appropriate styling.
+     * Used for neutral informational content.
+     * 
+     * @param message Information message text
      * @return Formatted information message
      */
     public static String formatInfo(String message) {
@@ -110,7 +150,9 @@ public class UIFormatter {
     }
     
     /**
-     * Formats a prompt string - only colors the prompt, not user input
+     * Formats a user input prompt with appropriate styling.
+     * Only colors the prompt text, not the user's input.
+     * 
      * @param prompt Prompt text
      * @return Formatted prompt string
      */
@@ -119,7 +161,9 @@ public class UIFormatter {
     }
     
     /**
-     * Formats table headers
+     * Formats table headers with appropriate styling for better readability.
+     * Used to make table column headers stand out from the data rows.
+     * 
      * @param headers Array of header strings
      * @return Array of formatted header strings
      */
@@ -132,8 +176,10 @@ public class UIFormatter {
     }
     
     /**
-     * Formats a section header
-     * @param title Section title
+     * Formats a section header with appropriate styling.
+     * Used for subsections within a page or form.
+     * 
+     * @param title Section title text
      * @return Formatted section header
      */
     public static String formatSectionHeader(String title) {
@@ -141,7 +187,9 @@ public class UIFormatter {
     }
     
     /**
-     * Highlights text with the header color
+     * Highlights text with the header color for emphasis.
+     * Used to make important information stand out.
+     * 
      * @param text Text to highlight
      * @return Highlighted text
      */
@@ -150,9 +198,11 @@ public class UIFormatter {
     }
     
     /**
-     * Formats status text with appropriate color based on context
-     * @param status Status text
-     * @return Formatted status text
+     * Formats status text with appropriate color based on semantic meaning.
+     * Automatically determines the appropriate color based on common status keywords.
+     * 
+     * @param status Status text to format
+     * @return Color-coded status text
      */
     public static String formatStatus(String status) {
         if (status == null) return "";
@@ -180,9 +230,11 @@ public class UIFormatter {
     }
     
     /**
-     * Formats registration status with appropriate coloring
+     * Formats officer registration status with appropriate coloring.
+     * Different statuses are color-coded to provide visual cues about the registration state.
+     * 
      * @param registrationStatus The registration status to format
-     * @return Formatted registration status text
+     * @return Color-coded registration status text
      */
     public static String formatRegistrationStatus(String registrationStatus) {
         if (registrationStatus == null) return "";
@@ -198,9 +250,11 @@ public class UIFormatter {
     }
     
     /**
-     * Formats project status with appropriate coloring
+     * Formats project status with appropriate coloring.
+     * Different project states are color-coded to provide visual cues about availability.
+     * 
      * @param projectStatus The project status to format
-     * @return Formatted project status text
+     * @return Color-coded project status text
      */
     public static String formatProjectStatus(String projectStatus) {
         if (projectStatus == null) return "";
@@ -217,11 +271,13 @@ public class UIFormatter {
     }
     
     /**
-     * Helper method to apply color to text
+     * Helper method to apply color and styling to text.
+     * Handles the actual ANSI code application and reset.
+     * 
      * @param text Text to colorize
      * @param type Color type to apply
      * @param bold Whether to make text bold
-     * @return Colorized string
+     * @return Colorized string with appropriate ANSI codes
      */
     private static String colorize(String text, ColorType type, boolean bold) {
         if (!useColors) return text;
@@ -237,8 +293,10 @@ public class UIFormatter {
     }
     
     /**
-     * Check if terminal supports colors by checking environment variables
-     * @return true if colors are supported
+     * Determines if the current terminal environment supports ANSI colors.
+     * Checks various environment variables and platform-specific features.
+     * 
+     * @return true if colors are supported by the terminal
      */
     public static boolean supportsColors() {
         // In JDK 8, we'll use a simpler approach that works cross-platform

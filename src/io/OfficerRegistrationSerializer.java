@@ -7,6 +7,11 @@ import utils.FileUtils;
 import static utils.Constants.DELIMITER;
 import static utils.Constants.DATE_TIME_FORMAT;
 
+/**
+ * Provides serialization functionality for OfficerRegistration objects.
+ * This class converts OfficerRegistration objects to string format for storage
+ * in CSV files, handling date formatting and proper field escaping.
+ */
 public class OfficerRegistrationSerializer {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern(DATE_TIME_FORMAT);
 

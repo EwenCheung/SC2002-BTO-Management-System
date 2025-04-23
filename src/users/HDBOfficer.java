@@ -6,15 +6,33 @@ import users.enums.MaritalStatus;
 import users.enums.UserType;
 import utils.FileUtils;
 
-
+/**
+ * Represents an HDB officer in the BTO Management System.
+ * HDB officers have the ability to process applications, update application statuses,
+ * and retrieve applicant information.
+ */
 public class HDBOfficer extends User{
 
+    /**
+     * Constructor for creating a new HDB Officer.
+     * Sets the user type to OFFICER automatically.
+     *
+     * @param name           The officer's full name
+     * @param nric           The officer's NRIC number
+     * @param age            The officer's age in years
+     * @param maritalStatus  The officer's marital status
+     * @param password       The officer's login password
+     */
     public HDBOfficer(String name, String nric, int age, MaritalStatus maritalStatus, String password){
         super(name, nric, age, maritalStatus, UserType.OFFICER, password);
     }
 
-
-
+    /**
+     * Retrieves and displays details of an applicant based on NRIC.
+     * Searches through application records to find matching applicant information.
+     *
+     * @param nric The NRIC of the applicant to retrieve details for
+     */
     public void retrieveApplicantDetails(String nric){
         System.out.println("\n=== Retrieve Applicant Details ===");
         List<String[]> applications = FileUtils.readFile("ApplicationList.txt");
@@ -31,8 +49,15 @@ public class HDBOfficer extends User{
         }
 
         System.out.println("Applicant not found or has not applied.");
-        }
-//update Application status to book in the txt file
+    }
+    
+    /**
+     * Updates an application status to "Booked" for a specified applicant.
+     * Only applications with "Successful" status can be updated to "Booked".
+     *
+     * @param type The unit type being booked
+     * @param nric The NRIC of the applicant booking the unit
+     */
     public void updateApplicationStatus(String type, String nric){
         System.out.println("\n=== Book Flat and Update Application ===");
     

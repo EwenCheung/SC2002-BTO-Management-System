@@ -3,6 +3,11 @@ package access.enquiry;
 import java.util.List;
 import models.Enquiry;
 
+/**
+ * Interface that defines the enquiry operations available to Applicants.
+ * Provides functionality for applicants to submit, edit, view, and delete
+ * their enquiries related to BTO projects.
+ */
 public interface ApplicantEnquiryFeatures {
     /**
      * Submits a new enquiry.

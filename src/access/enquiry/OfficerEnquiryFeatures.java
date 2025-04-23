@@ -3,6 +3,11 @@ package access.enquiry;
 import java.util.List;
 import models.Enquiry;
 
+/**
+ * Interface that defines the enquiry operations available to Officers.
+ * Provides functionality for officers to view and respond to enquiries
+ * related to projects they are assigned to.
+ */
 public interface OfficerEnquiryFeatures {
     /**
      * Retrieves all enquiries for a specified project.

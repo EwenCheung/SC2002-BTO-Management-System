@@ -7,6 +7,12 @@ import models.UnitInfo;
 import utils.Constants;
 import utils.FileUtils;
 
+/**
+ * Provides serialization functionality for Project objects.
+ * Responsible for converting Project objects to string format for persistent storage
+ * in CSV files. Handles complex project data including unit information, dates, officers,
+ * and other project attributes.
+ */
 public class ProjectSerializer {  
     // Create a separate formatter for LocalDate objects without time components
     private static final DateTimeFormatter DATE_ONLY_FORMATTER = DateTimeFormatter.ofPattern("M/d/yyyy");

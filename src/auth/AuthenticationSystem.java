@@ -8,14 +8,20 @@ import users.HDBOfficer;
 import users.ProjectManager;
 import io.FileIO;
 
+/**
+ * Manages user authentication for the BTO Management System.
+ * Provides functionality to authenticate users (applicants, officers, and managers)
+ * by validating their credentials against stored user data.
+ */
 public class AuthenticationSystem {
     /**
-     * Logs in a user with NRIC and password
+     * Logs in a user with NRIC and password, specifically targeting user type based on the provided choice.
+     * Allows multiple password attempts and provides appropriate feedback based on authentication results.
      * 
      * @param users List of all users in the system
      * @param scanner Scanner for input
-     * @param userTypeChoice Optional parameter: 1 for Applicant, 2 for Officer, 3 for Manager
-     * @return The logged in User, or null if login failed
+     * @param userTypeChoice User type filter: 1 for Applicant, 2 for Officer, 3 for Manager
+     * @return The authenticated User object if login is successful, or null if login failed
      */
     public User login(List<User> users, Scanner scanner, int userTypeChoice) {
         System.out.print("Enter NRIC: ");
@@ -92,7 +98,12 @@ public class AuthenticationSystem {
     }
     
     /**
-     * Legacy method for backward compatibility
+     * Legacy login method that doesn't filter by user type.
+     * Maintained for backward compatibility with existing code.
+     * 
+     * @param users List of all users in the system
+     * @param scanner Scanner for input
+     * @return The authenticated User object if login is successful, or null if login failed
      */
     public User login(List<User> users, Scanner scanner) {
         return login(users, scanner, 0); // 0 means no user type filter

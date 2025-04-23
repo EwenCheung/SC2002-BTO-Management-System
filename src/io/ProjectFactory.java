@@ -7,7 +7,23 @@ import java.util.*;
 import models.Project;
 import utils.Constants;
 
+/**
+ * Factory class responsible for creating Project objects from CSV data.
+ * Handles parsing project data from string arrays and safely converts values to appropriate types.
+ */
 public class ProjectFactory {
+    /**
+     * Creates a Project object from a string array of CSV data.
+     * Handles parsing of unit types, dates, and other project attributes.
+     * 
+     * @param tokens The array of strings containing the project data with expected format:
+     *               Project Name, Neighborhood, Type 1, Number of Units for Type 1, Available Units for Type 1, 
+     *               Selling price for Type 1, Type 2, Number of Units for Type 2, Available Units for Type 2, 
+     *               Selling price for Type 2, Application opening date, Application closing date, Manager, 
+     *               Officer Slot, Officer(s), Visibility
+     * @return A new Project object with data from the input strings
+     * @throws IllegalArgumentException if the data format is incorrect or values cannot be parsed
+     */
     public static Project createProject(String[] tokens) {
         // Format: Project Name, Neighborhood, Type 1, Number of Units for Type 1, Available Units for Type 1, Selling price for Type 1, 
         //         Type 2, Number of Units for Type 2, Available Units for Type 2, Selling price for Type 2,
@@ -95,7 +111,14 @@ public class ProjectFactory {
         }
     }
     
-    // Helper method to parse dates with various formats
+    /**
+     * Helper method to parse dates with various formats.
+     * Attempts to parse using multiple format patterns for maximum compatibility.
+     * 
+     * @param dateStr The date string to parse
+     * @return LocalDate object representing the parsed date
+     * @throws IllegalArgumentException if the date cannot be parsed with any available format
+     */
     private static LocalDate parseDate(String dateStr) {
         // Try first with the full date-time format
         try {

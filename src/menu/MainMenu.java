@@ -24,6 +24,10 @@ import models.Project;
 import models.OfficerRegistration;
 import models.WithdrawalRequest;
 
+/**
+ * Main menu class that serves as the entry point for the BTO Management System.
+ * Handles login flow, registration, and navigates to appropriate user menus.
+ */
 public class MainMenu {
     private Scanner scanner;
     private AuthenticationSystem authSystem;
@@ -40,6 +44,10 @@ public class MainMenu {
     private OfficerRegistrationHandler registrationHandler;
     private WithdrawalHandler withdrawalHandler;
 
+    /**
+     * Constructor for MainMenu.
+     * Initializes all required systems, handlers, and loads data from storage.
+     */
     public MainMenu() {
         this.scanner = new Scanner(System.in);
         this.authSystem = new AuthenticationSystem();
@@ -57,6 +65,10 @@ public class MainMenu {
         this.withdrawalHandler = new WithdrawalHandler(withdrawalRequestsList);
     }
 
+    /**
+     * Displays the main menu and handles user interactions.
+     * This is the primary entry point for the application.
+     */
     public void displayMainMenu() {
         // Initialize color support based on terminal capabilities
         UIFormatter.setColorEnabled(UIFormatter.supportsColors());
@@ -89,6 +101,10 @@ public class MainMenu {
         }
     }
 
+    /**
+     * Handles the login process for different user types.
+     * Directs users to appropriate menus based on their role.
+     */
     private void loginFlow() {
         System.out.println(UIFormatter.formatHeader("LOGIN MENU"));
         System.out.println("1. Applicant Login");
@@ -113,6 +129,7 @@ public class MainMenu {
     
     /**
      * Handles a user session with support for mode switching between Officer and Applicant modes.
+     * Officers can switch between officer functions and applicant functions.
      * 
      * @param user The logged-in user
      */
@@ -207,6 +224,10 @@ public class MainMenu {
         return readChoice("Enter your choice: ", 1, 2);
     }
 
+    /**
+     * Handles the applicant registration process.
+     * Adds newly registered users to the userList if registration is successful.
+     */
     private void registerFlow() {
         System.out.println(UIFormatter.formatHeader("REGISTER AS APPLICANT"));
         
@@ -219,9 +240,14 @@ public class MainMenu {
         }
     }
 
-
-    
-    // UI Helper Methods for consistent look and feel
+    /**
+     * Helper method to read a numeric choice from the user with validation.
+     * 
+     * @param prompt The prompt to display to the user
+     * @param min The minimum acceptable value
+     * @param max The maximum acceptable value
+     * @return The validated user choice
+     */
     private int readChoice(String prompt, int min, int max) {
         while (true) {
             System.out.print(UIFormatter.formatPrompt(prompt));

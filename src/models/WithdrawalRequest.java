@@ -3,6 +3,11 @@ package models;
 import java.time.LocalDateTime;
 import models.enums.WithdrawalStatus;
 
+/**
+ * Represents a withdrawal request for a BTO application.
+ * Contains information about the withdrawal request including its status,
+ * the related application, and processing details.
+ */
 public class WithdrawalRequest {
     private String requestId;
     private String applicationId;
@@ -39,35 +44,74 @@ public class WithdrawalRequest {
     }
 
     // Getters
-
+    /**
+     * Gets the unique identifier for this withdrawal request.
+     * 
+     * @return The request ID
+     */
     public String getRequestId() {
         return requestId;
     }
 
+    /**
+     * Gets the ID of the application being withdrawn.
+     * 
+     * @return The application ID
+     */
     public String getApplicationId() {
         return applicationId;
     }
 
+    /**
+     * Gets the NRIC of the applicant who submitted the withdrawal request.
+     * 
+     * @return The applicant's NRIC
+     */
     public String getApplicantNric() {
         return applicantNric;
     }
 
+    /**
+     * Gets the name of the project associated with the withdrawal request.
+     * 
+     * @return The project name
+     */
     public String getProjectName() {
         return projectName;
     }
 
+    /**
+     * Gets the current status of the withdrawal request.
+     * 
+     * @return The withdrawal status
+     */
     public WithdrawalStatus getStatus() {
         return status;
     }
 
+    /**
+     * Gets the date and time when the withdrawal request was submitted.
+     * 
+     * @return The request date
+     */
     public LocalDateTime getRequestDate() {
         return requestDate;
     }
 
+    /**
+     * Gets the date and time when the withdrawal request was processed.
+     * 
+     * @return The process date, or null if not yet processed
+     */
     public LocalDateTime getProcessDate() {
         return processDate;
     }
 
+    /**
+     * Gets any remarks or additional notes associated with this withdrawal request.
+     * 
+     * @return The remarks
+     */
     public String getRemarks() {
         return remarks;
     }
@@ -106,7 +150,11 @@ public class WithdrawalRequest {
         this.requestId = requestId;
     }
 
-
+    /**
+     * Returns a string representation of this withdrawal request.
+     * 
+     * @return A formatted string containing all withdrawal request details
+     */
     @Override
     public String toString() {
         return "WithdrawalRequest{" +

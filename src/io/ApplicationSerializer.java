@@ -6,6 +6,12 @@ import utils.FileUtils;
 import static utils.Constants.DATE_TIME_FORMAT;
 import static utils.Constants.DELIMITER;
 
+/**
+ * Provides serialization functionality for Application objects.
+ * This class is responsible for converting Application objects to string format
+ * for persistent storage in CSV files. It handles date formatting, null handling,
+ * and proper escaping of text fields.
+ */
 public class ApplicationSerializer {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern(DATE_TIME_FORMAT);
     /**

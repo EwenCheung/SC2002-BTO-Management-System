@@ -8,25 +8,43 @@ import io.FileIO;
 import models.Project;
 import models.UnitInfo;
 
+/**
+ * Handler class that implements all project-related features for different user roles.
+ * This class serves as the central implementation for project management, providing
+ * functionality for managers, officers, and applicants.
+ */
 public class ProjectHandler implements ManagerProjectFeatures, OfficerProjectFeatures, ApplicantProjectFeatures {
     private List<Project> projects;
     
-    // Constructor loads projects from file.
+    /**
+     * Constructs a ProjectHandler with the provided list of projects.
+     * 
+     * @param projects the list of projects to be managed by this handler.
+     */
     public ProjectHandler(List<Project> projects) {
         this.projects = projects;
     }
     
     // ---- ManagerProjectFeatures methods ----
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void addProject(Project project) {
         projects.add(project);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Project getProject(String projectName) {
-    return getProjectByName(projectName);
+        return getProjectByName(projectName);
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void updateProject(Project updatedProject) {
         boolean found = false;
@@ -42,11 +60,17 @@ public class ProjectHandler implements ManagerProjectFeatures, OfficerProjectFea
         }
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void deleteProject(String projectName) {
         projects.removeIf(project -> project.getProjectName().equalsIgnoreCase(projectName));
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void toggleVisibility(String projectName, boolean visible) {
         Project p = getProjectByName(projectName);
@@ -57,6 +81,9 @@ public class ProjectHandler implements ManagerProjectFeatures, OfficerProjectFea
         }
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<Project> getProjectsByManager(String manager) {
         List<Project> result = new ArrayList<>();
@@ -68,11 +95,17 @@ public class ProjectHandler implements ManagerProjectFeatures, OfficerProjectFea
         return result;
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<Project> getAllProjects() {
         return projects;
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void assignOfficer(String projectName, String officerNric) {
         Project p = getProjectByName(projectName);
@@ -84,6 +117,9 @@ public class ProjectHandler implements ManagerProjectFeatures, OfficerProjectFea
     }
     
     // ---- OfficerProjectFeatures methods ----
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<Project> getProjectsForOfficer(String officerNric) {
         List<Project> result = new ArrayList<>();
@@ -95,6 +131,9 @@ public class ProjectHandler implements ManagerProjectFeatures, OfficerProjectFea
         return result;
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void decreaseAvailableUnits(String projectName, String unitType, int count) {
         Project project = getProjectByName(projectName);
@@ -132,6 +171,9 @@ public class ProjectHandler implements ManagerProjectFeatures, OfficerProjectFea
     }
     
     // ---- ApplicantProjectFeatures methods ----
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<Project> getVisibleProjects() {
         List<Project> visibleProjects = new ArrayList<>();
@@ -143,6 +185,9 @@ public class ProjectHandler implements ManagerProjectFeatures, OfficerProjectFea
         return visibleProjects;
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<Project> getVisibleProjects(String applicantNric, List<String> appliedProjectNames) {
         List<Project> visibleProjects = new ArrayList<>();
@@ -161,7 +206,12 @@ public class ProjectHandler implements ManagerProjectFeatures, OfficerProjectFea
         return visibleProjects;
     }
     
-    // --- Internal helper ---
+    /**
+     * Helper method to find a project by its name (case insensitive).
+     * 
+     * @param projectName the name of the project to find.
+     * @return the Project object if found, null otherwise.
+     */
     private Project getProjectByName(String projectName) {
         for (Project p : projects) {
             if (p.getProjectName().equalsIgnoreCase(projectName)) {
@@ -171,7 +221,9 @@ public class ProjectHandler implements ManagerProjectFeatures, OfficerProjectFea
         return null;
     }
     
-    // Optionally, a method to save changes.
+    /**
+     * Saves all changes made to the projects list to the data file.
+     */
     public void saveChanges() {
         FileIO.saveProjects(projects);
     }

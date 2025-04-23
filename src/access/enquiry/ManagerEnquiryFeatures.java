@@ -3,6 +3,11 @@ package access.enquiry;
 import java.util.List;
 import models.Enquiry;
 
+/**
+ * Interface that defines the enquiry operations available to Project Managers.
+ * Provides functionality for managers to view, reply to, and manage enquiries
+ * across all projects in the system.
+ */
 public interface ManagerEnquiryFeatures {
     /**
      * Retrieves all enquiries for every project.

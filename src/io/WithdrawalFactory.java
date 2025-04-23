@@ -6,8 +6,20 @@ import models.WithdrawalRequest;
 import models.enums.WithdrawalStatus;
 import static utils.Constants.DATE_TIME_FORMAT;
 
+/**
+ * Factory class responsible for creating WithdrawalRequest objects from CSV data.
+ * Parses string arrays into properly typed withdrawal request objects for the system.
+ */
 public class WithdrawalFactory {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern(DATE_TIME_FORMAT);
+    
+    /**
+     * Creates a WithdrawalRequest object from a string array of CSV data.
+     * 
+     * @param tokens The array of strings containing the withdrawal request data
+     * @return A new WithdrawalRequest object with data from the input strings
+     * @throws IllegalArgumentException if any required field is missing or empty
+     */
     public static WithdrawalRequest createRequest(String[] tokens) {
         // Format: Request ID,Application ID,Applicant NRIC,Project Name,Status,Request Date,Process Date,Remarks
         if (tokens.length < 8 || tokens[0].isEmpty() || tokens[1].isEmpty() || tokens[2].isEmpty() || tokens[3].isEmpty() || tokens[4].isEmpty()) {

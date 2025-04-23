@@ -6,9 +6,22 @@ import models.Enquiry;
 import utils.FileUtils;
 import static utils.Constants.DATE_TIME_FORMAT;
 
+/**
+ * Factory class responsible for creating Enquiry objects from CSV data.
+ * Parses string arrays from CSV files into properly typed Enquiry objects,
+ * handling both required and optional fields safely.
+ */
 public class EnquiryFactory {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern(DATE_TIME_FORMAT);
 
+    /**
+     * Creates an Enquiry object from a string array of CSV data.
+     * Handles required fields and optional fields like response information.
+     * 
+     * @param tokens The array of strings containing the enquiry data
+     * @return A new Enquiry object with data from the input strings
+     * @throws IllegalArgumentException if any required field is missing or empty
+     */
     public static Enquiry createEnquiry(String[] tokens) {
         // Format: Enquiry ID,NRIC,Project Name,Enquiry,Response,Timestamp,Respondent NRIC,Response Date
         

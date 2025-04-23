@@ -5,7 +5,8 @@ import java.util.ArrayList;
 
 /**
  * Utility class for printing formatted tables in CLI applications.
- * This class handles automatic column width calculation and consistent formatting.
+ * This class handles automatic column width calculation and consistent formatting
+ * to improve readability of tabular data throughout the application.
  */
 public class TablePrinter {
     private final String[] headers;
@@ -15,8 +16,9 @@ public class TablePrinter {
     private final int padding = 4; // Padding between columns
     
     /**
-     * Constructor that initializes a new table
-     * @param headers Column headers
+     * Constructs a new table with the specified column headers.
+     * 
+     * @param headers Array of column headers that define the table structure
      */
     public TablePrinter(String[] headers) {
         this.headers = headers;
@@ -31,8 +33,11 @@ public class TablePrinter {
     }
     
     /**
-     * Add a row to the table
-     * @param rowData Row data (must match number of columns)
+     * Adds a row of data to the table.
+     * The row must have the same number of columns as the table headers.
+     * 
+     * @param rowData Array of string values representing one row of data
+     * @throws IllegalArgumentException if the row data does not match the number of columns
      */
     public void addRow(String[] rowData) {
         if (rowData.length != numColumns) {
@@ -50,8 +55,11 @@ public class TablePrinter {
     }
     
     /**
-     * Add a row from an array of objects, converting them to strings
-     * @param rowData Row data objects (must match number of columns)
+     * Adds a row of data to the table using varargs for convenience.
+     * Automatically converts all objects to strings using their toString() method.
+     * 
+     * @param rowData Variable number of objects representing one row of data
+     * @throws IllegalArgumentException if the number of arguments does not match the number of columns
      */
     public void addRow(Object... rowData) {
         if (rowData.length != numColumns) {
@@ -68,7 +76,8 @@ public class TablePrinter {
     }
     
     /**
-     * Print the table
+     * Prints the formatted table to the console.
+     * Includes headers, a divider line, and all data rows with proper alignment.
      */
     public void print() {
         // Calculate the width of each padded column
@@ -97,7 +106,9 @@ public class TablePrinter {
     }
     
     /**
-     * Helper method to pad a string to the right with spaces
+     * Helper method to pad a string to the right with spaces.
+     * Ensures consistent column alignment in the table.
+     * 
      * @param s String to pad
      * @param width Total width including string
      * @return Padded string
@@ -108,9 +119,12 @@ public class TablePrinter {
     }
     
     /**
-     * Get the table as a string
+     * Returns the table as a formatted string.
+     * Useful for saving tables to files or including them in other text content.
+     * 
      * @return Formatted table as string
      */
+    @Override
     public String toString() {
         StringBuilder result = new StringBuilder();
         
@@ -142,10 +156,12 @@ public class TablePrinter {
     }
     
     /**
-     * Format a value for display, truncating if necessary
-     * @param value The value to format
+     * Formats a value for display in a table cell, truncating if longer than maxLength.
+     * Useful for keeping table columns at a consistent width.
+     * 
+     * @param value The string value to format
      * @param maxLength Maximum length before truncating
-     * @return Formatted string
+     * @return Formatted string, truncated with ellipsis if necessary
      */
     public static String formatCell(String value, int maxLength) {
         if (value == null) return "";

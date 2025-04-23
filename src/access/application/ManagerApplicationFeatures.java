@@ -25,7 +25,17 @@ public interface ManagerApplicationFeatures {
      */
     void rejectApplication(String applicationId);
 
+    /**
+     * Retrieves all applications for a specific project.
+     * @param projectName the name of the project.
+     * @return a List of Application objects for the specified project.
+     */
     List<Application> getApplicationsByProject(String projectName);
     
+    /**
+     * Retrieves all pending applications for a specific project.
+     * @param projectName the name of the project.
+     * @return a List of pending Application objects for the specified project.
+     */
     List<Application> getPendingApplicationsByProject(String projectName);
 }

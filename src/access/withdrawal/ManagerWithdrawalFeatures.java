@@ -22,5 +22,10 @@ public interface ManagerWithdrawalFeatures {
      */
     void rejectWithdrawal(String requestId);
 
+    /**
+     * Retrieves withdrawal requests for a specific project.
+     * @param projectName the name of the project to filter withdrawal requests by.
+     * @return a list of WithdrawalRequest objects associated with the specified project.
+     */
     List<WithdrawalRequest> getWithdrawalRequestsByProject(String projectName);
 }

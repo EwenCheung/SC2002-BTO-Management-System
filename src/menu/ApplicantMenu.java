@@ -18,6 +18,11 @@ import utils.FileUtils;
 import utils.UIFormatter; // Added import for UIFormatter
 import utils.TablePrinter; // Added import for TablePrinter
 
+/**
+ * Menu interface for Applicant users in the BTO Management System.
+ * Provides functionality for browsing projects, submitting applications,
+ * managing enquiries, and handling withdrawal requests.
+ */
 public class ApplicantMenu {
     private Scanner scanner;
     private Applicant applicant;
@@ -26,6 +31,16 @@ public class ApplicantMenu {
     private ApplicantEnquiryFeatures enquiryFacade;
     private ApplicantWithdrawalFeatures withdrawalFacade;
 
+    /**
+     * Constructor for the ApplicantMenu.
+     * Initializes the menu with the current applicant and necessary data handlers.
+     *
+     * @param applicant         The currently logged in applicant
+     * @param projectFacade     Handler for project-related operations
+     * @param appFacade         Handler for application-related operations
+     * @param enquiryFacade     Handler for enquiry-related operations
+     * @param withdrawalFacade  Handler for withdrawal-related operations
+     */
     public ApplicantMenu(Applicant applicant, 
                          ApplicantProjectFeatures projectFacade,
                          ApplicantApplicationFeatures appFacade,
@@ -98,6 +113,10 @@ public class ApplicantMenu {
         }
     }
 
+    /**
+     * Displays the project browsing menu and handles project filtering options.
+     * Allows users to view all available projects or filter by neighborhood, flat type, or price range.
+     */
     private void browseProjects() {
         while (true) {
             printHeader("BROWSE PROJECTS");
@@ -178,6 +197,13 @@ public class ApplicantMenu {
         }
     }
     
+    /**
+     * Filters projects by neighborhood name (case-insensitive).
+     * 
+     * @param projects      List of projects to filter
+     * @param neighborhood  Neighborhood name to search for
+     * @return List of projects in the specified neighborhood
+     */
     private List<Project> filterProjectsByNeighborhood(List<Project> projects, String neighborhood) {
         List<Project> filtered = new java.util.ArrayList<>();
         for (Project project : projects) {
@@ -188,6 +214,13 @@ public class ApplicantMenu {
         return filtered;
     }
     
+    /**
+     * Filters projects that have the specified flat type available.
+     * 
+     * @param projects  List of projects to filter
+     * @param flatType  Flat type to search for (e.g., "2-Room", "3-Room")
+     * @return List of projects that have the specified flat type
+     */
     private List<Project> filterProjectsByFlatType(List<Project> projects, String flatType) {
         List<Project> filtered = new java.util.ArrayList<>();
         for (Project project : projects) {
@@ -198,6 +231,14 @@ public class ApplicantMenu {
         return filtered;
     }
     
+    /**
+     * Filters projects by unit price range.
+     * 
+     * @param projects  List of projects to filter
+     * @param minPrice  Minimum price threshold
+     * @param maxPrice  Maximum price threshold
+     * @return List of projects with unit prices within the specified range
+     */
     private List<Project> filterProjectsByPriceRange(List<Project> projects, double minPrice, double maxPrice) {
         List<Project> filtered = new java.util.ArrayList<>();
         for (Project project : projects) {
@@ -211,6 +252,13 @@ public class ApplicantMenu {
         return filtered;
     }
     
+    /**
+     * Displays a list of eligible projects based on applicant's marital status and age.
+     * Shows detailed information and allows selecting a project to view more details.
+     * 
+     * @param projects  List of projects to display
+     * @return true if the user wants to continue browsing projects, false otherwise
+     */
     private boolean displayProjects(List<Project> projects) {
         // First, filter projects based on applicant's eligibility
         List<Project> eligibleProjects = new ArrayList<>();
@@ -448,7 +496,9 @@ public class ApplicantMenu {
     }
 
     /**
-     * Check if the applicant (who is also an officer) has any pending or approved registration for a specific project
+     * Check if the applicant (who is also an officer) has any pending or approved registration for a specific project.
+     * Officers cannot apply for projects they're registered to handle.
+     * 
      * @param projectName The name of the project to check
      * @return true if the applicant has registered for the project as an officer, false otherwise
      */
@@ -497,6 +547,11 @@ public class ApplicantMenu {
         return false;
     }
 
+    /**
+     * Handles the application submission process.
+     * Checks eligibility, guides flat type selection based on marital status and age,
+     * and creates an application record in the system.
+     */
     private void submitApplication() {
         printHeader("SUBMIT APPLICATION");
         
@@ -651,6 +706,10 @@ public class ApplicantMenu {
         printSuccess("Application submitted successfully!");
     }
 
+    /**
+     * Displays the applicant's submitted applications and their statuses.
+     * Allows viewing detailed information about a selected application.
+     */
     private void viewApplicationStatus() {
         printHeader("APPLICATION STATUS");
         List<Application> myApps = appFacade.getApplicationsForApplicant(applicant.getNric());
@@ -722,6 +781,10 @@ public class ApplicantMenu {
         }
     }
 
+    /**
+     * Displays the enquiry management submenu and handles user interactions.
+     * Provides options for submitting, viewing, editing, and deleting enquiries.
+     */
     private void manageEnquiries() {
         while (true) {
             printHeader("ENQUIRIES MANAGEMENT");
@@ -743,6 +806,10 @@ public class ApplicantMenu {
         }
     }
 
+    /**
+     * Handles the process of submitting a new enquiry.
+     * Allows the user to select a project and enter their enquiry message.
+     */
     private void submitEnquiry() {
         printHeader("SUBMIT NEW ENQUIRY");
         
@@ -805,6 +872,10 @@ public class ApplicantMenu {
         printSuccess("Enquiry submitted successfully.");
     }
 
+    /**
+     * Displays all enquiries submitted by the current applicant.
+     * Shows enquiry details including status and any responses received.
+     */
     private void viewEnquiries() {
         printHeader("MY ENQUIRIES");
         List<Enquiry> enquiries = enquiryFacade.getEnquiriesForApplicant(applicant.getNric());
@@ -892,6 +963,10 @@ public class ApplicantMenu {
         scanner.nextLine();
     }
 
+    /**
+     * Allows the applicant to edit a pending (not yet responded to) enquiry.
+     * Only enquiries that haven't received a response can be edited.
+     */
     private void editEnquiry() {
         printHeader("EDIT ENQUIRY");
         
@@ -994,6 +1069,10 @@ public class ApplicantMenu {
         }
     }
 
+    /**
+     * Allows the applicant to delete a pending (not yet responded to) enquiry.
+     * Only enquiries that haven't received a response can be deleted.
+     */
     private void deleteEnquiry() {
         printHeader("DELETE ENQUIRY");
         
@@ -1090,6 +1169,10 @@ public class ApplicantMenu {
         }
     }
     
+    /**
+     * Displays the withdrawal management submenu and handles user interactions.
+     * Provides options for submitting withdrawal requests and viewing existing ones.
+     */
     private void manageWithdrawal() {
         while (true) {
             printHeader("MANAGE WITHDRAWAL");
@@ -1114,6 +1197,10 @@ public class ApplicantMenu {
         }
     }
 
+    /**
+     * Handles the process of submitting a withdrawal request for an existing application.
+     * Checks eligibility and guides the applicant through the withdrawal request process.
+     */
     private void submitWithdrawalRequest() {
         printHeader("SUBMIT WITHDRAWAL REQUEST");
         
@@ -1242,6 +1329,10 @@ public class ApplicantMenu {
         scanner.nextLine();
     }
 
+    /**
+     * Displays all withdrawal requests submitted by the current applicant.
+     * Shows detailed information about the status of each withdrawal request.
+     */
     private void viewWithdrawalRequests() {
         printHeader("MY WITHDRAWAL REQUESTS");
         
@@ -1342,6 +1433,10 @@ public class ApplicantMenu {
         scanner.nextLine();
     }
 
+    /**
+     * Handles the password change process for the current applicant.
+     * Verifies the current password and updates it with a new one.
+     */
     private void changePassword() {
         printHeader("CHANGE PASSWORD");
         
@@ -1426,26 +1521,56 @@ public class ApplicantMenu {
         }
     }
 
+    /**
+     * Prints a formatted header with the specified title.
+     * 
+     * @param title The title to display in the header
+     */
     private void printHeader(String title) {
         System.out.println(UIFormatter.formatHeader(title));
     }
     
+    /**
+     * Prints a horizontal divider line for visual separation in the UI.
+     */
     private void printDivider() {
         System.out.println(UIFormatter.formatDivider());
     }
     
+    /**
+     * Prints an informational message with appropriate formatting.
+     * 
+     * @param message The information message to display
+     */
     private void printMessage(String message) {
         System.out.println(UIFormatter.formatInfo(message));
     }
     
+    /**
+     * Prints a success message with appropriate formatting.
+     * 
+     * @param message The success message to display
+     */
     private void printSuccess(String message) {
         System.out.println(UIFormatter.formatSuccess(message));
     }
     
+    /**
+     * Prints an error message with appropriate formatting.
+     * 
+     * @param message The error message to display
+     */
     private void printError(String message) {
         System.out.println(UIFormatter.formatError(message));
     }
     
+    /**
+     * Reads a numeric choice from user input with validation.
+     * 
+     * @param min The minimum acceptable value
+     * @param max The maximum acceptable value
+     * @return The user's choice, or -1 if input was invalid
+     */
     private int readChoice(int min, int max) {
         System.out.print(UIFormatter.formatPrompt("Enter your choice: "));
         try {
@@ -1461,6 +1586,11 @@ public class ApplicantMenu {
         }
     }
     
+    /**
+     * Reads a decimal number from user input.
+     * 
+     * @return The parsed double value, or -1 if input was invalid
+     */
     private double readDouble() {
         try {
             return Double.parseDouble(scanner.nextLine().trim());
@@ -1470,18 +1600,36 @@ public class ApplicantMenu {
         }
     }
     
+    /**
+     * Reads a yes/no response from the user with a default prompt.
+     * 
+     * @return true for yes/y, false for any other input
+     */
     private boolean readYesNo() {
         System.out.print(UIFormatter.formatPrompt("Confirm (Y/N): "));
         String input = scanner.nextLine().trim().toUpperCase();
         return input.equals("Y") || input.equals("YES");
     }
     
+    /**
+     * Reads a yes/no response from the user with a custom prompt.
+     * 
+     * @param prompt The prompt to display to the user
+     * @return true for yes/y, false for any other input
+     */
     private boolean readYesNo(String prompt) {
         System.out.print(UIFormatter.formatPrompt(prompt));
         String input = scanner.nextLine().trim().toUpperCase();
         return input.equals("Y") || input.equals("YES");
     }
     
+    /**
+     * Truncates a string to the specified length for display purposes.
+     * 
+     * @param str The string to truncate
+     * @param length The maximum length
+     * @return The truncated string
+     */
     private String truncate(String str, int length) {
         return TablePrinter.formatCell(str, length);
     }

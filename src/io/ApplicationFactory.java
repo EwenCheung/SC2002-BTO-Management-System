@@ -6,9 +6,25 @@ import models.Application;
 import models.enums.ApplicationStatus;
 import static utils.Constants.DATE_TIME_FORMAT;
 
+/**
+ * Factory class for creating Application objects from string data.
+ * This class provides functionality to parse Application data from files or other string 
+ * representations, handling data validation, format conversion, and providing sensible defaults
+ * for missing values.
+ */
 public class ApplicationFactory {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern(DATE_TIME_FORMAT);
     
+    /**
+     * Creates an Application object from an array of string tokens.
+     * Handles data validation and provides defaults for missing values.
+     * 
+     * @param tokens Array of strings representing Application fields in the order:
+     *               Application ID, Applicant NRIC, Project Name, Unit Type, Status,
+     *               Assigned Unit, Assigned Officer, Application Date, Last Updated, Remarks
+     * @return A fully constructed Application object
+     * @throws IllegalArgumentException if required fields are missing or invalid
+     */
     public static Application createApplication(String[] tokens) {
         // Format: Application ID,Applicant NRIC,Project Name,Unit Type,Status,Assigned Unit,Assigned Officer,Application Date,Last Updated,Remarks
         // First ensure we have the minimal required fields (first 5 fields)
@@ -44,7 +60,14 @@ public class ApplicationFactory {
                 assignedUnit, assignedOfficer, applicationDate, lastUpdated, remarks);
     }
     
-    // Helper method to parse dates with various formats
+    /**
+     * Helper method to parse date-time strings with flexible format handling.
+     * Attempts to parse using the standard format first, then tries alternative formats,
+     * falling back to current time if parsing fails.
+     * 
+     * @param dateTimeStr The date-time string to parse
+     * @return LocalDateTime object representing the parsed date and time, or current time if parsing fails
+     */
     private static LocalDateTime parseDateTime(String dateTimeStr) {
         if (dateTimeStr == null || dateTimeStr.isEmpty()) {
             return LocalDateTime.now(); // Default to current time if no date is provided

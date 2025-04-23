@@ -6,9 +6,22 @@ import java.util.List;
 import static utils.Constants.DELIMITER;
 import static utils.Constants.QUOTE;
 
+/**
+ * Utility class for file operations in the BTO Management System.
+ * Provides methods for reading from and writing to CSV files with proper handling
+ * of special characters, quoting, and escaping. Centralizes all file IO operations
+ * to ensure consistent data handling across the application.
+ */
 public class FileUtils {
     private static final String DATASET_PATH = "Datasets/";
 
+    /**
+     * Reads a CSV file and returns its contents as a list of string arrays.
+     * Each array represents one row in the CSV file.
+     * 
+     * @param fileName Name of the file to read (relative to the DATASET_PATH)
+     * @return List of string arrays, each array containing one row of the CSV file
+     */
     public static List<String[]> readFile(String fileName) {
         List<String[]> data = new ArrayList<>();
         
@@ -26,7 +39,9 @@ public class FileUtils {
     }
 
     /**
-     * Parses a CSV line respecting quoted values that may contain commas
+     * Parses a CSV line respecting quoted values that may contain commas.
+     * Handles complex CSV formatting requirements like quoted fields and escaped quotes.
+     * 
      * @param line The CSV line to parse
      * @return Array of string tokens from the CSV line
      */
@@ -55,7 +70,11 @@ public class FileUtils {
     }
 
     /**
-     * Cleans a token by removing surrounding quotes and trimming whitespace
+     * Cleans a token by removing surrounding quotes and trimming whitespace.
+     * Helper method used by parseCsvLine to format individual CSV fields.
+     * 
+     * @param token The token to clean
+     * @return The cleaned token
      */
     private static String cleanToken(String token) {
         token = token.trim();
@@ -65,6 +84,14 @@ public class FileUtils {
         return token;
     }
 
+    /**
+     * Writes data to a CSV file.
+     * Each string array in the list represents one row in the CSV file.
+     * 
+     * @param fileName Name of the file to write (relative to the DATASET_PATH)
+     * @param data List of string arrays to write to the file
+     * @return true if the write operation was successful, false otherwise
+     */
     public static boolean writeFile(String fileName, List<String[]> data) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(DATASET_PATH + fileName))) {
             for (String[] row : data) {
@@ -79,7 +106,11 @@ public class FileUtils {
     }
 
     /**
-     * Converts an array of strings to a CSV line, properly escaping values that contain commas
+     * Converts an array of strings to a CSV line, properly escaping values that contain commas.
+     * Ensures CSV data is correctly formatted according to RFC 4180 standards.
+     * 
+     * @param tokens Array of string values to convert to a CSV line
+     * @return A properly formatted CSV line
      */
     private static String toCsvLine(String[] tokens) {
         StringBuilder line = new StringBuilder();
@@ -97,6 +128,15 @@ public class FileUtils {
         return line.toString();
     }
 
+    /**
+     * Updates a specific cell in a CSV file.
+     * 
+     * @param fileName Name of the file to update (relative to the DATASET_PATH)
+     * @param rowIndex Index of the row to update (0-based)
+     * @param colIndex Index of the column to update (0-based)
+     * @param value New value for the cell
+     * @return true if the update was successful, false otherwise
+     */
     public static boolean updateFile(String fileName, int rowIndex, int colIndex, String value) {
         List<String[]> data = readFile(fileName);
         if (rowIndex < 0 || rowIndex >= data.size()) {
