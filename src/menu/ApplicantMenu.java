@@ -15,6 +15,8 @@ import models.WithdrawalRequest;
 import models.UnitInfo;
 import users.Applicant;
 import utils.FileUtils;
+import utils.UIFormatter; // Added import for UIFormatter
+import utils.TablePrinter; // Added import for TablePrinter
 
 public class ApplicantMenu {
     private Scanner scanner;
@@ -35,6 +37,9 @@ public class ApplicantMenu {
         this.appFacade = appFacade;
         this.enquiryFacade = enquiryFacade;
         this.withdrawalFacade = withdrawalFacade;
+        
+        // Initialize color support based on terminal capabilities
+        UIFormatter.setColorEnabled(UIFormatter.supportsColors());
     }
 
     /**
@@ -236,49 +241,62 @@ public class ApplicantMenu {
         
         // If no eligible projects found, provide feedback based on eligibility
         if (eligibleProjects.isEmpty()) {
-            printMessage("No projects found matching your criteria.");
-            
-            // Enhanced feedback based on applicant's profile
-            System.out.println("\nEligibility information:");
-            if (maritalStatus.equals("SINGLE")) {
-                if (applicantAge < 35) {
-                    System.out.println("As a single applicant under 35 years old, you are not eligible for BTO applications yet.");
-                    System.out.println("Singles must be 35 years old and above to apply for 2-Room flats only.");
-                } else {
-                    System.out.println("As a single applicant 35 years old and above, you are eligible for 2-Room flats only.");
-                    System.out.println("Currently there are no 2-Room flats available for application.");
-                }
-            } else if (maritalStatus.equals("MARRIED")) {
-                if (applicantAge < 21) {
-                    System.out.println("As a married applicant under 21 years old, you are not eligible for BTO applications yet.");
-                    System.out.println("Married applicants must be 21 years old and above to apply for any flat type.");
-                } else {
-                    System.out.println("As a married applicant 21 years old and above, you are eligible for any flat type (2-Room or 3-Room).");
-                    System.out.println("Currently there are no flats available for application.");
-                }
-            }
-            
-            // Only show system-wide availability if the user is eligible to apply
-            if (isSingleEligible || isMarriedEligible) {
-                // Get ALL visible projects to show total availability
-                List<Project> allVisibleProjects = projectFacade.getVisibleProjects();
-                int total2Room = 0;
-                int total3Room = 0;
+            // If we're showing all projects and none match, it's an eligibility issue
+            if (projects.size() == projectFacade.getVisibleProjects().size()) {
+                printMessage("No projects found matching your criteria.");
                 
-                for (Project p : allVisibleProjects) {
-                    Map<String, UnitInfo> units = p.getUnits();
-                    if (units.containsKey("2-Room") && units.get("2-Room").getAvailableUnits() > 0) {
-                        total2Room++;
+                // Enhanced feedback based on applicant's profile
+                System.out.println("\nEligibility information:");
+                if (maritalStatus.equals("SINGLE")) {
+                    if (applicantAge < 35) {
+                        System.out.println(UIFormatter.formatWarning("As a single applicant under 35 years old, you are not eligible for BTO applications yet."));
+                        System.out.println("Singles must be 35 years old and above to apply for 2-Room flats only.");
+                    } else {
+                        System.out.println(UIFormatter.formatWarning("As a single applicant 35 years old and above, you are eligible for 2-Room flats only."));
+                        System.out.println("Currently there are no 2-Room flats available for application.");
                     }
-                    if (units.containsKey("3-Room") && units.get("3-Room").getAvailableUnits() > 0) {
-                        total3Room++;
+                } else if (maritalStatus.equals("MARRIED")) {
+                    if (applicantAge < 21) {
+                        System.out.println(UIFormatter.formatWarning("As a married applicant under 21 years old, you are not eligible for BTO applications yet."));
+                        System.out.println("Married applicants must be 21 years old and above to apply for any flat type.");
+                    } else {
+                        System.out.println(UIFormatter.formatWarning("As a married applicant 21 years old and above, you are eligible for any flat type (2-Room or 3-Room)."));
+                        System.out.println("Currently there are no flats available for application.");
                     }
                 }
                 
-                System.out.println("\nSystem-wide availability:");
-                System.out.println("Projects with 2-Room flats available: " + total2Room);
-                System.out.println("Projects with 3-Room flats available: " + total3Room);
-                System.out.println("Please check back later for updates or adjust your filter criteria.");
+                // Only show system-wide availability if the user is eligible to apply
+                if (isSingleEligible || isMarriedEligible) {
+                    // Get ALL visible projects to show total availability
+                    List<Project> allVisibleProjects = projectFacade.getVisibleProjects();
+                    int total2Room = 0;
+                    int total3Room = 0;
+                    
+                    for (Project p : allVisibleProjects) {
+                        Map<String, UnitInfo> units = p.getUnits();
+                        if (units.containsKey("2-Room") && units.get("2-Room").getAvailableUnits() > 0) {
+                            total2Room++;
+                        }
+                        if (units.containsKey("3-Room") && units.get("3-Room").getAvailableUnits() > 0) {
+                            total3Room++;
+                        }
+                    }
+                    
+                    System.out.println("\n" + UIFormatter.formatSectionHeader("System-wide Availability"));
+                    
+                    TablePrinter availabilityTable = new TablePrinter(new String[] {
+                        "Flat Type", "Projects with Available Units"
+                    });
+                    
+                    availabilityTable.addRow("2-Room", String.valueOf(total2Room));
+                    availabilityTable.addRow("3-Room", String.valueOf(total3Room));
+                    availabilityTable.print();
+                    
+                    System.out.println("\nPlease check back later for updates or adjust your filter criteria.");
+                }
+            } else {
+                // This is a filter result with no matches
+                printMessage("No projects match your filter criteria.");
             }
             
             return false;
@@ -287,37 +305,37 @@ public class ApplicantMenu {
         // Display eligibility information first
         System.out.println();
         if (maritalStatus.equals("SINGLE") && applicantAge >= 35) {
-            System.out.println("As a single above 35, you are only allowed to apply flat type with 2 room.");
+            System.out.println(UIFormatter.formatInfo("As a single above 35, you are only allowed to apply flat type with 2 room."));
         } else if (maritalStatus.equals("MARRIED") && applicantAge >= 21) {
-            System.out.println("As a married above 21, you are allowed to apply flat type with 2 room or 3 room.");
+            System.out.println(UIFormatter.formatInfo("As a married above 21, you are allowed to apply flat type with 2 room or 3 room."));
         }
-        System.out.println("Projects that match with you: " + eligibleProjects.size());
-        
-        // Display total projects as well
+        System.out.println("Projects that match with you: " + UIFormatter.highlight(String.valueOf(eligibleProjects.size())));
         System.out.println("Total Projects: " + projects.size());
         
         printHeader("PROJECT LIST");
-        // Improved header alignment
-        System.out.printf("%-4s %-25s %-12s %-12s %-15s %-25s\n", 
-            "No.", "Project Name", "Flat Type", "Price", "Units Left", "Application Period");
-        printDivider();
         
-        // New display format with grouped flat types and empty line between projects
+        // Create table for projects using TablePrinter
+        TablePrinter projectTable = new TablePrinter(new String[] {
+            "No.", "Project Name", "Flat Type", "Price", "Units Left", "Application Period"
+        });
+        
+        // Add rows to the table based on eligibility and flat type availability
         int projectCounter = 1;
         for (Project project : eligibleProjects) {
             Map<String, UnitInfo> units = project.getUnits();
+            String period = project.getApplicationOpeningDate() + " to " + project.getApplicationClosingDate();
             
             // For singles, only show 2-Room flats
             if (isSingleEligible) {
                 if (units.containsKey("2-Room") && units.get("2-Room").getAvailableUnits() > 0) {
                     UnitInfo info = units.get("2-Room");
-                    System.out.printf("%-4d %-25s a) %-8s $%-10.0f %-15d %-25s\n", 
-                        projectCounter, 
+                    projectTable.addRow(
+                        String.valueOf(projectCounter),
                         project.getProjectName(),
                         "2-Room",
-                        info.getSellingPrice(),
-                        info.getAvailableUnits(),
-                        project.getApplicationOpeningDate() + " to " + project.getApplicationClosingDate()
+                        "$" + String.format("%.0f", info.getSellingPrice()),
+                        String.valueOf(info.getAvailableUnits()),
+                        period
                     );
                 }
             } 
@@ -328,48 +346,46 @@ public class ApplicantMenu {
                 
                 if (has2Room) {
                     UnitInfo info = units.get("2-Room");
-                    System.out.printf("%-4d %-25s a) %-8s $%-10.0f %-15d %-25s\n", 
-                        projectCounter, 
+                    projectTable.addRow(
+                        String.valueOf(projectCounter),
                         project.getProjectName(),
                         "2-Room",
-                        info.getSellingPrice(),
-                        info.getAvailableUnits(),
-                        project.getApplicationOpeningDate() + " to " + project.getApplicationClosingDate()
+                        "$" + String.format("%.0f", info.getSellingPrice()),
+                        String.valueOf(info.getAvailableUnits()),
+                        period
                     );
                 }
                 
                 if (has3Room) {
                     UnitInfo info = units.get("3-Room");
                     if (!has2Room) {
-                        // If no 2-Room, this becomes the 'a)' option
-                        System.out.printf("%-4d %-25s a) %-8s $%-10.0f %-15d %-25s\n", 
-                            projectCounter, 
+                        projectTable.addRow(
+                            String.valueOf(projectCounter),
                             project.getProjectName(),
                             "3-Room",
-                            info.getSellingPrice(),
-                            info.getAvailableUnits(),
-                            project.getApplicationOpeningDate() + " to " + project.getApplicationClosingDate()
+                            "$" + String.format("%.0f", info.getSellingPrice()),
+                            String.valueOf(info.getAvailableUnits()),
+                            period
                         );
                     } else {
-                        // If has 2-Room, this becomes the 'b)' option
-                        System.out.printf("%-4s %-25s b) %-8s $%-10.0f %-15d %-25s\n", 
-                            "", 
+                        projectTable.addRow(
+                            "",
                             "",
                             "3-Room",
-                            info.getSellingPrice(),
-                            info.getAvailableUnits(),
-                            project.getApplicationOpeningDate() + " to " + project.getApplicationClosingDate()
+                            "$" + String.format("%.0f", info.getSellingPrice()),
+                            String.valueOf(info.getAvailableUnits()),
+                            ""
                         );
                     }
                 }
             }
             
-            // Add an empty line between projects
-            System.out.println();
             projectCounter++;
         }
         
-        System.out.println("\nEnter project number for details (0 to go back): ");
+        projectTable.print();
+        
+        System.out.print("\nEnter project number for details (0 to go back): ");
         int choice = readChoice(0, eligibleProjects.size());
         if (choice == 0 || choice == -1) return false;
         
@@ -378,10 +394,16 @@ public class ApplicantMenu {
         
         if (selected != null) {
             printHeader("PROJECT DETAILS: " + selected.getProjectName());
-            System.out.println("Project: " + selected.getProjectName());
-            System.out.println("Neighborhood: " + selected.getNeighborhood());
+            System.out.println("Project: " + UIFormatter.highlight(selected.getProjectName()));
+            System.out.println("Neighborhood: " + UIFormatter.highlight(selected.getNeighborhood()));
             System.out.println("Application Period: " + selected.getApplicationOpeningDate() + " to " + selected.getApplicationClosingDate());
-            System.out.println("\nUnit Types Available:");
+            
+            System.out.println("\n" + UIFormatter.formatSectionHeader("Unit Types Available"));
+            
+            // Create unit types table
+            TablePrinter unitsTable = new TablePrinter(new String[] {
+                "Unit Type", "Available Units", "Total Units", "Price ($)"
+            });
             
             Map<String, UnitInfo> units = selected.getUnits();
             
@@ -389,22 +411,36 @@ public class ApplicantMenu {
             if (isSingleEligible) {
                 if (units.containsKey("2-Room")) {
                     UnitInfo info = units.get("2-Room");
-                    System.out.println("  - 2-Room: " + info.getAvailableUnits() + "/" + info.getTotalUnits() + 
-                                      " units available, Price: $" + String.format("%.2f", info.getSellingPrice()));
+                    unitsTable.addRow(
+                        "2-Room",
+                        String.valueOf(info.getAvailableUnits()),
+                        String.valueOf(info.getTotalUnits()),
+                        String.format("%.2f", info.getSellingPrice())
+                    );
                 }
             } else if (isMarriedEligible) {
                 if (units.containsKey("2-Room")) {
                     UnitInfo info = units.get("2-Room");
-                    System.out.println("  - 2-Room: " + info.getAvailableUnits() + "/" + info.getTotalUnits() + 
-                                      " units available, Price: $" + String.format("%.2f", info.getSellingPrice()));
+                    unitsTable.addRow(
+                        "2-Room",
+                        String.valueOf(info.getAvailableUnits()),
+                        String.valueOf(info.getTotalUnits()),
+                        String.format("%.2f", info.getSellingPrice())
+                    );
                 }
                 
                 if (units.containsKey("3-Room")) {
                     UnitInfo info = units.get("3-Room");
-                    System.out.println("  - 3-Room: " + info.getAvailableUnits() + "/" + info.getTotalUnits() + 
-                                      " units available, Price: $" + String.format("%.2f", info.getSellingPrice()));
+                    unitsTable.addRow(
+                        "3-Room",
+                        String.valueOf(info.getAvailableUnits()),
+                        String.valueOf(info.getTotalUnits()),
+                        String.format("%.2f", info.getSellingPrice())
+                    );
                 }
             }
+            
+            unitsTable.print();
             
             System.out.println("\nPress Enter to continue...");
             scanner.nextLine();
@@ -495,15 +531,27 @@ public class ApplicantMenu {
             return;
         }
         
-        System.out.println("Available Projects:");
-        printDivider();
+        System.out.println(UIFormatter.formatSectionHeader("Available Projects"));
+        
+        // Use TablePrinter for available projects table
+        TablePrinter projectsTable = new TablePrinter(new String[] {
+            "No.", "Project Name", "Neighborhood", "Application Period"
+        });
         
         int i = 1;
         for (Project project : availableProjects) {
-            System.out.printf("%-2d. %-25s (%s)\n", i++, project.getProjectName(), project.getNeighborhood());
+            String period = project.getApplicationOpeningDate() + " to " + project.getApplicationClosingDate();
+            projectsTable.addRow(
+                String.valueOf(i++),
+                project.getProjectName(),
+                project.getNeighborhood(),
+                period
+            );
         }
         
-        System.out.print("\nSelect project number (0 to cancel): ");
+        projectsTable.print();
+        
+        System.out.print("\n" + UIFormatter.formatPrompt("Select project number (0 to cancel): "));
         int projectChoice = readChoice(0, availableProjects.size());
         if (projectChoice == 0 || projectChoice == -1) {
             printMessage("Application cancelled.");
@@ -527,18 +575,33 @@ public class ApplicantMenu {
                 printHeader("FLAT SELECTION");
                 System.out.println("As a Married applicant, you are eligible for:");
                 
+                // Use TablePrinter for flat type options
+                TablePrinter flatsTable = new TablePrinter(new String[] {
+                    "Option", "Flat Type", "Price"
+                });
+                
                 int flatTypeCount = 0;
                 if (selectedProject.getUnits().containsKey("2-Room")) {
                     flatTypeCount++;
-                    System.out.println("1. 2-Room (Price: $" + selectedProject.getUnits().get("2-Room").getSellingPrice() + ")");
+                    flatsTable.addRow(
+                        "1",
+                        "2-Room",
+                        "$" + String.format("%.2f", selectedProject.getUnits().get("2-Room").getSellingPrice())
+                    );
                 }
                 
                 if (selectedProject.getUnits().containsKey("3-Room")) {
                     flatTypeCount++;
-                    System.out.println((flatTypeCount == 1 ? 1 : 2) + ". 3-Room (Price: $" + selectedProject.getUnits().get("3-Room").getSellingPrice() + ")");
+                    flatsTable.addRow(
+                        flatTypeCount == 1 ? "1" : "2",
+                        "3-Room",
+                        "$" + String.format("%.2f", selectedProject.getUnits().get("3-Room").getSellingPrice())
+                    );
                 }
                 
-                System.out.print("Choose flat type (0 to cancel): ");
+                flatsTable.print();
+                
+                System.out.print(UIFormatter.formatPrompt("Choose flat type (0 to cancel): "));
                 int flatChoice = readChoice(0, flatTypeCount);
                 if (flatChoice == 0 || flatChoice == -1) {
                     printMessage("Application cancelled.");
@@ -561,13 +624,20 @@ public class ApplicantMenu {
         }
         
         printHeader("CONFIRM APPLICATION");
-        System.out.println("Project: " + selectedProject.getProjectName());
-        System.out.println("Neighborhood: " + selectedProject.getNeighborhood());
-        System.out.println("Flat Type: " + allowedUnitType);
-        System.out.println("Price: $" + selectedProject.getUnits().get(allowedUnitType).getSellingPrice());
+        TablePrinter confirmTable = new TablePrinter(new String[] {
+            "Detail", "Value"
+        });
+        
+        confirmTable.addRow("Project", selectedProject.getProjectName());
+        confirmTable.addRow("Neighborhood", selectedProject.getNeighborhood());
+        confirmTable.addRow("Flat Type", allowedUnitType);
+        confirmTable.addRow("Price", "$" + String.format("%.2f", selectedProject.getUnits().get(allowedUnitType).getSellingPrice()));
+        
+        confirmTable.print();
+        
         printDivider();
         
-        System.out.print("Confirm application? (Y/N): ");
+        System.out.print(UIFormatter.formatPrompt("Confirm application? (Y/N): "));
         if (!readYesNo()) {
             printMessage("Application cancelled.");
             return;
@@ -593,20 +663,22 @@ public class ApplicantMenu {
             return;
         }
         
-        // Modified to ensure application ID is displayed in full without truncation
-        System.out.printf("%-20s %-25s %-10s %-15s %-15s\n", 
-                          "Application ID", "Project", "Unit Type", "Status", "Last Updated");
-        printDivider();
+        // Use TablePrinter for application status table
+        TablePrinter table = new TablePrinter(new String[] {
+            "Application ID", "Project", "Unit Type", "Status", "Last Updated"
+        });
         
         for (Application app : myApps) {
-            System.out.printf("%-20s %-25s %-10s %-15s %-15s\n",
-                    app.getApplicationId(), // No truncation for Application ID
-                    truncate(app.getProjectName(), 25),
-                    app.getUnitType(),
-                    app.getStatus(),
-                    app.getLastUpdated().toLocalDate()
+            table.addRow(
+                app.getApplicationId(),
+                TablePrinter.formatCell(app.getProjectName(), 25),
+                app.getUnitType(),
+                UIFormatter.formatStatus(app.getStatus().toString()),
+                app.getLastUpdated().toLocalDate().toString()
             );
         }
+        
+        table.print();
         
         // If there are applications, allow viewing more details
         if (!myApps.isEmpty()) {
@@ -624,10 +696,10 @@ public class ApplicantMenu {
                 
                 if (selectedApp != null) {
                     printHeader("APPLICATION DETAILS");
-                    System.out.println("Application ID: " + selectedApp.getApplicationId());
-                    System.out.println("Project: " + selectedApp.getProjectName());
+                    System.out.println("Application ID: " + UIFormatter.highlight(selectedApp.getApplicationId()));
+                    System.out.println("Project: " + UIFormatter.highlight(selectedApp.getProjectName()));
                     System.out.println("Unit Type: " + selectedApp.getUnitType());
-                    System.out.println("Status: " + selectedApp.getStatus());
+                    System.out.println("Status: " + UIFormatter.formatStatus(selectedApp.getStatus().toString()));
                     System.out.println("Application Date: " + selectedApp.getApplicationDate().toLocalDate());
                     System.out.println("Last Updated: " + selectedApp.getLastUpdated().toLocalDate());
                     
@@ -640,7 +712,8 @@ public class ApplicantMenu {
                     }
                     
                     if (selectedApp.getRemarks() != null && !selectedApp.getRemarks().isEmpty()) {
-                        System.out.println("Remarks: " + selectedApp.getRemarks());
+                        System.out.println("\nRemarks:");
+                        System.out.println(selectedApp.getRemarks());
                     }
                 } else {
                     printError("Invalid Application ID.");
@@ -684,17 +757,26 @@ public class ApplicantMenu {
             return;
         }
         
-        // Display available projects
-        System.out.println("Available projects for enquiry:");
-        printDivider();
-        for (int i = 0; i < visibleProjects.size(); i++) {
-            System.out.printf("%d. %s (%s)\n", i + 1, visibleProjects.get(i).getProjectName(), 
-                              visibleProjects.get(i).getNeighborhood());
+        // Display available projects using TablePrinter
+        System.out.println(UIFormatter.formatSectionHeader("Available Projects for Enquiry"));
+        
+        TablePrinter projectsTable = new TablePrinter(new String[] {
+            "No.", "Project Name", "Neighborhood"
+        });
+        
+        int i = 1;
+        for (Project project : visibleProjects) {
+            projectsTable.addRow(
+                String.valueOf(i++),
+                project.getProjectName(),
+                project.getNeighborhood()
+            );
         }
-        printDivider();
+        
+        projectsTable.print();
         
         // Let user select project by number
-        System.out.print("Choose project number (0 to cancel): ");
+        System.out.print("\n" + UIFormatter.formatPrompt("Choose project number (0 to cancel): "));
         int projectChoice = readChoice(0, visibleProjects.size());
         if (projectChoice == 0 || projectChoice == -1) {
             printMessage("Enquiry cancelled.");
@@ -704,7 +786,7 @@ public class ApplicantMenu {
         String projectName = visibleProjects.get(projectChoice - 1).getProjectName();
         
         // Get enquiry message
-        System.out.print("Enter your enquiry message: ");
+        System.out.print(UIFormatter.formatPrompt("Enter your enquiry message: "));
         String message = scanner.nextLine().trim();
         
         if (message.isEmpty()) {
@@ -735,24 +817,26 @@ public class ApplicantMenu {
             return;
         }
         
-        // Improved formatting to ensure proper alignment
-        System.out.printf("%-5s %-25s %-25s %-30s %-15s\n", 
-            "No.", "Enquiry ID", "Project", "Message", "Status");
-        printDivider();
+        // Use TablePrinter for enquiries table
+        TablePrinter table = new TablePrinter(new String[] {
+            "No.", "Enquiry ID", "Project", "Message", "Status"
+        });
         
         int i = 1;
         for (Enquiry enq : enquiries) {
             String status = (enq.getReply() == null || enq.getReply().isEmpty()) ? 
                             "Pending" : "Responded";
             
-            System.out.printf("%-5d %-25s %-25s %-30s %-15s\n", 
-                i++,
+            table.addRow(
+                String.valueOf(i++),
                 enq.getEnquiryId(),
-                truncate(enq.getProjectName(), 25),
-                truncate(enq.getMessage(), 15), // Reduced to 15 characters
-                status
+                TablePrinter.formatCell(enq.getProjectName(), 25),
+                TablePrinter.formatCell(enq.getMessage(), 30),
+                UIFormatter.formatStatus(status)
             );
         }
+        
+        table.print();
         
         System.out.print("\nEnter enquiry number to view details (or enquiry ID, 0 to go back): ");
         String input = scanner.nextLine().trim();
@@ -788,22 +872,23 @@ public class ApplicantMenu {
         
         // Display the selected enquiry details
         printHeader("ENQUIRY DETAILS");
-        System.out.println("Enquiry ID: " + selectedEnq.getEnquiryId());
-        System.out.println("Project: " + selectedEnq.getProjectName());
+        System.out.println("Enquiry ID: " + UIFormatter.highlight(selectedEnq.getEnquiryId()));
+        System.out.println("Project: " + UIFormatter.highlight(selectedEnq.getProjectName()));
         System.out.println("Submit Date: " + (selectedEnq.getSubmittedAt() != null ? 
                             selectedEnq.getSubmittedAt().toLocalDate() : "N/A"));
-        System.out.println("\nYour Message:");
+        
+        System.out.println("\n" + UIFormatter.formatSectionHeader("Your Message"));
         System.out.println(selectedEnq.getMessage());
         
         if (selectedEnq.getReply() != null && !selectedEnq.getReply().isEmpty()) {
-            System.out.println("\nResponse:");
+            System.out.println("\n" + UIFormatter.formatSectionHeader("Response"));
             System.out.println(selectedEnq.getReply());
             System.out.println("\nResponded by: " + 
                               (selectedEnq.getRespondentNric() != null ? selectedEnq.getRespondentNric() : "N/A"));
             System.out.println("Response Date: " + 
                               (selectedEnq.getRepliedAt() != null ? selectedEnq.getRepliedAt().toLocalDate() : "N/A"));
         } else {
-            System.out.println("\nStatus: Pending response");
+            System.out.println("\nStatus: " + UIFormatter.formatStatus("Pending"));
         }
         
         System.out.println("\nPress Enter to continue...");
@@ -834,21 +919,23 @@ public class ApplicantMenu {
             return;
         }
         
-        // Display only the list of editable enquiries
-        System.out.printf("%-5s %-25s %-25s %-30s %-15s\n", 
-            "No.", "Enquiry ID", "Project", "Message", "Status");
-        printDivider();
+        // Use TablePrinter for editable enquiries table
+        TablePrinter table = new TablePrinter(new String[] {
+            "No.", "Enquiry ID", "Project", "Message", "Status"
+        });
         
         int i = 1;
         for (Enquiry enq : editableEnquiries) {
-            System.out.printf("%-5d %-25s %-25s %-30s %-15s\n", 
-                i++,
+            table.addRow(
+                String.valueOf(i++),
                 enq.getEnquiryId(),
-                truncate(enq.getProjectName(), 25),
-                truncate(enq.getMessage(), 15),
-                "Pending"
+                TablePrinter.formatCell(enq.getProjectName(), 25),
+                TablePrinter.formatCell(enq.getMessage(), 30),
+                UIFormatter.formatStatus("Pending")
             );
         }
+        
+        table.print();
         
         // Let user select which enquiry to edit
         System.out.print("\nEnter enquiry number to edit (or enquiry ID, 0 to cancel): ");
@@ -883,7 +970,7 @@ public class ApplicantMenu {
             }
         }
         
-        System.out.println("\nCurrent message:");
+        System.out.println("\n" + UIFormatter.formatSectionHeader("Current Message"));
         System.out.println(selectedEnq.getMessage());
         
         // Get the new message
@@ -934,24 +1021,26 @@ public class ApplicantMenu {
             return;
         }
         
-        // Display only deletable enquiries
-        System.out.printf("%-5s %-25s %-25s %-30s %-15s\n", 
-            "No.", "Enquiry ID", "Project", "Message", "Status");
-        printDivider();
+        // Use TablePrinter for deletable enquiries table
+        TablePrinter table = new TablePrinter(new String[] {
+            "No.", "Enquiry ID", "Project", "Message", "Status"
+        });
         
         int i = 1;
         for (Enquiry enq : deletableEnquiries) {
-            System.out.printf("%-5d %-25s %-25s %-30s %-15s\n", 
-                i++,
+            table.addRow(
+                String.valueOf(i++),
                 enq.getEnquiryId(),
-                truncate(enq.getProjectName(), 25),
-                truncate(enq.getMessage(), 15),  // Changed to 15 chars to match other methods
-                "Pending"
+                TablePrinter.formatCell(enq.getProjectName(), 25),
+                TablePrinter.formatCell(enq.getMessage(), 30),
+                UIFormatter.formatStatus("Pending")
             );
         }
         
+        table.print();
+        
         // Let user select which enquiry to delete
-        System.out.print("\nEnter enquiry number to delete (or enquiry ID, 0 to cancel): ");
+        System.out.print("\n" + UIFormatter.formatPrompt("Enter enquiry number to delete (or enquiry ID, 0 to cancel): "));
         String input = scanner.nextLine().trim();
         
         // If the user enters 0 or nothing, go back
@@ -1067,24 +1156,26 @@ public class ApplicantMenu {
             return;
         }
         
-        // Display the applications for the user to select from - with application ID in full
-        System.out.printf("%-5s %-25s %-25s %-10s %-15s\n", 
-                          "No.", "Application ID", "Project", "Unit Type", "Status");
-        printDivider();
+        // Use TablePrinter for withdrawal applications table
+        TablePrinter table = new TablePrinter(new String[] {
+            "No.", "Application ID", "Project", "Unit Type", "Status"
+        });
         
         int i = 1;
         for (Application app : withdrawableApps) {
-            System.out.printf("%-5d %-25s %-25s %-10s %-15s\n", 
-                i++, 
+            table.addRow(
+                String.valueOf(i++),
                 app.getApplicationId(),
-                truncate(app.getProjectName(), 25),
+                TablePrinter.formatCell(app.getProjectName(), 25),
                 app.getUnitType(),
-                app.getStatus()
+                UIFormatter.formatStatus(app.getStatus().toString())
             );
         }
         
+        table.print();
+        
         // Let the user select which application to withdraw
-        System.out.print("\nSelect application number to withdraw (0 to cancel): ");
+        System.out.print("\n" + UIFormatter.formatPrompt("Select application number to withdraw (0 to cancel): "));
         int choice = readChoice(0, withdrawableApps.size());
         if (choice == 0 || choice == -1) {
             printMessage("Withdrawal request cancelled.");
@@ -1112,12 +1203,12 @@ public class ApplicantMenu {
         
         // Get confirmation from the user
         printHeader("CONFIRM WITHDRAWAL");
-        System.out.println("Application ID: " + selectedApp.getApplicationId());
-        System.out.println("Project: " + selectedApp.getProjectName());
+        System.out.println("Application ID: " + UIFormatter.highlight(selectedApp.getApplicationId()));
+        System.out.println("Project: " + UIFormatter.highlight(selectedApp.getProjectName()));
         System.out.println("Unit Type: " + selectedApp.getUnitType());
-        System.out.println("Current Status: " + selectedApp.getStatus());
+        System.out.println("Current Status: " + UIFormatter.formatStatus(selectedApp.getStatus().toString()));
         printDivider();
-        System.out.println("WARNING: Withdrawal is irreversible once processed.");
+        System.out.println(UIFormatter.formatWarning("WARNING: Withdrawal is irreversible once processed."));
         
         if (!readYesNo("Are you sure you want to withdraw this application? (Y/N): ")) {
             printMessage("Withdrawal request cancelled.");
@@ -1127,7 +1218,7 @@ public class ApplicantMenu {
         }
         
         // Get reason for withdrawal
-        System.out.print("Please provide a reason for withdrawal (optional): ");
+        System.out.print(UIFormatter.formatPrompt("Please provide a reason for withdrawal (optional): "));
         String remarks = scanner.nextLine().trim();
         
         // Create and submit withdrawal request
@@ -1167,24 +1258,27 @@ public class ApplicantMenu {
             return;
         }
         
-        // Display the withdrawal requests
-        System.out.printf("%-5s %-25s %-25s %-15s %-15s\n", 
-                        "No.", "Request ID", "Application ID", "Status", "Request Date");
-        printDivider();
+        // Use TablePrinter for withdrawal requests table
+        TablePrinter table = new TablePrinter(new String[] {
+            "No.", "Request ID", "Application ID", "Project", "Status", "Request Date"
+        });
         
         int i = 1;
         for (WithdrawalRequest req : myRequests) {
-            System.out.printf("%-5d %-25s %-25s %-15s %-15s\n", 
-                i++, 
+            table.addRow(
+                String.valueOf(i++),
                 req.getRequestId(),
                 req.getApplicationId(),
-                req.getStatus(),
-                req.getRequestDate().toLocalDate()
+                TablePrinter.formatCell(req.getProjectName(), 25),
+                UIFormatter.formatStatus(req.getStatus().toString()),
+                req.getRequestDate().toLocalDate().toString()
             );
         }
         
+        table.print();
+        
         // Let the user select a request to view details
-        System.out.print("\nSelect request number for details (or request ID, 0 to go back): ");
+        System.out.print("\n" + UIFormatter.formatPrompt("Select request number for details (or request ID, 0 to go back): "));
         String input = scanner.nextLine().trim();
         
         // If the user enters 0 or nothing, go back
@@ -1223,27 +1317,27 @@ public class ApplicantMenu {
         
         // Display the selected request details
         printHeader("WITHDRAWAL REQUEST DETAILS");
-        System.out.println("Request ID: " + selectedReq.getRequestId());
-        System.out.println("Application ID: " + selectedReq.getApplicationId());
-        System.out.println("Project: " + selectedReq.getProjectName());
-        System.out.println("Status: " + selectedReq.getStatus());
+        System.out.println("Request ID: " + UIFormatter.highlight(selectedReq.getRequestId()));
+        System.out.println("Application ID: " + UIFormatter.highlight(selectedReq.getApplicationId()));
+        System.out.println("Project: " + UIFormatter.highlight(selectedReq.getProjectName()));
+        System.out.println("Status: " + UIFormatter.formatStatus(selectedReq.getStatus().toString()));
         System.out.println("Request Date: " + selectedReq.getRequestDate().toLocalDate());
         
         if (selectedReq.getRemarks() != null && !selectedReq.getRemarks().isEmpty()) {
-            System.out.println("\nReason for withdrawal:");
+            System.out.println("\n" + UIFormatter.formatSectionHeader("Reason for Withdrawal"));
             System.out.println(selectedReq.getRemarks());
         }
         
         if (selectedReq.getStatus().toString().equalsIgnoreCase("APPROVED")) {
-            System.out.println("\nYour withdrawal request has been approved.");
+            System.out.println("\nYour withdrawal request has been " + UIFormatter.formatStatus("APPROVED") + ".");
             System.out.println("Processed Date: " + (selectedReq.getProcessDate() != null ? 
                               selectedReq.getProcessDate().toLocalDate() : "N/A"));
         } else if (selectedReq.getStatus().toString().equalsIgnoreCase("REJECTED")) {
-            System.out.println("\nYour withdrawal request has been rejected.");
+            System.out.println("\nYour withdrawal request has been " + UIFormatter.formatStatus("REJECTED") + ".");
             System.out.println("Processed Date: " + (selectedReq.getProcessDate() != null ? 
                               selectedReq.getProcessDate().toLocalDate() : "N/A"));
         } else {
-            System.out.println("\nYour withdrawal request is still pending.");
+            System.out.println("\nYour withdrawal request is " + UIFormatter.formatStatus("PENDING") + ".");
             System.out.println("Please check back later for updates.");
         }
         
@@ -1254,11 +1348,11 @@ public class ApplicantMenu {
     private void changePassword() {
         printHeader("CHANGE PASSWORD");
         
-        System.out.println("Press 0 to quit");
+        System.out.println(UIFormatter.formatInfo("Enter 0 at any time to cancel the password change."));
         
         // Get current password
         while (true) {
-            System.out.print("Enter your current password: ");
+            System.out.print(UIFormatter.formatPrompt("Enter your current password: "));
             String current = scanner.nextLine().trim();
             
             // Check if user wants to quit
@@ -1277,7 +1371,7 @@ public class ApplicantMenu {
         // Get new password
         String newPass;
         while (true) {
-            System.out.print("Enter your new password: ");
+            System.out.print(UIFormatter.formatPrompt("Enter your new password: "));
             newPass = scanner.nextLine().trim();
             
             // Check if user wants to quit
@@ -1293,7 +1387,7 @@ public class ApplicantMenu {
             }
             
             // Confirm new password
-            System.out.print("Confirm your new password: ");
+            System.out.print(UIFormatter.formatPrompt("Confirm your new password: "));
             String confirmPass = scanner.nextLine().trim();
             
             if (!newPass.equals(confirmPass)) {
@@ -1336,29 +1430,27 @@ public class ApplicantMenu {
     }
 
     private void printHeader(String title) {
-        System.out.println("\n" + FileUtils.repeatChar('=', 60));
-        System.out.println(FileUtils.repeatChar(' ', (60 - title.length()) / 2) + title);
-        System.out.println(FileUtils.repeatChar('=', 60));
+        System.out.println(UIFormatter.formatHeader(title));
     }
     
     private void printDivider() {
-        System.out.println(FileUtils.repeatChar('-', 60));
+        System.out.println(UIFormatter.formatDivider());
     }
     
     private void printMessage(String message) {
-        System.out.println("\n" + message);
+        System.out.println(UIFormatter.formatInfo(message));
     }
     
     private void printSuccess(String message) {
-        System.out.println("\n✓ " + message);
+        System.out.println(UIFormatter.formatSuccess(message));
     }
     
     private void printError(String message) {
-        System.out.println("\n✗ " + message);
+        System.out.println(UIFormatter.formatError(message));
     }
     
     private int readChoice(int min, int max) {
-        System.out.print("Enter your choice: ");
+        System.out.print(UIFormatter.formatPrompt("Enter your choice: "));
         try {
             int choice = Integer.parseInt(scanner.nextLine().trim());
             if (choice < min || choice > max) {
@@ -1382,19 +1474,19 @@ public class ApplicantMenu {
     }
     
     private boolean readYesNo() {
+        System.out.print(UIFormatter.formatPrompt("Confirm (Y/N): "));
         String input = scanner.nextLine().trim().toUpperCase();
         return input.equals("Y") || input.equals("YES");
     }
     
     private boolean readYesNo(String prompt) {
-        System.out.print(prompt);
+        System.out.print(UIFormatter.formatPrompt(prompt));
         String input = scanner.nextLine().trim().toUpperCase();
         return input.equals("Y") || input.equals("YES");
     }
     
     private String truncate(String str, int length) {
-        if (str.length() <= length) return str;
-        return str.substring(0, length - 3) + "...";
+        return TablePrinter.formatCell(str, length);
     }
 }
 
