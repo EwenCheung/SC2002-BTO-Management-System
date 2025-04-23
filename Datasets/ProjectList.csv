@@ -1,6 +1,6 @@
 Project Name,Neighborhood,Type 1,Total Units for Type 1,Available Units for Type 1,Selling price for Type 1,Type 2,Total Units for Type 2,Available Units for Type 2,Selling price for Type 2,Application opening date,Application closing date,Manager,Officer Slot,Officer(s),Visibility
 Evergreen Gardens,Punggol,2-Room,120,120,320000.0,3-Room,85,85,450000.0,3/1/2025,7/1/2025,S5678901G,3,,false
-Lakeside Vista,Tampines,2-Room,95,92,340000.0,3-Room,70,70,480000.0,3/15/2025,7/15/2025,T3456789H,2,T2109876H,true
+Lakeside Vista,Tampines,2-Room,95,93,340000.0,3-Room,70,70,480000.0,3/15/2025,7/15/2025,T3456789H,2,T2109876H,true
 Skyview Heights,Sengkang,2-Room,150,150,310000.0,3-Room,100,100,430000.0,6/1/2025,8/1/2025,T1234567A,4,,false
 Greenville Park,Bukit Panjang,2-Room,0,0,0.0,3-Room,65,65,420000.0,6/15/2025,8/15/2025,T8765432F,2,,true
 Waterfront Residences,Bedok,2-Room,110,110,350000.0,3-Room,0,0,0.0,7/1/2025,9/1/2025,S2345678B,3,,true

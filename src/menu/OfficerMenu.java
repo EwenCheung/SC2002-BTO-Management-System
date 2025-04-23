@@ -665,11 +665,33 @@ public class OfficerMenu {
         // Get the unit type prefix
         String typePrefix = unitType.startsWith("2") ? "2R" : "3R";
         
-        // Generate a random number between 100 and 999
-        int random = 100 + (int)(Math.random() * 900);
+        // Load all applications for this project to check for existing unit numbers
+        List<Application> projectApplications = new ArrayList<>();
+        if (appFacade instanceof access.application.ApplicationHandler) {
+            projectApplications = appFacade.getApplicationsForProject(projectName);
+        }
         
-        // Combine to form a unit number
-        return projectCode + "-" + typePrefix + "-" + random;
+        // Keep generating until we find an unused unit number
+        String unitNumber;
+        boolean isUnique;
+        do {
+            // Generate a random number between 100 and 999
+            int random = 100 + (int)(Math.random() * 900);
+            
+            // Combine to form a unit number
+            unitNumber = projectCode + "-" + typePrefix + "-" + random;
+            
+            // Check if this unit number already exists in any application
+            isUnique = true;
+            for (Application app : projectApplications) {
+                if (unitNumber.equals(app.getAssignedUnit())) {
+                    isUnique = false;
+                    break;
+                }
+            }
+        } while (!isUnique);
+        
+        return unitNumber;
     }
     
     private void generateBookingReceipt() {
