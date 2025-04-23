@@ -18,6 +18,7 @@ public class RegistrationSystem {
      */
     public User registerUserFromInput(Scanner scanner, List<User> userList) {
         // Header is handled by MainMenu, so we don't print it here
+        System.out.println("Type 'quit' at any prompt to cancel registration and return to the main menu.");
 
         // Name validation
         String name = "";
@@ -25,8 +26,12 @@ public class RegistrationSystem {
         while (!validName) {
             System.out.print("Enter Name: ");
             name = scanner.nextLine().trim();
-            if (name.isEmpty()) {
-                System.out.println("✗ Name cannot be empty. Please enter a valid name.");
+            if (name.equalsIgnoreCase("quit")) {
+                System.out.println("Registration cancelled.");
+                return null;
+            }
+            if (!isValidName(name)) {
+                System.out.println("✗ Name must contain only letters and spaces. Please enter a valid name.");
             } else {
                 validName = true;
             }
@@ -38,6 +43,10 @@ public class RegistrationSystem {
         while (!validNRIC) {
             System.out.print("Enter NRIC (e.g., S1234567A): ");
             nric = scanner.nextLine().trim();
+            if (nric.equalsIgnoreCase("quit")) {
+                System.out.println("Registration cancelled.");
+                return null;
+            }
             if (!isValidNRIC(nric)) {
                 System.out.println("✗ Invalid NRIC format. Must be S/T followed by 7 digits and ending with a letter.");
             } else {
@@ -51,6 +60,10 @@ public class RegistrationSystem {
         while (!validAge) {
             System.out.print("Enter Age: ");
             String ageInput = scanner.nextLine().trim();
+            if (ageInput.equalsIgnoreCase("quit")) {
+                System.out.println("Registration cancelled.");
+                return null;
+            }
             try {
                 age = Integer.parseInt(ageInput);
                 if (!isValidAge(age)) {
@@ -69,6 +82,10 @@ public class RegistrationSystem {
         while (!validMaritalStatus) {
             System.out.print("Enter Marital Status (Single/Married): ");
             maritalStatusStr = scanner.nextLine().trim();
+            if (maritalStatusStr.equalsIgnoreCase("quit")) {
+                System.out.println("Registration cancelled.");
+                return null;
+            }
             if (!isValidMaritalStatus(maritalStatusStr)) {
                 System.out.println("✗ Please enter 'Single' or 'Married'.");
             } else {
@@ -82,6 +99,10 @@ public class RegistrationSystem {
         while (!validPassword) {
             System.out.print("Enter Password (minimum 6 characters): ");
             password = scanner.nextLine().trim();
+            if (password.equalsIgnoreCase("quit")) {
+                System.out.println("Registration cancelled.");
+                return null;
+            }
             if (!isValidPassword(password)) {
                 System.out.println("✗ Password must be at least 6 characters long.");
             } else {
@@ -129,6 +150,14 @@ public class RegistrationSystem {
 
     public boolean isValidPassword(String password) {
         return password != null && password.length() >= 6;
+    }
+    
+    public boolean isValidName(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            return false;
+        }
+        // Check if the name contains only letters and spaces
+        return name.chars().allMatch(c -> Character.isLetter(c) || Character.isSpaceChar(c));
     }
 
     /**
