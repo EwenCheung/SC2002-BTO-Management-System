@@ -80,7 +80,6 @@ public class MainMenu {
                     registerFlow();
                     break;
                 case 3:
-                    saveAllData();
                     System.out.println(UIFormatter.formatSuccess("Thank you for using BTO Management System. Exiting..."));
                     System.exit(0);
                     break;
@@ -110,7 +109,6 @@ public class MainMenu {
         // Handle user session with potential mode switching
         handleUserSession(user);
         
-        saveAllData(); // Save data when returning from a sub-menu
     }
     
     /**
@@ -221,14 +219,7 @@ public class MainMenu {
         }
     }
 
-    private void saveAllData() {
-        FileIO.saveApplications(applicationList);
-        FileIO.saveEnquiries(enquiryList);
-        FileIO.saveProjects(projectList);
-        FileIO.saveOfficerRegistrations(officerRegistrationList);
-        FileIO.saveUsers(userList);
-        FileIO.saveWithdrawals(withdrawalRequestsList);
-    }
+
     
     // UI Helper Methods for consistent look and feel
     private int readChoice(String prompt, int min, int max) {

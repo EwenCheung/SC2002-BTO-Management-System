@@ -142,18 +142,6 @@ public class TablePrinter {
     }
     
     /**
-     * Get the total width of the table
-     * @return The total width
-     */
-    private int getTotalWidth() {
-        int sum = 0;
-        for (int width : columnWidths) {
-            sum += width + padding;
-        }
-        return sum;
-    }
-    
-    /**
      * Format a value for display, truncating if necessary
      * @param value The value to format
      * @param maxLength Maximum length before truncating
