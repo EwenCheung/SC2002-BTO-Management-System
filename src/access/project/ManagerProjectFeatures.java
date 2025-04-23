@@ -4,6 +4,11 @@ import java.util.List;
 
 import models.Project;
 
+/**
+ * Interface that defines the project management operations available to Project Managers.
+ * Provides functionality for creating, updating, deleting, and managing BTO projects,
+ * as well as handling project visibility and officer assignments.
+ */
 public interface ManagerProjectFeatures {    
     /**
      * Creates a new project.

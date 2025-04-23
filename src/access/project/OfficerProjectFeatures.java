@@ -3,6 +3,11 @@ package access.project;
 import java.util.List;
 import models.Project;
 
+/**
+ * Interface that defines the project-related operations available to HDB Officers.
+ * Provides functionality for officers to retrieve assigned projects and manage 
+ * unit availability for projects they are responsible for.
+ */
 public interface OfficerProjectFeatures {
     
     /**
