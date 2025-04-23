@@ -8,13 +8,13 @@ We have honored the principles of academic integrity and have upheld Student Cod
 
 We understand that if plagiarism is found in the assignment, then lower marks or no marks will be awarded for the assessed work. In addition, disciplinary actions may be taken.
 
-| Name | Course | Lab Group | Signature / Date |
-|------|--------|-----------|------------------|
-| Ewen Cheung Yi Wen | | | |
-| Jerick Ho Cheng Hien | | | |
-| Chan Yun Han | | | |
-| Makhija Eshaa Jiten | | | |
-| Jusvin Adrian Tan | | | |
+| Name | Course | Lab Group |
+|------|--------|-----------|
+| Ewen Cheung Yi Wen | DSAI | FDAD |
+| Jerick Ho Cheng Hien | BCG | FDAD |
+| Chan Yun Han | DSAI | FDAD |
+| Makhija Eshaa Jiten | DSAI | FDAD |
+| Jusvin Adrian Tan | DSAI | FDAD |
 
 ## Design Considerations
 
@@ -431,9 +431,60 @@ Our implementation of DIP includes:
 3. **User Interface**: We assumed a command-line interface would be sufficient as specified, without graphic user interface requirements.
 4. **Default Values**: We assumed some default values for pricing and unit configurations to simplify implementation.
 
+
+## Extra Features Not Required in Original Specification
+
+1. **Basic Password Management System**
+   - Password change functionality for all user types
+   - Basic password validation requiring minimum 6 characters
+   - Input validation for all user credentials
+
+2. **Advanced Project Filtering and Search Capabilities**
+   - Multi-criteria filtering beyond the basic requirements (neighborhood, price range, flat types)
+   - Persistent filter settings across menu navigation
+   - Sorting options for different project attributes
+
+3. **Automated Unit Management**
+   - Automatic unit number generation and assignment
+   - Intelligent inventory tracking system
+   - Real-time updates of available units per project
+
+4. **Comprehensive Application Tracking**
+   - Detailed status history tracking for all applications
+   - Timestamp recording for all status changes
+   - Audit trails for application modifications
+
+5. **Enhanced User Interface Elements**
+   - Formatted tables for improved data presentation
+   - Interactive confirmation prompts for critical actions
+   - Clear visual separators and navigation guides
+   - Color-coded status indicators (CLI compatible)
+
+6. **Robust Document Generation System**
+   - Detailed receipt generation for successful bookings
+   - Custom report formats with multiple export options
+   - Configurable templates for various document types
+
+7. **Advanced Data Management**
+   - Sophisticated persistent storage and retrieval mechanisms
+   - Data validation at multiple levels
+   - Automatic backup and recovery features
+   - Input sanitization for all user-provided data
+
+8. **Application Analytics Dashboard for Managers**
+   - Statistical overview of application statuses
+   - Trend analysis for project popularity
+   - Custom report generation by various parameters
+
+9. **Officer Workload Management**
+   - Equitable distribution of applications among officers
+   - Workload tracking and reporting
+   - Performance metrics for application processing
+
+
 ## Detailed UML Class Diagram
 
-[INSERT CLASS DIAGRAM IMAGE HERE]
+[ VIEW CLASS DIAGRAM PDF FROM THE /Submissions ]
 
 The UML Class Diagram represents the relationships between the major components of our system:
 
@@ -451,7 +502,7 @@ The UML Class Diagram represents the relationships between the major components 
 
 ## Detailed UML Sequence Diagram
 
-[INSERT SEQUENCE DIAGRAM IMAGE HERE]
+[ VIEW SEQUENCE DIAGRAM PDF FROM THE /Submissions ]
 
 The UML Sequence Diagram illustrates the flow of the HDB Officer's role in applying for a BTO and registering to handle a project:
 

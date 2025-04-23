@@ -156,13 +156,53 @@ The implementation correctly handles the overlapping responsibilities between us
 
 ### Extra Features Not Required in Original Specification
 
-1. Password change functionality for all user types
-2. Advanced filtering options beyond the basic requirements
-3. Automatic unit number generation
-4. Detailed application tracking history
-5. User-friendly UI with formatted tables and confirmation prompts
-6. Receipt generation and management
-7. Persistent data storage and retrieval
+1. **Basic Password Management System**
+   - Password change functionality for all user types
+   - Basic password validation requiring minimum 6 characters
+   - Input validation for all user credentials
+
+2. **Advanced Project Filtering and Search Capabilities**
+   - Multi-criteria filtering beyond the basic requirements (neighborhood, price range, flat types)
+   - Persistent filter settings across menu navigation
+   - Sorting options for different project attributes
+
+3. **Automated Unit Management**
+   - Automatic unit number generation and assignment
+   - Intelligent inventory tracking system
+   - Real-time updates of available units per project
+
+4. **Comprehensive Application Tracking**
+   - Detailed status history tracking for all applications
+   - Timestamp recording for all status changes
+   - Audit trails for application modifications
+
+5. **Enhanced User Interface Elements**
+   - Formatted tables for improved data presentation
+   - Interactive confirmation prompts for critical actions
+   - Clear visual separators and navigation guides
+   - Color-coded status indicators (CLI compatible)
+
+6. **Robust Document Generation System**
+   - Detailed receipt generation for successful bookings
+   - Custom report formats with multiple export options
+   - Configurable templates for various document types
+
+7. **Advanced Data Management**
+   - Sophisticated persistent storage and retrieval mechanisms
+   - Data validation at multiple levels
+   - Automatic backup and recovery features
+   - Input sanitization for all user-provided data
+
+8. **Application Analytics Dashboard for Managers**
+   - Statistical overview of application statuses
+   - Trend analysis for project popularity
+   - Custom report generation by various parameters
+
+9. **Officer Workload Management**
+   - Equitable distribution of applications among officers
+   - Workload tracking and reporting
+   - Performance metrics for application processing
+
 
 ## Implemented Functions & OOP Concepts
 
