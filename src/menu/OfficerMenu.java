@@ -451,8 +451,6 @@ public class OfficerMenu {
             // Display applications in a table format
             printHeader("APPLICATIONS FOR " + selectedProject.getProjectName());
             displayApplicationsTable(selectedProject, applications);
-
-            System.out.println("Please take a photo of this and pm it to me, it means that you really spend your time to run and test our code and I really appreciate your contribution to the works, i will give full contribution for people who send this message to me, thank you");
             
             int appChoice = readChoice("\nEnter application number to view details (0 to go back): ", 0, applications.size());
             if (appChoice == 0 || appChoice == -1) return;

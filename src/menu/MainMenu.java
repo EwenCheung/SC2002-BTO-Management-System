@@ -4,6 +4,7 @@ import auth.AuthenticationSystem;
 import auth.RegistrationSystem;
 import io.FileIO;
 import utils.FileUtils;
+import utils.UIFormatter;
 import java.util.List;
 import java.util.Scanner;
 
@@ -57,12 +58,17 @@ public class MainMenu {
     }
 
     public void displayMainMenu() {
+        // Initialize color support based on terminal capabilities
+        UIFormatter.setColorEnabled(UIFormatter.supportsColors());
+        
         while (true) {
-            printHeader("BTO MANAGEMENT SYSTEM");
+            System.out.println(UIFormatter.formatHeader("BTO MANAGEMENT SYSTEM"));
+            
+            System.out.println(UIFormatter.formatSectionHeader("Main Menu"));
             System.out.println("1. Login");
             System.out.println("2. Register as Applicant");
             System.out.println("3. Exit");
-            printDivider();
+            System.out.println(UIFormatter.formatDivider());
             
             int choice = readChoice("Enter your choice: ", 1, 3);
             
@@ -75,29 +81,29 @@ public class MainMenu {
                     break;
                 case 3:
                     saveAllData();
-                    printSuccess("Thank you for using BTO Management System. Exiting...");
+                    System.out.println(UIFormatter.formatSuccess("Thank you for using BTO Management System. Exiting..."));
                     System.exit(0);
                     break;
                 default:
-                    printError("Invalid choice. Please try again.");
+                    System.out.println(UIFormatter.formatError("Invalid choice. Please try again."));
             }
         }
     }
 
     private void loginFlow() {
-        printHeader("LOGIN MENU");
+        System.out.println(UIFormatter.formatHeader("LOGIN MENU"));
         System.out.println("1. Applicant Login");
         System.out.println("2. Officer Login");
         System.out.println("3. Manager Login");
         System.out.println("4. Back to Main Menu");
-        printDivider();
+        System.out.println(UIFormatter.formatDivider());
         
         int choice = readChoice("Enter your choice: ", 1, 4);
         if (choice == 4) return;
         
         User user = authSystem.login(userList, scanner, choice);
         if (user == null) {
-            printError("Login failed. Returning to main menu.");
+            System.out.println(UIFormatter.formatError("Login failed. Returning to main menu."));
             return;
         }
         
@@ -192,26 +198,26 @@ public class MainMenu {
      * @return The selected mode (1 for Officer, 2 for Applicant)
      */
     private int promptForMode(String name) {
-        printHeader("OFFICER LOGIN SUCCESSFUL");
+        System.out.println(UIFormatter.formatHeader("OFFICER LOGIN SUCCESSFUL"));
         System.out.println("Welcome, " + name);
-        printDivider();
+        System.out.println(UIFormatter.formatDivider());
         System.out.println("Select your mode: ");
         System.out.println("1. Officer Functions");
         System.out.println("2. Applicant Functions");
-        printDivider();
+        System.out.println(UIFormatter.formatDivider());
         
         return readChoice("Enter your choice: ", 1, 2);
     }
 
     private void registerFlow() {
-        printHeader("REGISTER AS APPLICANT");
+        System.out.println(UIFormatter.formatHeader("REGISTER AS APPLICANT"));
         
         User newUser = regSystem.registerUserFromInput(scanner, userList);
         if (newUser != null) {
             userList.add(newUser);
-            printSuccess("Registration successful! You can now login.");
+            System.out.println(UIFormatter.formatSuccess("Registration successful! You can now login."));
         } else {
-            printError("Registration failed. Please try again.");
+            System.out.println(UIFormatter.formatError("Registration failed. Please try again."));
         }
     }
 
@@ -225,36 +231,18 @@ public class MainMenu {
     }
     
     // UI Helper Methods for consistent look and feel
-    private void printHeader(String title) {
-        System.out.println("\n" + FileUtils.repeatChar('=', 60));
-        System.out.println(FileUtils.repeatChar(' ', (60 - title.length()) / 2) + title);
-        System.out.println(FileUtils.repeatChar('=', 60));
-    }
-    
-    private void printDivider() {
-        System.out.println(FileUtils.repeatChar('-', 60));
-    }
-    
-    private void printSuccess(String message) {
-        System.out.println("\n✓ " + message);
-    }
-    
-    private void printError(String message) {
-        System.out.println("\n✗ " + message);
-    }
-    
     private int readChoice(String prompt, int min, int max) {
         while (true) {
-            System.out.print(prompt);
+            System.out.print(UIFormatter.formatPrompt(prompt));
             try {
                 int choice = Integer.parseInt(scanner.nextLine().trim());
                 if (choice >= min && choice <= max) {
                     return choice;
                 } else {
-                    printError("Please enter a number between " + min + " and " + max);
+                    System.out.println(UIFormatter.formatError("Please enter a number between " + min + " and " + max));
                 }
             } catch (NumberFormatException e) {
-                printError("Please enter a valid number");
+                System.out.println(UIFormatter.formatError("Please enter a valid number"));
             }
         }
     }
