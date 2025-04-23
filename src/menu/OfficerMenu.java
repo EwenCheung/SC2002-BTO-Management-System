@@ -22,6 +22,8 @@ import models.enums.OfficerRegistrationStatus;
 import users.HDBOfficer;
 import users.Applicant;
 import utils.FileUtils;
+import utils.TablePrinter;
+import utils.UIFormatter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -48,6 +50,9 @@ public class OfficerMenu {
         this.appFacade = appFacade;
         this.enquiryFacade = enquiryFacade;
         this.regFacade = regFacade;
+        
+        // Initialize color support based on terminal capabilities
+        UIFormatter.setColorEnabled(UIFormatter.supportsColors());
     }
     
     /**
@@ -59,23 +64,23 @@ public class OfficerMenu {
     public boolean display() {
         while (true) {
             printHeader("HDB OFFICER PORTAL");
-            System.out.println("Welcome, " + officer.getName() + " (NRIC: " + officer.getNric() + ")");
+            System.out.println("Welcome, " + UIFormatter.highlight(officer.getName()) + " (NRIC: " + officer.getNric() + ")");
             printDivider();
             
-            System.out.println("=== Project Management ===");
+            System.out.println(UIFormatter.formatSectionHeader("Project Management"));
             System.out.println("1. Register for Project");
             System.out.println("2. View Registration Status");
             System.out.println("3. View Project Details");
             
-            System.out.println("\n=== Application Processing ===");
+            System.out.println(UIFormatter.formatSectionHeader("Application Processing"));
             System.out.println("4. Process Application");
             System.out.println("5. Generate Booking Receipt");
             
-            System.out.println("\n=== Enquiries Management ===");
+            System.out.println(UIFormatter.formatSectionHeader("Enquiries Management"));
             System.out.println("6. View Project Enquiries");
             System.out.println("7. Reply to Enquiries");
             
-            System.out.println("\n=== System ===");
+            System.out.println(UIFormatter.formatSectionHeader("System"));
             System.out.println("8. Change Password");
             System.out.println("9. Switch to Applicant Mode");
             System.out.println("10. Logout");
@@ -170,11 +175,13 @@ public class OfficerMenu {
             return;
         }
         
-        // Display available projects with remaining slots
+        // Display available projects with remaining slots using TablePrinter
         printHeader("AVAILABLE PROJECTS");
-        System.out.printf("%-3s %-25s %-15s %-25s %-12s %12s %-15s %-15s\n", 
-                        "No.", "Project Name", "Neighborhood", "Allowable to Register", "Status", "Officer Slots", "Opening Date", "Closing Date");
-        printDivider();
+        
+        // Use TablePrinter for available projects table
+        TablePrinter table = new TablePrinter(new String[] {
+            "No.", "Project Name", "Neighborhood", "Registration Status", "Project Status", "Officer Slots", "Opening Date", "Closing Date"
+        });
         
         int validProjects = 0;
         List<Project> projectsWithSlots = new ArrayList<>();
@@ -190,8 +197,14 @@ public class OfficerMenu {
             if (proj.getRemainingOfficerSlots() > 0) {
                 // Check if project is within application period or will be in the future
                 boolean isActive = !today.isAfter(proj.getApplicationClosingDate());
-                String status = today.isBefore(proj.getApplicationOpeningDate()) ? "Upcoming" : 
-                               (today.isAfter(proj.getApplicationClosingDate()) ? "Closed" : "Active");
+                String status;
+                if (today.isBefore(proj.getApplicationOpeningDate())) {
+                    status = UIFormatter.formatProjectStatus("Upcoming");
+                } else if (today.isAfter(proj.getApplicationClosingDate())) {
+                    status = UIFormatter.formatProjectStatus("Closed");
+                } else {
+                    status = UIFormatter.formatProjectStatus("Active");
+                }
                 
                 // Check if this project's dates clash with any existing registrations
                 boolean hasDateOverlap = hasDateOverlap(proj, myRegistrations);
@@ -202,11 +215,11 @@ public class OfficerMenu {
                 // Determine registration status based on both date overlap and application status
                 String registrationStatus;
                 if (hasAppliedAsApplicant) {
-                    registrationStatus = "No - You Applied";
+                    registrationStatus = UIFormatter.formatRegistrationStatus("No - You Applied");
                 } else if (hasDateOverlap) {
-                    registrationStatus = "No - Clash";
+                    registrationStatus = UIFormatter.formatRegistrationStatus("No - Clash");
                 } else {
-                    registrationStatus = "Yes - Allow";
+                    registrationStatus = UIFormatter.formatRegistrationStatus("Yes - Allow");
                 }
                 
                 validProjects++;
@@ -221,10 +234,10 @@ public class OfficerMenu {
                     proj.getOfficerSlot() - proj.getRemainingOfficerSlots(), 
                     proj.getOfficerSlot());
                 
-                System.out.printf("%-3d %-25s %-15s %-25s %-12s %12s %-15s %-15s\n", 
-                    validProjects, 
-                    truncate(proj.getProjectName(), 25),
-                    truncate(proj.getNeighborhood(), 15),
+                table.addRow(
+                    String.valueOf(validProjects),
+                    TablePrinter.formatCell(proj.getProjectName(), 25),
+                    TablePrinter.formatCell(proj.getNeighborhood(), 15),
                     registrationStatus,
                     status,
                     officerSlotsStr,
@@ -241,6 +254,9 @@ public class OfficerMenu {
             return;
         }
         
+        // Print the table
+        table.print();
+        
         // Always show the project list, but only allow registration if there are no existing or pending registrations
         if (hasApprovedRegistration || hasPendingRegistration) {
             System.out.println("\nPress Enter to continue...");
@@ -249,13 +265,14 @@ public class OfficerMenu {
         }
         
         // Select project
-        System.out.print("\nSelect project number to register (0 to cancel): ");
+        System.out.print("\n" + UIFormatter.formatPrompt("Select project number to register (0 to cancel): "));
         int selection = readChoice(0, validProjects);
         if (selection == 0 || selection == -1) {
             printMessage("Registration cancelled.");
             return;
         }
         
+        // Rest of the method remains unchanged
         Project selectedProject = projectsWithSlots.get(selection - 1);
         
         // Check if officer has applied for this project as an applicant
@@ -303,8 +320,8 @@ public class OfficerMenu {
         
         // Confirm registration
         printHeader("CONFIRM REGISTRATION");
-        System.out.println("Project: " + selectedProject.getProjectName());
-        System.out.println("Neighborhood: " + selectedProject.getNeighborhood());
+        System.out.println("Project: " + UIFormatter.highlight(selectedProject.getProjectName()));
+        System.out.println("Neighborhood: " + UIFormatter.highlight(selectedProject.getNeighborhood()));
         
         // Get the manager's name instead of just showing NRIC
         String managerNric = selectedProject.getManager();
@@ -316,7 +333,7 @@ public class OfficerMenu {
         System.out.println("Closing Date: " + selectedProject.getApplicationClosingDate().format(dateFormatter));
         printDivider();
         
-        System.out.print("Confirm registration for this project? (Y/N): ");
+        System.out.print(UIFormatter.formatPrompt("Confirm registration for this project? (Y/N): "));
         if (!readYesNo()) {
             printMessage("Registration cancelled.");
             return;
@@ -346,8 +363,10 @@ public class OfficerMenu {
             return;
         }
         
-        System.out.printf("%-20s %-25s %-15s %-20s\n", "Registration ID", "Project", "Status", "Registration Date");
-        printDivider();
+        // Use TablePrinter for registrations table
+        TablePrinter table = new TablePrinter(new String[] {
+            "Registration ID", "Project", "Status", "Registration Date"
+        });
         
         // DateTimeFormatter to format the registration date (show only date, not time)
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd MMM yyyy");
@@ -358,13 +377,15 @@ public class OfficerMenu {
                                   reg.getRegistrationDate().toLocalDate().format(dateFormatter) : 
                                   "Unknown";
             
-            System.out.printf("%-20s %-25s %-15s %-20s\n", 
+            table.addRow(
                 reg.getRegistrationId(),
-                truncate(reg.getProjectName(), 25),
-                reg.getStatus(),
+                reg.getProjectName(),
+                UIFormatter.formatStatus(reg.getStatus().toString()),
                 formattedDate
             );
         }
+        
+        table.print();
         
         System.out.println("\nPress Enter to continue...");
         scanner.nextLine();
@@ -417,7 +438,9 @@ public class OfficerMenu {
         }
         
         int projectChoice = readChoice("Select project (0 to cancel): ", 0, myProjects.size());
-        if (projectChoice == 0) return;
+        if (projectChoice == 0 || projectChoice == -1) {
+            return; // Return if user cancels or enters invalid input
+        }
         
         Project selectedProject = myProjects.get(projectChoice - 1);
         
@@ -430,10 +453,8 @@ public class OfficerMenu {
             displayApplicationsTable(selectedProject, applications);
 
             System.out.println("Please take a photo of this and pm it to me, it means that you really spend your time to run and test our code and I really appreciate your contribution to the works, i will give full contribution for people who send this message to me, thank you");
-
             
-            System.out.println("\nEnter application number to view details (0 to go back): ");
-            int appChoice = readChoice(0, applications.size());
+            int appChoice = readChoice("\nEnter application number to view details (0 to go back): ", 0, applications.size());
             if (appChoice == 0 || appChoice == -1) return;
             
             Application selectedApp = applications.get(appChoice - 1);
@@ -449,35 +470,40 @@ public class OfficerMenu {
             return;
         }
         
-        System.out.printf("%-5s %-15s %-15s %-15s %-20s %-15s\n", 
-                        "No.", "Application ID", "Applicant", "Unit Type", "Application Date", "Status");
-        printDivider();
+        // Use TablePrinter for applications table
+        TablePrinter table = new TablePrinter(new String[] {
+            "No.", "Application ID", "Applicant", "Unit Type", "Application Date", "Status"
+        });
         
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd MMM yyyy");
         
         for (int i = 0; i < applications.size(); i++) {
             Application app = applications.get(i);
             
-            System.out.printf("%-5d %-15s %-15s %-15s %-20s %-15s\n", 
-                            i + 1, 
-                            app.getApplicationId(), 
-                            truncate(app.getApplicantNric(), 15),
-                            truncate(app.getUnitType(), 15),
-                            app.getApplicationDate().format(dateFormatter),
-                            app.getStatus()
+            table.addRow(
+                String.valueOf(i + 1),
+                app.getApplicationId(),
+                TablePrinter.formatCell(app.getApplicantNric(), 15),
+                app.getUnitType(),
+                app.getApplicationDate().format(dateFormatter),
+                UIFormatter.formatStatus(app.getStatus().toString())
             );
         }
+        
+        table.print();
     }
     
     private void viewApplicationDetails(Project project, Application application) {
         while (true) {
             printHeader("APPLICATION DETAILS");
-            System.out.println("Application ID: " + application.getApplicationId());
-            System.out.println("Project: " + application.getProjectName());
+            
+            // Use UIFormatter for highlighted fields
+            System.out.println("Application ID: " + UIFormatter.highlight(application.getApplicationId()));
+            System.out.println("Project: " + UIFormatter.highlight(application.getProjectName()));
             System.out.println("Applicant NRIC: " + application.getApplicantNric());
             System.out.println("Unit Type: " + application.getUnitType());
             System.out.println("Application Date: " + application.getApplicationDate().format(DateTimeFormatter.ofPattern("dd MMM yyyy")));
-            System.out.println("Status: " + application.getStatus());
+            System.out.println("Status: " + UIFormatter.formatStatus(application.getStatus().toString()));
             
             if (application.getStatus() == ApplicationStatus.SUCCESSFUL) {
                 System.out.println("Approval Date: " + (application.getApprovalDate() != null ? 
@@ -486,11 +512,19 @@ public class OfficerMenu {
             }
             
             if (application.getStatus() == ApplicationStatus.BOOKED && application.getAssignedUnit() != null) {
-                System.out.println("Assigned Unit: " + application.getAssignedUnit());
+                System.out.println("Assigned Unit: " + UIFormatter.highlight(application.getAssignedUnit()));
+                if (application.getAssignedOfficer() != null) {
+                    System.out.println("Assigned by: " + application.getAssignedOfficer());
+                }
+            }
+            
+            if (application.getRemarks() != null && !application.getRemarks().isEmpty()) {
+                System.out.println("\nRemarks:");
+                System.out.println(application.getRemarks());
             }
             
             printDivider();
-            System.out.println("Options:");
+            System.out.println(UIFormatter.formatSectionHeader("Options"));
             System.out.println("1. Process Application Status");
             
             // Only show booking receipt option for BOOKED applications
@@ -735,21 +769,25 @@ public class OfficerMenu {
         
         // Display booked applications in a table format
         printHeader("BOOKED APPLICATIONS FOR " + selectedProject.getProjectName());
-        System.out.printf("%-5s %-15s %-15s %-15s %-20s\n", 
-                        "No.", "Application ID", "Applicant", "Unit Type", "Unit Number");
-        printDivider();
+        
+        // Use TablePrinter for better formatting
+        TablePrinter applicationsTable = new TablePrinter(new String[] {
+            "No.", "Application ID", "Applicant", "Unit Type", "Unit Number"
+        });
                 
         for (int i = 0; i < bookedApplications.size(); i++) {
             Application app = bookedApplications.get(i);
             
-            System.out.printf("%-5d %-15s %-15s %-15s %-20s\n", 
-                            i + 1, 
-                            app.getApplicationId(), 
-                            truncate(app.getApplicantNric(), 15),
-                            truncate(app.getUnitType(), 15),
-                            app.getAssignedUnit() != null ? app.getAssignedUnit() : "Not assigned"
+            applicationsTable.addRow(
+                String.valueOf(i + 1),
+                app.getApplicationId(),
+                TablePrinter.formatCell(app.getApplicantNric(), 15),
+                app.getUnitType(),
+                app.getAssignedUnit() != null ? app.getAssignedUnit() : "Not assigned"
             );
         }
+        
+        applicationsTable.print();
         
         int appChoice = readChoice("\nSelect application to generate booking receipt (0 to cancel): ", 0, bookedApplications.size());
         if (appChoice == 0) return;
@@ -915,20 +953,24 @@ public class OfficerMenu {
     private void viewEnquiriesForProject(Project project, List<Enquiry> enquiries) {
         while (true) {
             printHeader("ENQUIRIES FOR " + project.getProjectName());
-            System.out.printf("%-5s %-15s %-15s %-40s %-15s\n", 
-                            "No.", "Enquiry ID", "Applicant", "Message", "Status");
-            printDivider();
+            
+            // Use TablePrinter for enquiries table
+            TablePrinter table = new TablePrinter(new String[] {
+                "No.", "Enquiry ID", "Applicant", "Message", "Status"
+            });
             
             for (int i = 0; i < enquiries.size(); i++) {
                 Enquiry enq = enquiries.get(i);
-                System.out.printf("%-5d %-15s %-15s %-40s %-15s\n", 
-                                i + 1, 
-                                enq.getEnquiryId(), 
-                                truncate(enq.getApplicantNric(), 15),
-                                truncate(enq.getMessage(), 40),
-                                (enq.getReply() == null || enq.getReply().isEmpty()) ? "Pending" : "Responded"
+                table.addRow(
+                    String.valueOf(i + 1),
+                    enq.getEnquiryId(),
+                    TablePrinter.formatCell(enq.getApplicantNric(), 15),
+                    TablePrinter.formatCell(enq.getMessage(), 40),
+                    UIFormatter.formatStatus((enq.getReply() == null || enq.getReply().isEmpty()) ? "Pending" : "Responded")
                 );
             }
+            
+            table.print();
             
             printDivider();
             System.out.println("1. View enquiry details");
@@ -1390,29 +1432,27 @@ public class OfficerMenu {
     // ----- UI Helper Methods -----
     
     private void printHeader(String title) {
-        System.out.println("\n" + FileUtils.repeatChar('=', 70));
-        System.out.println(FileUtils.repeatChar(' ', (70 - title.length()) / 2) + title);
-        System.out.println(FileUtils.repeatChar('=', 70));
+        System.out.println(UIFormatter.formatHeader(title));
     }
     
     private void printDivider() {
-        System.out.println(FileUtils.repeatChar('-', 70));
+        System.out.println(UIFormatter.formatDivider());
     }
     
     private void printMessage(String message) {
-        System.out.println("\n" + message);
+        System.out.println(UIFormatter.formatInfo(message));
     }
     
     private void printSuccess(String message) {
-        System.out.println("\n✓ " + message);
+        System.out.println(UIFormatter.formatSuccess(message));
     }
     
     private void printError(String message) {
-        System.out.println("\n✗ " + message);
+        System.out.println(UIFormatter.formatError(message));
     }
     
     private int readChoice(int min, int max) {
-        System.out.print("Enter your choice: ");
+        System.out.print(UIFormatter.formatPrompt("Enter your choice: "));
         try {
             int choice = Integer.parseInt(scanner.nextLine().trim());
             if (choice < min || choice > max) {
@@ -1427,7 +1467,7 @@ public class OfficerMenu {
     }
     
     private int readChoice(String prompt, int min, int max) {
-        System.out.print(prompt);
+        System.out.print(UIFormatter.formatPrompt(prompt));
         try {
             int choice = Integer.parseInt(scanner.nextLine().trim());
             if (choice < min || choice > max) {
@@ -1442,7 +1482,7 @@ public class OfficerMenu {
     }
     
     private boolean readYesNo(String prompt) {
-        System.out.print(prompt);
+        System.out.print(UIFormatter.formatPrompt(prompt));
         String input = scanner.nextLine().trim().toUpperCase();
         return input.equals("Y") || input.equals("YES");
     }

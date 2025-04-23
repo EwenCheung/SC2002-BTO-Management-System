@@ -181,6 +181,43 @@ public class UIFormatter {
     }
     
     /**
+     * Formats registration status with appropriate coloring
+     * @param registrationStatus The registration status to format
+     * @return Formatted registration status text
+     */
+    public static String formatRegistrationStatus(String registrationStatus) {
+        if (registrationStatus == null) return "";
+        
+        if (registrationStatus.equals("Yes - Allow")) {
+            return colorize(registrationStatus, ColorType.SUCCESS, false);
+        } else if (registrationStatus.equals("No - Clash") || 
+                   registrationStatus.equals("No - You Applied")) {
+            return colorize(registrationStatus, ColorType.ERROR, false);
+        } else {
+            return registrationStatus;
+        }
+    }
+    
+    /**
+     * Formats project status with appropriate coloring
+     * @param projectStatus The project status to format
+     * @return Formatted project status text
+     */
+    public static String formatProjectStatus(String projectStatus) {
+        if (projectStatus == null) return "";
+        
+        if (projectStatus.equals("Active")) {
+            return colorize(projectStatus, ColorType.SUCCESS, false);
+        } else if (projectStatus.equals("Upcoming")) {
+            return colorize(projectStatus, ColorType.WARNING, false);
+        } else if (projectStatus.equals("Closed")) {
+            return colorize(projectStatus, ColorType.ERROR, false);
+        } else {
+            return projectStatus;
+        }
+    }
+    
+    /**
      * Helper method to apply color to text
      * @param text Text to colorize
      * @param type Color type to apply
