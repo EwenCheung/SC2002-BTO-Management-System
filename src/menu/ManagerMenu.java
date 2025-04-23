@@ -24,6 +24,8 @@ import users.ProjectManager;
 import users.User;
 import utils.Constants;
 import utils.FileUtils;
+import utils.UIFormatter;
+import utils.TablePrinter;
 
 public class ManagerMenu {
     private Scanner scanner;
@@ -54,15 +56,18 @@ public class ManagerMenu {
         this.enquiryFacade = enquiryFacade;
         this.officerRegFacade = officerRegFacade;
         this.withdrawalFacade = withdrawalFacade;
+        
+        // Initialize color support based on terminal capabilities
+        UIFormatter.setColorEnabled(UIFormatter.supportsColors());
     }
     
     public void display() {
         while (true) {
             printHeader("HDB MANAGER PORTAL");
-            System.out.println("Welcome, " + projectManager.getName());
+            System.out.println("Welcome, " + UIFormatter.highlight(projectManager.getName()));
             printDivider();
             
-            System.out.println("=== Project Management ===");
+            System.out.println(UIFormatter.formatSectionHeader("Project Management"));
             System.out.println("1. Create New Project");
             System.out.println("2. Edit Project");
             System.out.println("3. Delete Project");
@@ -70,19 +75,19 @@ public class ManagerMenu {
             System.out.println("5. View My Projects");
             System.out.println("6. Toggle Project Visibility");
             
-            System.out.println("\n=== Officer Management ===");
+            System.out.println(UIFormatter.formatSectionHeader("Officer Management"));
             System.out.println("7. View Officer Registrations");
             
-            System.out.println("\n=== Application Management ===");
+            System.out.println(UIFormatter.formatSectionHeader("Application Management"));
             System.out.println("8. Process BTO Applications");
             System.out.println("9. Process Withdrawal Requests");
             
-            System.out.println("\n=== Reports & Enquiries ===");
+            System.out.println(UIFormatter.formatSectionHeader("Reports & Enquiries"));
             System.out.println("10. Generate Reports");
             System.out.println("11. View All Project Enquiries");
             System.out.println("12. View and Reply My Project Enquiries");
             
-            System.out.println("\n=== System ===");
+            System.out.println(UIFormatter.formatSectionHeader("System"));
             System.out.println("13. Change Password");
             System.out.println("14. Logout");
             printDivider();
@@ -104,7 +109,7 @@ public class ManagerMenu {
                 case 12: replyToEnquiries(); break;
                 case 13: changePassword(); break;
                 case 14:
-                    printMessage("Logging out...");
+                    printMessage(UIFormatter.formatWarning("Logging out..."));
                     return;
                 default:
                     printError("Invalid choice. Please try again.");
@@ -115,13 +120,11 @@ public class ManagerMenu {
     // --- UI Helper Methods ---
     
     private void printHeader(String title) {
-        System.out.println("\n" + FileUtils.repeatChar('=', 70));
-        System.out.println(FileUtils.repeatChar(' ', (70 - title.length()) / 2) + title);
-        System.out.println(FileUtils.repeatChar('=', 70));
+        System.out.println(UIFormatter.formatHeader(title));
     }
     
     private void printDivider() {
-        System.out.println(FileUtils.repeatChar('-', 70));
+        System.out.println(UIFormatter.formatDivider());
     }
     
     private void printMessage(String message) {
@@ -129,16 +132,20 @@ public class ManagerMenu {
     }
     
     private void printSuccess(String message) {
-        System.out.println("\n✓ " + message);
+        System.out.println(UIFormatter.formatSuccess(message));
     }
     
     private void printError(String message) {
-        System.out.println("\n✗ " + message);
+        System.out.println(UIFormatter.formatError(message));
+    }
+    
+    private void printWarning(String message) {
+        System.out.println(UIFormatter.formatWarning(message));
     }
     
     private int readChoice(String prompt, int min, int max) {
         while (true) {
-            System.out.print(prompt);
+            System.out.print(UIFormatter.formatPrompt(prompt));
             try {
                 int choice = Integer.parseInt(scanner.nextLine().trim());
                 if (choice >= min && choice <= max) {
@@ -153,13 +160,12 @@ public class ManagerMenu {
     }
     
     private String readString(String prompt) {
-        System.out.print(prompt);
-        String input = scanner.nextLine().trim();
-        return input;
+        System.out.print(UIFormatter.formatPrompt(prompt));
+        return scanner.nextLine().trim();
     }
     
     private boolean readYesNo(String prompt) {
-        System.out.print(prompt);
+        System.out.print(UIFormatter.formatPrompt(prompt));
         String input = scanner.nextLine().trim().toUpperCase();
         return input.equals("Y") || input.equals("YES");
     }
@@ -551,7 +557,7 @@ public class ManagerMenu {
             List<Project> allProjects = projectFacade.getAllProjects();
             
             // Add filtering options
-            System.out.println("Filter Options:");
+            System.out.println(UIFormatter.formatSectionHeader("Filter Options"));
             System.out.println("1. View all projects");
             System.out.println("2. Filter by neighborhood");
             System.out.println("3. Filter by application period");
@@ -595,24 +601,27 @@ public class ManagerMenu {
             }
             
             if (filteredProjects.isEmpty()) {
-                printMessage("No projects found with the specified filter criteria.");
+                printMessage(UIFormatter.formatWarning("No projects found with the specified filter criteria."));
             } else {
-                // Display projects in a tabular format without allowing selection
-                System.out.printf("%-4s %-25s %-15s %-15s %-15s %-10s %-10s%n", 
-                                 "No.", "Project Name", "Neighborhood", "Opening Date", "Closing Date", "Manager", "Visibility");
-                printDivider();
+                // Use TablePrinter for better formatted tables
+                TablePrinter table = new TablePrinter(new String[] {
+                    "No.", "Project Name", "Neighborhood", "Opening Date", "Closing Date", "Manager", "Visibility"
+                });
                 
                 int i = 1;
                 for (Project project : filteredProjects) {
-                    System.out.printf("%-4d %-25s %-15s %-15s %-15s %-10s %-10s%n", 
-                                    i++, 
-                                    truncate(project.getProjectName(), 25),
-                                    truncate(project.getNeighborhood(), 15),
-                                    project.getApplicationOpeningDate(),
-                                    project.getApplicationClosingDate(),
-                                    truncate(project.getManager(), 10),
-                                    project.isVisible() ? "Visible" : "Hidden");
+                    table.addRow(
+                        String.valueOf(i++),
+                        TablePrinter.formatCell(project.getProjectName(), 25),
+                        TablePrinter.formatCell(project.getNeighborhood(), 15),
+                        project.getApplicationOpeningDate().toString(),
+                        project.getApplicationClosingDate().toString(),
+                        TablePrinter.formatCell(project.getManager(), 10),
+                        project.isVisible() ? UIFormatter.formatStatus("Visible") : UIFormatter.formatStatus("Hidden")
+                    );
                 }
+                
+                table.print();
             }
             
             // Always show the options to continue regardless of whether projects were found
@@ -633,12 +642,12 @@ public class ManagerMenu {
         List<Project> myProjects = getMyProjects();
         
         if (myProjects.isEmpty()) {
-            printMessage("You are not currently managing any projects.");
+            printMessage(UIFormatter.formatWarning("You are not currently managing any projects."));
             return;
         }
         
         // Add filtering options
-        System.out.println("Filter Options:");
+        System.out.println(UIFormatter.formatSectionHeader("Filter Options"));
         System.out.println("1. View all my projects");
         System.out.println("2. Filter by neighborhood");
         System.out.println("3. Filter by application period");
@@ -682,33 +691,34 @@ public class ManagerMenu {
         }
         
         if (filteredProjects.isEmpty()) {
-            printMessage("No projects found with the specified filter criteria.");
+            printMessage(UIFormatter.formatWarning("No projects found with the specified filter criteria."));
             return;
         }
         
-        // Display projects in a tabular format
-        System.out.printf("%-4s %-25s %-15s %-15s %-10s %-15s\n", 
-                          "No.", "Project Name", "Neighborhood", "Application Period", "Officers", "Visibility");
-        printDivider();
+        // Use TablePrinter for more consistent display
+        TablePrinter table = new TablePrinter(new String[] {
+            "No.", "Project Name", "Neighborhood", "Application Period", "Officers", "Visibility"
+        });
         
         int i = 1;
         for (Project project : filteredProjects) {
             String period = project.getApplicationOpeningDate() + " to " + project.getApplicationClosingDate();
             String officers = project.getOfficers().size() + "/" + project.getOfficerSlot();
             
-            System.out.printf("%-4d %-25s %-15s %-15s %-10s %-15s\n", 
-                i++, 
-                truncate(project.getProjectName(), 25),
-                truncate(project.getNeighborhood(), 15),
-                truncate(period, 15),
+            table.addRow(
+                String.valueOf(i++),
+                TablePrinter.formatCell(project.getProjectName(), 25),
+                TablePrinter.formatCell(project.getNeighborhood(), 15),
+                TablePrinter.formatCell(period, 25),
                 officers,
-                project.isVisible() ? "Visible" : "Hidden"
+                project.isVisible() ? UIFormatter.formatStatus("Visible") : UIFormatter.formatStatus("Hidden")
             );
         }
         
+        table.print();
+        
         // Allow selecting a project for more details
-        System.out.print("\nSelect project number for details (0 to go back): ");
-        int choice = readChoice("", 0, filteredProjects.size());
+        int choice = readChoice("Select project number for details (0 to go back): ", 0, filteredProjects.size());
         if (choice == 0) return;
         
         Project selectedProject = filteredProjects.get(choice - 1);
@@ -719,23 +729,32 @@ public class ManagerMenu {
         printHeader("PROJECT DETAILS: " + project.getProjectName());
         
         // Basic project information
-        System.out.println("Neighborhood: " + project.getNeighborhood());
+        System.out.println("Neighborhood: " + UIFormatter.highlight(project.getNeighborhood()));
         System.out.println("Application Period: " + project.getApplicationOpeningDate() + " to " + project.getApplicationClosingDate());
-        System.out.println("Visibility: " + (project.isVisible() ? "Visible" : "Hidden"));
+        System.out.println("Visibility: " + (project.isVisible() ? 
+                         UIFormatter.formatStatus("Visible") : 
+                         UIFormatter.formatStatus("Hidden")));
         System.out.println("Officer Slots: " + project.getOfficers().size() + "/" + project.getOfficerSlot());
         
         // Unit information
-        System.out.println("\nUnit Types:");
-        printDivider();
+        System.out.println(UIFormatter.formatSectionHeader("Unit Types"));
+        
+        // Use TablePrinter for unit information
+        TablePrinter unitsTable = new TablePrinter(new String[] {
+            "Unit Type", "Available", "Total", "Price"
+        });
+        
         for (String unitType : project.getUnits().keySet()) {
             UnitInfo unitInfo = project.getUnits().get(unitType);
-            System.out.printf("%-10s: %d/%d units available, Price: $%.2f\n", 
-                unitType, 
-                unitInfo.getAvailableUnits(), 
-                unitInfo.getTotalUnits(),
-                unitInfo.getSellingPrice()
+            unitsTable.addRow(
+                unitType,
+                String.valueOf(unitInfo.getAvailableUnits()),
+                String.valueOf(unitInfo.getTotalUnits()),
+                String.format("$%.2f", unitInfo.getSellingPrice())
             );
         }
+        
+        unitsTable.print();
         
         // Application statistics
         List<Application> applications = appFacade.getApplicationsByProject(project.getProjectName());
@@ -755,22 +774,35 @@ public class ManagerMenu {
             else if (status.equalsIgnoreCase("WITHDRAWN")) withdrawnApps++;
         }
         
-        System.out.println("\nApplication Statistics:");
-        printDivider();
-        System.out.println("Total Applications: " + totalApps);
-        System.out.println("Pending: " + pendingApps);
-        System.out.println("Approved: " + approvedApps);
-        System.out.println("Booked: " + bookedApps);
-        System.out.println("Rejected: " + rejectedApps);
-        System.out.println("Withdrawn: " + withdrawnApps);
+        System.out.println(UIFormatter.formatSectionHeader("Application Statistics"));
+        
+        // Use TablePrinter for statistics
+        TablePrinter statsTable = new TablePrinter(new String[] {
+            "Status", "Count"
+        });
+        
+        statsTable.addRow("Total", String.valueOf(totalApps));
+        statsTable.addRow("Pending", String.valueOf(pendingApps));
+        statsTable.addRow("Approved", String.valueOf(approvedApps));
+        statsTable.addRow("Booked", String.valueOf(bookedApps));
+        statsTable.addRow("Rejected", String.valueOf(rejectedApps));
+        statsTable.addRow("Withdrawn", String.valueOf(withdrawnApps));
+        
+        statsTable.print();
         
         // Assigned officers
         if (!project.getOfficers().isEmpty()) {
-            System.out.println("\nAssigned Officers:");
-            printDivider();
+            System.out.println(UIFormatter.formatSectionHeader("Assigned Officers"));
+            
+            TablePrinter officersTable = new TablePrinter(new String[] {
+                "Officer NRIC"
+            });
+            
             for (String officerNric : project.getOfficers()) {
-                System.out.println("- " + officerNric);
+                officersTable.addRow(officerNric);
             }
+            
+            officersTable.print();
         }
         
         System.out.println("\nPress Enter to continue...");
@@ -826,25 +858,27 @@ public class ManagerMenu {
                 return;
             }
             
-            // Display registrations in a table format
-            System.out.printf("%-4s %-20s %-15s %-25s %-15s %-15s%n", 
-                             "No.", "Registration ID", "Officer NRIC", "Project", "Status", "Date");
-            printDivider();
+            // Use TablePrinter for officer registrations table
+            TablePrinter table = new TablePrinter(new String[] {
+                "No.", "Registration ID", "Officer NRIC", "Project", "Status", "Date"
+            });
             
             int i = 1;
             for (OfficerRegistration reg : myRegs) {
-                System.out.printf("%-4d %-20s %-15s %-25s %-15s %-15s%n", 
-                                i++, 
-                                truncate(reg.getRegistrationId(), 20),
-                                reg.getOfficerNric(),
-                                truncate(reg.getProjectName(), 25),
-                                reg.getStatus().toString(),
-                                reg.getRegistrationDate().toLocalDate());
+                table.addRow(
+                    String.valueOf(i++),
+                    TablePrinter.formatCell(reg.getRegistrationId(), 20),
+                    reg.getOfficerNric(),
+                    TablePrinter.formatCell(reg.getProjectName(), 25),
+                    UIFormatter.formatStatus(reg.getStatus().toString()),
+                    reg.getRegistrationDate().toLocalDate().toString()
+                );
             }
             
+            table.print();
+            
             // User selection options
-            System.out.println("\nSelect a registration to view details (0 to return): ");
-            int choice = readChoice("", 0, myRegs.size());
+            int choice = readChoice("\nSelect a registration to view details (0 to return): ", 0, myRegs.size());
             
             if (choice == 0) {
                 return;
@@ -1298,10 +1332,10 @@ public class ManagerMenu {
             return;
         }
         
-        // Build a header row
-        System.out.printf("%-15s %-15s %-25s %-10s %-15s %-10s %s%n",
-                "Applicant", "NRIC", "Project", "Flat Type", "Status", "Age", "Marital Status");
-        System.out.println(FileUtils.repeatChar('=', 100));
+        // Use TablePrinter for better formatted report
+        TablePrinter applicantsTable = new TablePrinter(new String[] {
+            "Applicant", "NRIC", "Project", "Flat Type", "Status", "Age", "Marital Status"
+        });
         
         // For each application, get the applicant details
         for (Application app : applications) {
@@ -1309,19 +1343,20 @@ public class ManagerMenu {
             User applicant = findUserByNric(applicantNric);
             
             if (applicant != null) {
-                System.out.printf("%-15s %-15s %-25s %-10s %-15s %-10d %s%n",
-                        applicant.getName(),
-                        applicantNric,
-                        app.getProjectName(),
-                        app.getUnitType(),
-                        app.getStatus(),
-                        applicant.getAge(),
-                        applicant.getMaritalStatus()
+                applicantsTable.addRow(
+                    TablePrinter.formatCell(applicant.getName(), 15),
+                    applicantNric,
+                    TablePrinter.formatCell(app.getProjectName(), 25),
+                    app.getUnitType(),
+                    UIFormatter.formatStatus(app.getStatus().toString()),
+                    String.valueOf(applicant.getAge()),
+                    applicant.getMaritalStatus().toString()
                 );
             }
         }
-        System.out.println(FileUtils.repeatChar('=', 100));
-        System.out.println("Total Applications: " + applications.size());
+        
+        applicantsTable.print();
+        System.out.println(UIFormatter.highlight("Total Applications: " + applications.size()));
         
         // Ask if user wants to save the report to a file
         if (readYesNo("\nSave this report to a file? (Y/N): ")) {
@@ -1347,26 +1382,27 @@ public class ManagerMenu {
             return;
         }
         
-        // Build the report
-        System.out.printf("%-15s %-15s %-25s %-10s %-15s %-10s%n",
-                "Applicant", "NRIC", "Project", "Flat Type", "Status", "Age");
-        System.out.println(FileUtils.repeatChar('=', 90));
+        // Use TablePrinter for better formatted report
+        TablePrinter applicantsTable = new TablePrinter(new String[] {
+            "Applicant", "NRIC", "Project", "Flat Type", "Status", "Age"
+        });
         
         for (Application app : marriedApplicantsApps) {
             User applicant = findUserByNric(app.getApplicantNric());
             if (applicant != null) {
-                System.out.printf("%-15s %-15s %-25s %-10s %-15s %-10d%n",
-                        applicant.getName(),
-                        app.getApplicantNric(),
-                        app.getProjectName(),
-                        app.getUnitType(),
-                        app.getStatus(),
-                        applicant.getAge()
+                applicantsTable.addRow(
+                    TablePrinter.formatCell(applicant.getName(), 15),
+                    applicant.getNric(),
+                    TablePrinter.formatCell(app.getProjectName(), 25),
+                    app.getUnitType(),
+                    UIFormatter.formatStatus(app.getStatus().toString()),
+                    String.valueOf(applicant.getAge())
                 );
             }
         }
-        System.out.println(FileUtils.repeatChar('=', 90));
-        System.out.println("Total Applications from Married Applicants: " + marriedApplicantsApps.size());
+        
+        applicantsTable.print();
+        System.out.println(UIFormatter.highlight("Total Applications from Married Applicants: " + marriedApplicantsApps.size()));
         
         // Ask if user wants to save the report to a file
         if (readYesNo("\nSave this report to a file? (Y/N): ")) {
@@ -1392,26 +1428,27 @@ public class ManagerMenu {
             return;
         }
         
-        // Build the report
-        System.out.printf("%-15s %-15s %-25s %-10s %-15s %-10s%n",
-                "Applicant", "NRIC", "Project", "Flat Type", "Status", "Age");
-        System.out.println(FileUtils.repeatChar('=', 90));
+        // Use TablePrinter for better formatted report
+        TablePrinter applicantsTable = new TablePrinter(new String[] {
+            "Applicant", "NRIC", "Project", "Flat Type", "Status", "Age"
+        });
         
         for (Application app : singleApplicantsApps) {
             User applicant = findUserByNric(app.getApplicantNric());
             if (applicant != null) {
-                System.out.printf("%-15s %-15s %-25s %-10s %-15s %-10d%n",
-                        applicant.getName(),
-                        app.getApplicantNric(),
-                        app.getProjectName(),
-                        app.getUnitType(),
-                        app.getStatus(),
-                        applicant.getAge()
+                applicantsTable.addRow(
+                    TablePrinter.formatCell(applicant.getName(), 15),
+                    applicant.getNric(),
+                    TablePrinter.formatCell(app.getProjectName(), 25),
+                    app.getUnitType(),
+                    UIFormatter.formatStatus(app.getStatus().toString()),
+                    String.valueOf(applicant.getAge())
                 );
             }
         }
-        System.out.println(FileUtils.repeatChar('=', 90));
-        System.out.println("Total Applications from Single Applicants: " + singleApplicantsApps.size());
+        
+        applicantsTable.print();
+        System.out.println(UIFormatter.highlight("Total Applications from Single Applicants: " + singleApplicantsApps.size()));
         
         // Ask if user wants to save the report to a file
         if (readYesNo("\nSave this report to a file? (Y/N): ")) {
@@ -1424,16 +1461,30 @@ public class ManagerMenu {
         List<Project> myProjects = getMyProjects();
         
         if (myProjects.isEmpty()) {
-            printError("You have no projects to generate reports for.");
+            printError("No projects to generate reports for.");
             return;
         }
         
         // List projects
-        System.out.println("Select a project for the report:");
+        System.out.println(UIFormatter.formatSectionHeader("Available Projects"));
+        
+        // Use TablePrinter for project listing
+        TablePrinter projectsTable = new TablePrinter(new String[] {
+            "No.", "Project Name", "Neighborhood", "Application Period"
+        });
+        
         for (int i = 0; i < myProjects.size(); i++) {
             Project project = myProjects.get(i);
-            System.out.printf("%d. %s%n", i + 1, project.getProjectName());
+            String period = project.getApplicationOpeningDate() + " to " + project.getApplicationClosingDate();
+            projectsTable.addRow(
+                String.valueOf(i + 1),
+                project.getProjectName(),
+                project.getNeighborhood(),
+                period
+            );
         }
+        
+        projectsTable.print();
         
         try {
             int choice = readChoice("Select project (0 to cancel): ", 0, myProjects.size());
@@ -1473,45 +1524,53 @@ public class ManagerMenu {
                 }
             }
             
-            // Print summary
-            System.out.println("\nSummary:");
-            System.out.println("Total Applications: " + totalApplications);
-            System.out.println("2-Room Applications: " + twoRoomApplications);
-            System.out.println("3-Room Applications: " + threeRoomApplications);
-            System.out.println("Approved/Booked: " + approvedApplications);
-            System.out.println("Pending: " + pendingApplications);
-            System.out.println("Rejected: " + rejectedApplications);
+            // Print summary using TablePrinter
+            System.out.println(UIFormatter.formatSectionHeader("Summary Statistics"));
+            
+            TablePrinter summaryTable = new TablePrinter(new String[] {
+                "Statistic", "Count"
+            });
+            
+            summaryTable.addRow("Total Applications", String.valueOf(totalApplications));
+            summaryTable.addRow("2-Room Applications", String.valueOf(twoRoomApplications));
+            summaryTable.addRow("3-Room Applications", String.valueOf(threeRoomApplications));
+            summaryTable.addRow("Approved/Booked", String.valueOf(approvedApplications));
+            summaryTable.addRow("Pending", String.valueOf(pendingApplications));
+            summaryTable.addRow("Rejected", String.valueOf(rejectedApplications));
+            
+            summaryTable.print();
             
             // Detailed list
-            System.out.println("\nDetailed Application List:");
-            System.out.printf("%-15s %-15s %-15s %-10s %-15s %-10s %-15s%n",
-                    "Applicant", "NRIC", "Project", "Flat Type", "Status", "Age", "Marital Status");
-            System.out.println(FileUtils.repeatChar('=', 100));
+            System.out.println(UIFormatter.formatSectionHeader("Detailed Application List"));
+            
+            TablePrinter detailsTable = new TablePrinter(new String[] {
+                "Applicant", "NRIC", "Flat Type", "Status", "Age", "Marital Status"
+            });
             
             for (Application app : projectApplications) {
                 User applicant = findUserByNric(app.getApplicantNric());
                 if (applicant != null) {
-                    System.out.printf("%-15s %-15s %-15s %-10s %-15s %-10d %-15s%n",
-                            applicant.getName(),
-                            app.getApplicantNric(),
-                            truncate(selectedProject.getProjectName(), 15),
-                            app.getUnitType(),
-                            app.getStatus(),
-                            applicant.getAge(),
-                            applicant.getMaritalStatus()
+                    detailsTable.addRow(
+                        TablePrinter.formatCell(applicant.getName(), 15),
+                        app.getApplicantNric(),
+                        app.getUnitType(),
+                        UIFormatter.formatStatus(app.getStatus().toString()),
+                        String.valueOf(applicant.getAge()),
+                        applicant.getMaritalStatus().toString()
                     );
                 } else {
-                    System.out.printf("%-15s %-15s %-15s %-10s %-15s %-10s %-15s%n",
-                            "Unknown",
-                            app.getApplicantNric(),
-                            truncate(selectedProject.getProjectName(), 15),
-                            app.getUnitType(),
-                            app.getStatus(),
-                            "N/A",
-                            "N/A"
+                    detailsTable.addRow(
+                        "Unknown",
+                        app.getApplicantNric(),
+                        app.getUnitType(),
+                        UIFormatter.formatStatus(app.getStatus().toString()),
+                        "N/A",
+                        "N/A"
                     );
                 }
             }
+            
+            detailsTable.print();
             
             // Ask if user wants to save the report to a file
             if (readYesNo("\nSave this report to a file? (Y/N): ")) {
