@@ -13,6 +13,7 @@ import static utils.Constants.QUOTE;
  * to ensure consistent data handling across the application.
  */
 public class FileUtils {
+    /** The base directory path where all data files are stored */
     private static final String DATASET_PATH = "Datasets/";
 
     /**

@@ -14,6 +14,7 @@ import static utils.Constants.DATE_TIME_FORMAT;
  * message content, and ensures special characters are properly escaped.
  */
 public class EnquirySerializer {
+    /** Date formatter used for formatting submission and response timestamps in the standard system format */
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern(DATE_TIME_FORMAT);
     
     /**

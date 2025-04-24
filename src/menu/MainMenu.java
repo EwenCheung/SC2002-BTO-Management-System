@@ -29,19 +29,46 @@ import models.WithdrawalRequest;
  * Handles login flow, registration, and navigates to appropriate user menus.
  */
 public class MainMenu {
+    /** Scanner for reading user input from console */
     private Scanner scanner;
+    
+    /** Authentication system for handling user login */
     private AuthenticationSystem authSystem;
+    
+    /** Registration system for handling new user registrations */
     private RegistrationSystem regSystem;
+    
+    /** In-memory list of all BTO applications in the system */
     private List<Application> applicationList;
+    
+    /** In-memory list of all enquiries in the system */
     private List<Enquiry> enquiryList;
+    
+    /** In-memory list of all users registered in the system */
     private List<User> userList;
+    
+    /** In-memory list of all BTO projects in the system */
     private List<Project> projectList;
+    
+    /** In-memory list of all officer registrations for projects */
     private List<OfficerRegistration> officerRegistrationList;
+    
+    /** In-memory list of all withdrawal requests in the system */
     private List<WithdrawalRequest> withdrawalRequestsList;
+    
+    /** Handler for project-related operations */
     private ProjectHandler projectHandler;
+    
+    /** Handler for application-related operations */
     private ApplicationHandler applicationHandler;
+    
+    /** Handler for enquiry-related operations */
     private EnquiryHandler enquiryHandler;
+    
+    /** Handler for officer registration operations */
     private OfficerRegistrationHandler registrationHandler;
+    
+    /** Handler for withdrawal request operations */
     private WithdrawalHandler withdrawalHandler;
 
     /**

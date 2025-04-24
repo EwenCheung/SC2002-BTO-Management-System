@@ -12,6 +12,7 @@ import io.FileIO;
  */
 public class EnquiryHandler implements ManagerEnquiryFeatures, OfficerEnquiryFeatures, ApplicantEnquiryFeatures {
 
+    /** The in-memory list of all enquiries in the system */
     private List<Enquiry> enquiries;
 
     /**

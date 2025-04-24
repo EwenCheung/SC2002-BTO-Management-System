@@ -32,6 +32,9 @@ public enum ApplicationStatus {
     /** Application has been withdrawn by the applicant */
     WITHDRAWN("Unsuccessful");
 
+    /**
+     * The display name of the status, used for presenting the status to users in a more readable form.
+     */
     private final String displayName;
 
     /**

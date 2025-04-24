@@ -12,6 +12,7 @@ import static utils.Constants.DATE_TIME_FORMAT;
  * handling both required and optional fields safely.
  */
 public class EnquiryFactory {
+    /** Date formatter used for parsing timestamp and response date fields in the standard system format */
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern(DATE_TIME_FORMAT);
 
     /**

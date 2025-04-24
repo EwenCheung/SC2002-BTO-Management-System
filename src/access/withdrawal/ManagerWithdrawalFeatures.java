@@ -3,6 +3,10 @@ package access.withdrawal;
 import java.util.List;
 import models.WithdrawalRequest;
 
+/**
+ * Interface defining features related to withdrawal request management available to project managers.
+ * Provides functionality for approving, rejecting and viewing withdrawal requests.
+ */
 public interface ManagerWithdrawalFeatures {
     /**
      * Returns all withdrawal requests.

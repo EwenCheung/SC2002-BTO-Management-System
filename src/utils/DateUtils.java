@@ -8,6 +8,7 @@ import java.time.format.DateTimeFormatter;
  * Centralizes date-related operations to maintain consistent date handling across the application.
  */
 public class DateUtils {
+    /** The standard date formatter used throughout the application for consistent date formatting */
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern(Constants.DATE_TIME_FORMAT);
 
     /**

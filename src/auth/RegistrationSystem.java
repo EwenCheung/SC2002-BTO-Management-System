@@ -7,6 +7,12 @@ import io.FileIO;
 import java.util.List;
 import java.util.Scanner;
 
+/**
+ * Handles the user registration process for the BTO Management System.
+ * This class provides methods for validating and processing user registrations,
+ * including collecting user input, validating data, and storing new user records.
+ * Currently supports registration as an applicant only.
+ */
 public class RegistrationSystem {
     /**
      * Handles the entire user registration process by scanning inputs from the provided Scanner.
@@ -119,6 +125,14 @@ public class RegistrationSystem {
     }
 
     // Helper validation methods
+    /**
+     * Validates a user's NRIC format.
+     * Valid NRIC must be 9 characters long, starting with 'S' or 'T', 
+     * followed by 7 digits, and ending with a letter.
+     * 
+     * @param nric The NRIC string to validate
+     * @return true if the NRIC format is valid, false otherwise
+     */
     public boolean isValidNRIC(String nric) {
         if (nric == null || nric.length() != 9) {
             return false;
@@ -136,10 +150,24 @@ public class RegistrationSystem {
         return Character.isLetter(nric.charAt(8));
     }
 
+    /**
+     * Validates a user's age.
+     * Valid age must be between 18 and 130 inclusive.
+     * 
+     * @param age The age to validate
+     * @return true if the age is valid, false otherwise
+     */
     public boolean isValidAge(int age) {
         return age >= 18 && age <= 130;
     }
 
+    /**
+     * Validates a user's marital status string.
+     * Valid values are "Single" or "Married" (case-insensitive).
+     * 
+     * @param status The marital status string to validate
+     * @return true if the status is valid, false otherwise
+     */
     public boolean isValidMaritalStatus(String status) {
         if (status == null) {
             return false;
@@ -148,10 +176,24 @@ public class RegistrationSystem {
         return lowerStatus.equals("single") || lowerStatus.equals("married");
     }
 
+    /**
+     * Validates a user's password.
+     * Valid passwords must be at least 6 characters long.
+     * 
+     * @param password The password to validate
+     * @return true if the password is valid, false otherwise
+     */
     public boolean isValidPassword(String password) {
         return password != null && password.length() >= 6;
     }
     
+    /**
+     * Validates a user's name.
+     * Valid names must not be empty and contain only letters and spaces.
+     * 
+     * @param name The name to validate
+     * @return true if the name is valid, false otherwise
+     */
     public boolean isValidName(String name) {
         if (name == null || name.trim().isEmpty()) {
             return false;

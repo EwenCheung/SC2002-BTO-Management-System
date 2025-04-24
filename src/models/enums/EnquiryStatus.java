@@ -11,6 +11,7 @@ public enum EnquiryStatus {
     /** Enquiry that has been responded to and resolved */
     CLOSE("Close");
 
+    /** The display name of the status, used for presenting the status to users in a more readable form */
     private final String displayName;
 
     /**

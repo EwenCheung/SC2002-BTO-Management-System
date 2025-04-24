@@ -12,19 +12,54 @@ import models.enums.*;
  * and managers, while maintaining backward compatibility with the original single-reply model.
  */
 public class Enquiry {
+    /**
+     * Unique identifier for the enquiry.
+     */
     private String enquiryId;
+    
+    /**
+     * NRIC of the applicant who submitted this enquiry.
+     */
     private String applicantNric;
+    
+    /**
+     * Name of the BTO project this enquiry is about.
+     */
     private String projectName;
+    
+    /**
+     * The actual enquiry text/question submitted by the applicant.
+     */
     private String enquiryText;
+    
+    /**
+     * Current status of this enquiry.
+     */
     private EnquiryStatus status;
     
-    // New structure for multiple replies
+    /**
+     * List of replies to this enquiry.
+     */
     private List<Reply> replies;
     
-    // Legacy fields for backward compatibility
+    /**
+     * The most recent response text to this enquiry.
+     */
     private String responseText;
+    
+    /**
+     * NRIC of the staff member who responded to this enquiry.
+     */
     private String respondentNric;
+    
+    /**
+     * Date and time when this enquiry was submitted.
+     */
     private LocalDateTime submittedAt;
+    
+    /**
+     * Date and time when this enquiry was replied to.
+     */
     private LocalDateTime repliedAt;
 
     /**
@@ -33,8 +68,19 @@ public class Enquiry {
      * can provide input on a single enquiry.
      */
     public static class Reply {
+        /**
+         * The content of the reply message.
+         */
         private String text;
+        
+        /**
+         * The NRIC of the staff member who provided this reply.
+         */
         private String respondentNric;
+        
+        /**
+         * The date and time when this reply was submitted.
+         */
         private LocalDateTime timestamp;
         
         /**

@@ -13,6 +13,7 @@ import io.FileIO;
  */
 public class ApplicationHandler implements ManagerApplicationFeatures, OfficerApplicationFeatures, ApplicantApplicationFeatures {
     
+    /** The in-memory list of all applications in the system */
     private List<Application> applications;
     
     /**

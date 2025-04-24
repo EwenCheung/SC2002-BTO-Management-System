@@ -11,6 +11,7 @@ import static utils.Constants.DATE_TIME_FORMAT;
  * Converts string arrays from CSV files into properly typed OfficerRegistration objects.
  */
 public class OfficerRegistrationFactory {
+    /** Date formatter used for parsing registration dates in the standard system format */
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern(DATE_TIME_FORMAT);
 
     /**

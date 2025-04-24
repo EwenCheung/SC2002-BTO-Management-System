@@ -4,6 +4,12 @@ import users.*;
 import utils.FileUtils;
 import static utils.Constants.DELIMITER;
 
+/**
+ * Provides serialization functionality for User objects and their subclasses.
+ * This class is responsible for converting User objects to string format
+ * for persistent storage in CSV files. It handles proper escaping of text fields
+ * and maintains specific serialization formats for different user types.
+ */
 public class UserSerializer {
     /**
      * Serializes a User object into a string that can be saved to a text file.

@@ -3,6 +3,10 @@ package access.withdrawal;
 import java.util.List;
 import models.WithdrawalRequest;
 
+/**
+ * Interface defining features related to withdrawal requests available to applicants.
+ * Provides functionality for submitting withdrawal requests and retrieving previous requests.
+ */
 public interface ApplicantWithdrawalFeatures {
     /**
      * Submits a new withdrawal request.

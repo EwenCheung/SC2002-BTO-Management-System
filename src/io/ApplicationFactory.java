@@ -13,6 +13,7 @@ import static utils.Constants.DATE_TIME_FORMAT;
  * for missing values.
  */
 public class ApplicationFactory {
+    /** Date formatter used for parsing and formatting dates in the standard application format */
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern(DATE_TIME_FORMAT);
     
     /**

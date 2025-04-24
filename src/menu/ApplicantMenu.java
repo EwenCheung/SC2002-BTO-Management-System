@@ -24,11 +24,22 @@ import utils.TablePrinter; // Added import for TablePrinter
  * managing enquiries, and handling withdrawal requests.
  */
 public class ApplicantMenu {
+    /** Scanner for reading user input from the console */
     private Scanner scanner;
+    
+    /** The currently logged-in applicant user */
     private Applicant applicant;
+    
+    /** Interface for project-related operations available to applicants */
     private ApplicantProjectFeatures projectFacade;
+    
+    /** Interface for application-related operations available to applicants */
     private ApplicantApplicationFeatures appFacade;
+    
+    /** Interface for enquiry-related operations available to applicants */
     private ApplicantEnquiryFeatures enquiryFacade;
+    
+    /** Interface for withdrawal-related operations available to applicants */
     private ApplicantWithdrawalFeatures withdrawalFacade;
 
     /**

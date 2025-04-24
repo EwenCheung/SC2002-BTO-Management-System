@@ -11,16 +11,59 @@ import models.enums.ApplicationStatus;
  */
 public class Application {
 
+    /**
+     * Unique identifier for the application.
+     */
     private String applicationId;
+    
+    /**
+     * NRIC of the applicant who submitted this application.
+     */
     private String applicantNric;
+    
+    /**
+     * Name of the BTO project the application is for.
+     */
     private String projectName;
+    
+    /**
+     * Type of housing unit applied for (e.g., "2-Room", "3-Room").
+     */
     private String unitType;
+    
+    /**
+     * Current status of the application.
+     */
     private ApplicationStatus status;
+    
+    /**
+     * Assigned unit number if application is approved.
+     */
     private String assignedUnit;
+    
+    /**
+     * NRIC of the HDB officer assigned to this application.
+     */
     private String assignedOfficer;
+    
+    /**
+     * Date and time when the application was submitted.
+     */
     private LocalDateTime applicationDate;
+    
+    /**
+     * Date and time when the application was last modified.
+     */
     private LocalDateTime lastUpdated;
+    
+    /**
+     * Additional comments or notes about the application.
+     */
     private String remarks;
+    
+    /**
+     * Date when the application was approved.
+     */
     private LocalDate approvalDate; // Added approval date field
 
     /**

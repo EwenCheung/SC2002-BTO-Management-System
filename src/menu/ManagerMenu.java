@@ -27,6 +27,12 @@ import utils.FileUtils;
 import utils.UIFormatter;
 import utils.TablePrinter;
 
+/**
+ * This class represents the menu interface for Project Managers.
+ * It provides functionality for managers to create, edit, and delete projects, 
+ * process applications and withdrawal requests, manage officer registrations,
+ * and generate various reports.
+ */
 public class ManagerMenu {
     private Scanner scanner;
     private ProjectManager projectManager;
@@ -42,6 +48,16 @@ public class ManagerMenu {
     private static final DateTimeFormatter DATE_FORMATTER = 
             DateTimeFormatter.ofPattern(Constants.DATE_FORMAT);
     
+    /**
+     * Constructs a new Manager Menu with the specified ProjectManager and feature interfaces.
+     *
+     * @param projectManager The ProjectManager using this menu
+     * @param projectFacade Interface for project-related operations
+     * @param appFacade Interface for application-related operations
+     * @param enquiryFacade Interface for enquiry-related operations
+     * @param officerRegFacade Interface for officer registration-related operations
+     * @param withdrawalFacade Interface for withdrawal request-related operations
+     */
     public ManagerMenu(ProjectManager projectManager,
                        ManagerProjectFeatures projectFacade,
                        ManagerApplicationFeatures appFacade,
@@ -61,6 +77,10 @@ public class ManagerMenu {
         UIFormatter.setColorEnabled(UIFormatter.supportsColors());
     }
     
+    /**
+     * Displays the Manager Menu and handles user interactions.
+     * This method shows all available options for project managers and processes user selections.
+     */
     public void display() {
         while (true) {
             printHeader("HDB MANAGER PORTAL");

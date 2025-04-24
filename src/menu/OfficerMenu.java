@@ -29,6 +29,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.io.IOException;
 
+/**
+ * This class represents the menu interface for HDB Officers.
+ * It provides functionality for officers to manage projects, process applications,
+ * handle enquiries, and perform other officer-specific tasks.
+ */
 public class OfficerMenu {
     private Scanner scanner;
     private HDBOfficer officer;
@@ -39,6 +44,15 @@ public class OfficerMenu {
     private OfficerEnquiryFeatures enquiryFacade;
     private OfficerRegistrationApplicantFeatures regFacade;
     
+    /**
+     * Constructs a new Officer Menu with the specified HDB Officer and feature interfaces.
+     *
+     * @param officer The HDB Officer using this menu
+     * @param projectFacade Interface for project-related operations
+     * @param appFacade Interface for application-related operations
+     * @param enquiryFacade Interface for enquiry-related operations
+     * @param regFacade Interface for officer registration-related operations
+     */
     public OfficerMenu(HDBOfficer officer,
                        OfficerProjectFeatures projectFacade,
                        OfficerApplicationFeatures appFacade,

@@ -5,8 +5,9 @@ import users.*;
 import models.*;
 
 /**
- * Provides data access functionality for the BTO Management System.
- * Handles loading and saving of all system data to and from CSV files.
+ * Provides file input/output operations for the BTO Management System.
+ * This class handles reading and writing of data files for users, applications, 
+ * projects, enquiries, and other system data.
  */
 public class FileIO {
     /**
