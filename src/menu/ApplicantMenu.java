@@ -566,6 +566,11 @@ public class ApplicantMenu {
             return;
         }
         
+        // Update project visibility based on current date before retrieving projects
+        if (projectFacade instanceof access.project.ProjectHandler) {
+            ((access.project.ProjectHandler) projectFacade).updateVisibilityBasedOnDate();
+        }
+        
         // Get all visible projects
         List<Project> allProjects = projectFacade.getVisibleProjects();
         if (allProjects.isEmpty()) {

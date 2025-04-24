@@ -392,7 +392,7 @@ High-level modules depend on abstractions rather than concrete implementations:
 
 ```java
 // OfficerMenu depends on abstractions, not concrete implementations
-public class OfficerMenu extends BaseMenu {
+public class OfficerMenu{
     // Dependencies on interfaces instead of concrete classes
     private OfficerProjectFeatures projectFacade;
     private OfficerApplicationFeatures appFacade;
