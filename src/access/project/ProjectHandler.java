@@ -157,6 +157,47 @@ public class ProjectHandler implements ManagerProjectFeatures, OfficerProjectFea
     }
     
     /**
+     * Updates visibility of all projects based on application date range.
+     * Projects are automatically set to invisible if the current date is outside their application period,
+     * which means either:
+     * 1. The current date is before the application opening date, or
+     * 2. The current date is after the application closing date.
+     * 
+     * This method is designed to be called before displaying projects to users to ensure
+     * that project visibility is always up-to-date with respect to the current date.
+     * 
+     * Only projects that are currently marked as visible will be checked and potentially updated.
+     * If any project's visibility is changed, the changes will be saved to the persistent storage.
+     * 
+     * @see Project#isVisible()
+     * @see Project#setVisible(boolean)
+     * @see #saveChanges()
+     */
+    public void updateVisibilityBasedOnDate() {
+        java.time.LocalDate currentDate = java.time.LocalDate.now();
+        boolean changesNeeded = false;
+        
+        for (Project p : projects) {
+            // Only update projects that are visible
+            if (p.isVisible()) {
+                // Check if the application period has closed or not started yet
+                boolean outsideDateRange = currentDate.isBefore(p.getApplicationOpeningDate()) || 
+                                         currentDate.isAfter(p.getApplicationClosingDate());
+                
+                if (outsideDateRange) {
+                    p.setVisible(false);
+                    changesNeeded = true;
+                }
+            }
+        }
+        
+        // Save changes to file if any project's visibility was updated
+        if (changesNeeded) {
+            saveChanges();
+        }
+    }
+    
+    /**
      * Gets all projects that have open officer slots and are available for registration
      * @return a list of projects with available officer slots
      */

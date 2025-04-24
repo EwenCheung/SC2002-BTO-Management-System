@@ -210,7 +210,7 @@ public abstract class BaseMenu {
     // Other common methods...
 }
 
-public class OfficerMenu extends BaseMenu {
+public class OfficerMenu {
     // Dependencies on interfaces, not concrete implementations
     private OfficerProjectFeatures projectFacade;
     private OfficerApplicationFeatures appFacade;

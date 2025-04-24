@@ -259,8 +259,8 @@ public class ManagerMenu {
                 }
             }
             
-            // Convert Project Name and Neighborhood to camel case
-            projectName = toCamelCase(projectName);
+            // Convert Neighborhood to camel case (but keep Project Name as is)
+            // projectName = toCamelCase(projectName);  // Removing this conversion to preserve spaces
             neighborhood = toCamelCase(neighborhood);
             
             // Number of 2-Room units - validate and re-prompt if invalid
@@ -554,6 +554,12 @@ public class ManagerMenu {
     private void viewAllProjects() {
         while (true) {
             printHeader("All Projects");
+            
+            // Update project visibility based on current date before retrieving projects
+            if (projectFacade instanceof access.project.ProjectHandler) {
+                ((access.project.ProjectHandler) projectFacade).updateVisibilityBasedOnDate();
+            }
+            
             List<Project> allProjects = projectFacade.getAllProjects();
             
             // Add filtering options

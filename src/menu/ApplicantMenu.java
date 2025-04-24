@@ -132,6 +132,11 @@ public class ApplicantMenu {
             
             if (choice == 5) return;
             
+            // Update project visibility based on current date before retrieving projects
+            if (projectFacade instanceof access.project.ProjectHandler) {
+                ((access.project.ProjectHandler) projectFacade).updateVisibilityBasedOnDate();
+            }
+            
             // Get the list of projects the applicant has already applied to
             List<Application> myApps = appFacade.getApplicationsForApplicant(applicant.getNric());
             List<String> appliedProjectNames = new ArrayList<>();
