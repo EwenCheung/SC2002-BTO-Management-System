@@ -234,7 +234,7 @@ public class OfficerMenu {
 
 Abstraction has been implemented in our system through several mechanisms:
 
-1. **Abstract Classes**: We used abstract classes like `User` and `BaseMenu` to define common attributes and behaviors while deferring specific implementations to child classes.
+1. **Abstract Classes**: We used abstract classes like `User` to define common attributes and behaviors while deferring specific implementations to child classes.
 
 2. **Interface-based Design**: Our system defines functionality through interfaces, allowing multiple implementations and hiding implementation details from client code.
 
